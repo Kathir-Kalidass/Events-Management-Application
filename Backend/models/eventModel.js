@@ -72,6 +72,18 @@ const eventSchema = mongoose.Schema(
       ref: "User",
     },
 
+    reviewComments: {
+      type: String,
+    },
+
+    coordinators: [
+      {
+        name: String,
+        designation: String,
+        department: String,
+      },
+    ],
+
     targetAudience: {
       type: [String],
       required: true,
