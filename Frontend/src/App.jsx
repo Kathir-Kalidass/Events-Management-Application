@@ -7,6 +7,7 @@ import RegisterForm from './pages/Auth/RegisterForm';
 import LoginForm from './pages/Auth/LoginForm';
 import HodDashboard from './pages/HOD/dashboard';
 import Feedback from './pages/Feedback/feedback';
+import ForgotPassword from './pages/Auth/ForgotPassword';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/coordinator/dashboard" element={<CoordinatorDashboard/>}></Route>
         <Route path="/hod/dashboard" element={<HodDashboard/>}></Route>
         <Route path="/participant/feedback" element={<Feedback/>}></Route>
+        <Route path="/forgot-password/:role" element={<ForgotPassword />} />
       </Routes>
     </Router>
   )
