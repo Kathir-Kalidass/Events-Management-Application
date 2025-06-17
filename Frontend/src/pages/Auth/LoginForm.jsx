@@ -16,6 +16,7 @@ const LoginForm = () => {
       const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
 
       if (res.data.role === role) {
+        localStorage.setItem("user", JSON.stringify(res.data)); //  Save all user info
         alert("Login successful");
         navigate(`/${role}/dashboard`);
       } else {
