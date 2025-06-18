@@ -2,7 +2,7 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 const ProtectedRoute = ({ children, allowedRole }) => {
-  const user = JSON.parse(localStorage.getItem("user")); // { name, email, role, dept }
+  const user = JSON.parse(localStorage.getItem("userInfo")); // { name, email, role, dept }
   const location = useLocation();
 
   if (!user) {

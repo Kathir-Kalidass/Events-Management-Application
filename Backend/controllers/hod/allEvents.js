@@ -2,7 +2,6 @@ import asyncHandler from "express-async-handler";
 import event from "../../models/eventModel.js";
 
 export const allEvents = asyncHandler(async(req, res)=>{
-
   try{
       const result = await event.find()
       .populate('createdBy', '_id name email')

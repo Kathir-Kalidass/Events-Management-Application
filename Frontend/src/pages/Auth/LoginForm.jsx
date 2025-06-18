@@ -13,16 +13,19 @@ const LoginForm = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+      const res = await axios.post("http://localhost:5050/api/auth/login", { email, password });
 
       if (res.data.role === role) {
-        localStorage.setItem("user", JSON.stringify(res.data)); //  Save all user info
+        console.log(res.data);
+        localStorage.setItem("userInfo", JSON.stringify(res.data)); //  Save all user info
+        localStorage.setItem("token", JSON.stringify(res.data.token));
         alert("Login successful");
         navigate(`/${role}/dashboard`);
       } else {
         alert("Role mismatch! You are not a " + role);
       }
     } catch (err) {
+      console.log(err.message);
       alert("Login failed");
     }
   };

@@ -6,6 +6,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
+import { useNavigate } from "react-router-dom";
 
 export default function TemporaryDrawer({
   open,
@@ -13,6 +14,9 @@ export default function TemporaryDrawer({
   activePage,
   setActivePage,
 }) {
+
+  const navigate = useNavigate();
+
   function handleOverview() {
     setActivePage("overview");
     onClose();
@@ -40,6 +44,9 @@ export default function TemporaryDrawer({
 
   function handleLogOut() {
     onClose();
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
+    navigate("/");
   }
 
   return (

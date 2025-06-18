@@ -22,7 +22,7 @@ const HodDashboard = () => {
     const token = localStorage.getItem("token");
 
     try {
-      fetch("http://localhost:5050/hod/allEvents/", {
+      fetch("http://localhost:5050/api/hod/allEvents/", {
         method: "GET",
         /*  headers:{
           "authorization": `Bearer ${token}`,
