@@ -19,14 +19,14 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
 
   // Data for the pie chart
   const pieData = [
-    { name: "Income", value: event.budgetBreakdown.income.total },
+    { name: "Income", value: event.budgetBreakdown.totalIncome },
     { name: "Expenses", value: event.budgetBreakdown.totalExpenditure },
   ];
 
   const COLORS = [theme.palette.success.main, theme.palette.error.main];
 
   const profit =
-    event.budgetBreakdown.income.total - event.budgetBreakdown.totalExpenditure;
+    event.budgetBreakdown.totalIncome - event.budgetBreakdown.totalExpenditure;
   const profitPercentage = (profit / event.budget) * 100;
 
   function handleViewFinalBudget() {
@@ -87,7 +87,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
             <Box display="flex" alignItems="center" justifyContent="center">
               <ArrowUpward color="success" fontSize="small" />
               <Typography variant="h6" color="success.main">
-                ₹{event.budgetBreakdown.income.total.toLocaleString()}
+                ₹{event.budgetBreakdown.totalIncome.toLocaleString()}
               </Typography>
             </Box>
           </Box>

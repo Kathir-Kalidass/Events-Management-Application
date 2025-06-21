@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext } from "react";
 import NavbarHod from "./utils/navbar";
-import Overview from "./drawerPages/overview";
+import Overview from "./drawerPages/overview/overview";
 import Proposals from "./drawerPages/proposals";
 import ApprovedEvents from "./drawerPages/approvedEvents";
 import Button from "@mui/material/Button";
@@ -18,7 +18,7 @@ const HodDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState("");
   const { user, events, setEvents } = eventState();
 
-  function fetchAllEvents() {
+  function fetchAllEvents(){
     const token = localStorage.getItem("token");
 
     try {
