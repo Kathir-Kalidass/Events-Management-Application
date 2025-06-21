@@ -120,7 +120,6 @@ const CoordinatorDashboard = () => {
       return;
     }
     const token = localStorage.getItem("token");
-    console.log(user);
     fetch(`http://localhost:5050/api/coordinator/getHOD?id=${user._id}`, {
       method: "GET",
       headers: {

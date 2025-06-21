@@ -4,7 +4,7 @@ import dotenv from "dotenv"
 import db from './config/db.js';
 import authRoutes from "./routes/authRoutes.js";
 import participantRoutes from "./routes/participantRoutes.js";
-import coordinatorRoutes from "./routes/coordinatorRoutes2.js";
+import coordinatorRoutes from "./routes/coordinatorRoutes.js";
 import hodRoutes from "./routes/hodRoutes.js";
 
 const app = express()

@@ -1,6 +1,6 @@
 import express from 'express';
-import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard2.js';
-import { generateClaimBillPDF } from '../controllers/coordinator/dashboard2.js';
+import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard.js';
+import { generateClaimBillPDF } from '../controllers/coordinator/dashboard.js';
 import {
   createProgramme,
   getProgrammes,
@@ -9,7 +9,7 @@ import {
   deleteProgramme,
   generateProgrammePDF,
   getHod
-} from '../controllers/coordinator/dashboard2.js';
+} from '../controllers/coordinator/dashboard.js';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
