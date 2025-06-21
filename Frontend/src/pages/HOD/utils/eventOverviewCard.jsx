@@ -38,9 +38,10 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   }
 
   function approveEvent(id) {
-    const token = localStorage.getItem("token");
+    console.log(`approve ${id}`);
     setLoading(true);
 
+    const token = localStorage.getItem("token");
     fetch("http://localhost:5050/api/hod/event/approve", {
       method: "PUT",
       headers: {
@@ -64,6 +65,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   }
 
   function rejectEvent(id) {
+    console.log(`reject ${id}`);
     const token = localStorage.getItem("token");
     setLoading(true);
 

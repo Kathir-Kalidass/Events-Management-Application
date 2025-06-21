@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/AuthForm.css";
+import {eventState} from "../../context/eventProvider"
 
 const LoginForm = () => {
+
+  const {user, setUser} = eventState(); 
   const { role } = useParams();
   const navigate = useNavigate();
 
@@ -16,10 +19,10 @@ const LoginForm = () => {
       const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
 
       if (res.data.role === role) {
-        console.log(res.data);
         localStorage.setItem("userInfo", JSON.stringify(res.data)); //  Save all user info
         localStorage.setItem("token", JSON.stringify(res.data.token));
         alert("Login successful");
+        setUser(res.data);
         navigate(`/${role}/dashboard`);
       } else {
         alert("Role mismatch! You are not a " + role);

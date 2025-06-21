@@ -128,7 +128,10 @@ const ApprovedEvents = () => {
         }}
       >
         {pendingEvents.map((event) => (
-          <EventOverviewCard key={event._id} event={event}></EventOverviewCard>
+          <EventOverviewCard 
+            key={event._id} 
+            event={event}
+          ></EventOverviewCard>
         ))}
       </Box>
     </Box>

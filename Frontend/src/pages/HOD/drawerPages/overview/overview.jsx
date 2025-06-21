@@ -5,7 +5,8 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-import { eventState } from "../../../context/eventProvider";
+import { eventState } from "../../../../context/eventProvider";
+import DashboardCharts from "./eventstatistics";
 
 const Overview = ({ activePage, setActivePage }) => {
 
@@ -89,7 +90,7 @@ const Overview = ({ activePage, setActivePage }) => {
 
       <Box
         sx={{
-          marginTop: 4,
+          marginTop: 12,
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
@@ -318,6 +319,25 @@ const Overview = ({ activePage, setActivePage }) => {
           </Box>
         </Box>
       </Box>
+
+      <Box>
+        <Box>
+          <Typography
+            sx={{
+              fontSize:"1.5rem",
+              fontWeight:"600",
+              mt:2,
+              mb:2,
+              pl:1,
+              textAlign:"left"
+            }}
+          >
+            Events Statistics
+          </Typography>
+        </Box>
+        <DashboardCharts></DashboardCharts>
+      </Box>
+
     </Box>
   );
 };
