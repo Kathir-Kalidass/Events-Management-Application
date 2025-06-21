@@ -2,13 +2,13 @@ import React from 'react';
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
 import Home from './pages/Home/Home';
 import ParticipantDashboard from './pages/Participants/dashboard';
-import CoordinatorDashboard from './pages/coordinator/dashboard';
 import RegisterForm from './pages/Auth/RegisterForm';
 import LoginForm from './pages/Auth/LoginForm';
 import HodDashboard from './pages/HOD/dashboard';
 import Feedback from './pages/Feedback/feedback';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ProtectedRoute from './pages/Auth/ProtectedRoute';
+import CoordinatorDashboard from './pages/coordinator/coordinatorDashboard'
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
 
         <Route path="/coordinator/dashboard" element={
           <ProtectedRoute allowedRole="coordinator">
-            <CoordinatorDashboard />
+            <CoordinatorDashboard/>
           </ProtectedRoute>
         } />
 
