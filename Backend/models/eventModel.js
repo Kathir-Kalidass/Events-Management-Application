@@ -25,6 +25,7 @@ const eventSchema = mongoose.Schema(
     mode: {
       type: String,
       required: true,
+      enum: ["Online", "Offline", "Hybrid"],
     },
 
     duration: {
@@ -55,12 +56,32 @@ const eventSchema = mongoose.Schema(
     status: {
       type: String,
       default: "pending",
+      enum: ["pending", "approved", "rejected"],
     },
 
     brochure: {
       data: Buffer,
       contentType: String,
+      fileName: String,
     },
+
+    claimBill: {
+      expenses: [
+        {
+          category: String,
+          amount: Number,
+        },
+      ],
+      totalExpenditure: Number,
+    },
+
+    claimPDF: {
+      data: Buffer,
+      contentType: String,
+      fileName: String,
+    },
+
+    claimSubmitted: { type: Boolean, default: false },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -93,74 +114,34 @@ const eventSchema = mongoose.Schema(
       required: true,
     },
 
-    registrationFees: [
+    approvers: [
       {
-        category: {
-          type: String,
-          required: true,
-        },
-        amount: {
-          type: Number,
-          required: true,
-        },
-        gstPercentage: {
-          type: Number,
-          required: true,
-        },
+        name: String,
+        role: String,
       },
     ],
 
-    paymentDetails: {
-      mode: {
-        type: [String], // array of strings
-        required: true,
-      },
-      payTo: {
-        type: String,
-        required: true,
-      },
-    },
-
     budgetBreakdown: {
-      income: {
-        expectedParticipants: {
-          type: Number,
-          required: true,
-        },
-        perParticipantAmount: {
-          type: Number,
-          required: true,
-        },
-        total: {
-          type: Number,
-          required: true,
-        },
-      },
-      expenses: [
+      income: [
         {
-          category: {
-            type: String,
-            required: true,
-          },
-          amount: {
-            type: Number,
-            required: true,
-          },
+          category: String,
+          expectedParticipants: Number,
+          perParticipantAmount: Number,
+          gstPercentage: Number,
+          income: Number, // auto-calculated value from frontend
         },
       ],
-      totalExpenditure: {
-        type: Number,
-        required: true,
-      },
-      universityOverhead: {
-        type: Number,
-        required: true,
-      },
-      gstAmount: {
-        type: Number,
-        required: true,
-      },
+      expenses: [
+        {
+          category: String,
+          amount: Number,
+        },
+      ],
+      totalIncome: Number, // sum of all income[].income
+      totalExpenditure: Number, // sum of all expenses[].amount
+      universityOverhead: Number, // 30% of totalIncome
     },
+
   },
 
   {
