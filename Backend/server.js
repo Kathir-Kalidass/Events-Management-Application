@@ -14,17 +14,13 @@ dotenv.config();
 db.connectDb();
 
 
-app.use("/auth", authRoutes);
-app.use("/participant", participantRoutes);
-app.use("/coordinator", coordinatorRoutes);
-app.use("/hod", hodRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/participant", participantRoutes);
+app.use("/api/coordinator", coordinatorRoutes);
+app.use("/api/hod", hodRoutes);
 
 
-
-
-
-
-
-app.listen(process.env.PORT,"0.0.0.0", ()=>{
-  console.log(`server started: http://localhost:${process.env.PORT}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
