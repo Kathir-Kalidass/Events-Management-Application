@@ -8,6 +8,7 @@ import HodDashboard from './pages/HOD/dashboard';
 import Feedback from './pages/Feedback/feedback';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ProtectedRoute from './pages/Auth/ProtectedRoute';
+import CertificatePage from './pages/Participants/CertificatePage';
 import CoordinatorDashboard from './pages/coordinator/coordinatorDashboard'
 
 function App() {
@@ -21,6 +22,11 @@ function App() {
         <Route path="/participant/dashboard" element={
           <ProtectedRoute allowedRole="participant">
             <ParticipantDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/participant/certificate" element={
+          <ProtectedRoute allowedRole="participant">
+            <CertificatePage />
           </ProtectedRoute>
         } />
 
