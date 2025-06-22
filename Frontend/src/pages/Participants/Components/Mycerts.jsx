@@ -12,7 +12,7 @@ const MyCertificates = ({ participantId }) => {
   const [certificates, setCertificates] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/participant/my-certificates/${participantId}`)
+    fetch(`http://localhost:5050/api/participant/my-certificates/${participantId}`)
       .then(res => res.json())
       .then(data => setCertificates(data));
   }, [participantId]);

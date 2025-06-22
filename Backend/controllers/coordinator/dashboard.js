@@ -1,5 +1,5 @@
 import event from "../../models/eventModel.js";
-import user from "../../models/userModel.js"
+import user from "../../models/userModel.js";
 import PDFDocument from "pdfkit";
 import pkg from "number-to-words";
 const { toWords } = pkg;
@@ -173,6 +173,7 @@ export const deleteProgramme = async (req, res) => {
 };
 // Handle claim bill submission
 export const handleClaimBillSubmission = async (req, res) => {
+  console.log("claimbill submission");
   try {
     const programme = await event.findById(req.params.id);
     if (!programme) {
@@ -212,6 +213,7 @@ export const handleClaimBillSubmission = async (req, res) => {
 
 // ... (your existing imports and other controller functions)
 export const generateProgrammePDF = async (req, res) => {
+  console.log("controller-1");
   try {
     const programme = await event.findById(req.params.id);
     if (!programme) {
@@ -514,8 +516,10 @@ export const generateProgrammePDF = async (req, res) => {
 };
 
 export const generateClaimBillPDF = async (req, res) => {
+  console.log(req.params.id);
   try {
     const programme = await event.findById(req.params.id);
+    console.log(programme.claimBill);
     if (!programme || !programme.claimBill) {
       return res
         .status(404)
@@ -568,11 +572,13 @@ export const generateClaimBillPDF = async (req, res) => {
     doc.moveDown(1.5);
 
     // Table Header
+
     doc.fontSize(12).font("Helvetica-Bold");
     doc
       .text("S.No", 60)
       .text("Head of the Expenditure", 120)
       .text("Amount (in rupees)", 400, { align: "right" });
+    console.log("580");
     doc.moveDown(0.5);
     doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
 
@@ -581,15 +587,18 @@ export const generateClaimBillPDF = async (req, res) => {
     let total = 0;
     doc.font("Helvetica");
     expenses.forEach((exp, idx) => {
-      const amt = parseFloat(exp.amount);
+      const amt = Number(exp.amount);
+
       if (isNaN(amt)) {
-        console.warn(`⚠️ Invalid amount in expense[${idx}]:`, exp.amount);
-        return; // Skip this invalid entry
+        console.warn(`❌ Skipping invalid amount in expense[${idx}]:`, exp);
+        return;
       }
+
       total += amt;
-      doc.text(`${idx + 1}.`, 60);
-      doc.text(exp.category, 120);
-      doc.text(`₹ ${amt.toFixed(2)}`, 400, { align: "right" });
+
+      doc.text(`${idx + 1}.`, 60); // Serial No.
+      doc.text(exp.category || "N/A", 120); // Category
+      doc.text(`₹ ${amt.toFixed(2)}`, 400, { align: "right" }); // Amount
       doc.moveDown(0.5);
     });
 
@@ -649,12 +658,15 @@ export const generateClaimBillPDF = async (req, res) => {
       );
 
     doc.moveDown(1);
+    console.log(`total : ${total}`);
     const safeTotal = isNaN(total) ? 0 : total;
+    console.log(safeTotal);
+
     const totalAmount = `Rs. ${safeTotal.toFixed(2)}/-`;
 
     doc.text(
       `The bill is in order and may be passed for payment of Rs. ${totalAmount}/- (Rupees ${convertToWords(
-        total
+        safeTotal
       )} Only).`
     );
     doc.text(`The bill amount has not been claimed previously.`);
@@ -680,34 +692,34 @@ export const generateClaimBillPDF = async (req, res) => {
     doc.moveDown(2);
     doc.text("Director\nCentre for Cyber Security", { align: "right" });
 
+    console.log("Total (for words):", safeTotal);
     doc.end();
   } catch (error) {
     console.error("PDF generation error:", error);
     if (!res.headersSent) {
-      res
-        .status(500)
-        .json({
-          message: "Error generating Claim Bill PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error generating Claim Bill PDF",
+        error: error.message,
+      });
     }
   }
 };
 
-export const getHod = async (req, res)=>{
-  try{
-    const hod = await user.findOne({
-      role: { $regex: "^HOD$", $options: "i" },
-      department: { $regex: "^CSE$", $options: "i" }
-    })
-    .select('-password');
+export const getHod = async (req, res) => {
+  try {
+    const hod = await user
+      .findOne({
+        role: { $regex: "^HOD$", $options: "i" },
+        department: { $regex: "^CSE$", $options: "i" },
+      })
+      .select("-password");
 
     res.status(200).send(hod);
-  }catch(err){
+  } catch (err) {
     res.status(500);
     throw new Error(err.message);
   }
-}
+};
 
 function convertToWords(amount) {
   return toWords(amount).replace(/\b\w/g, (l) => l.toUpperCase());

@@ -14,7 +14,7 @@ const MyEvents = ({ participantId }) => {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/participant/my-events/${participantId}`)
+    fetch(`http://localhost:5050/api/participant/my-events/${participantId}`)
       .then(res => res.json())
       .then(data => setEvents(data));
   }, [participantId]);

@@ -1,7 +1,7 @@
 import React from 'react';
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
 import Home from './pages/Home/Home';
-import ParticipantDashboard from './pages/Participants/dashboard';
+import ParticipantDashboard from './pages/Participants/Components/dashboard';
 import RegisterForm from './pages/Auth/RegisterForm';
 import LoginForm from './pages/Auth/LoginForm';
 import HodDashboard from './pages/HOD/dashboard';

@@ -1,6 +1,7 @@
 import express from 'express';
 import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard.js';
 import { generateClaimBillPDF } from '../controllers/coordinator/dashboard.js';
+import { generateClaimBillPDF2 } from '../controllers/coordinator/generateClaim.js'
 import {
   createProgramme,
   getProgrammes,
@@ -34,7 +35,7 @@ coordinatorRoutes.route('/programmes/:id')
 // Add the PDF route
 coordinatorRoutes.get('/programmes/:id/pdf',  generateProgrammePDF);
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
-coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF);
+coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF2);
 coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
   try {
     const programme = await TrainingProgramme.findById(req.params.id);

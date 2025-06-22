@@ -37,6 +37,10 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     setSelectedEvent(event);
   }
 
+  function updatePendingEvents(){
+    console.log("set pending");
+  }
+
   function approveEvent(id) {
     console.log(`approve ${id}`);
     setLoading(true);
@@ -55,6 +59,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         setEvents((preEvents) =>
           preEvents.map((item) => (item._id === data._id ? data : item))
         );
+        updatePendingEvents();
       })
       .catch((error) => {
         console.log(error.message);
@@ -82,6 +87,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         setEvents((preEvents) =>
           preEvents.map((item) => (item._id === data._id ? data : item))
         );
+        updatePendingEvents();
       })
       .catch((error) => {
         console.log(error.message);

@@ -10,7 +10,7 @@ const PList = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/participants/events');
+        const res = await fetch('http://localhost:5050/api/participants/events');
         const data = await res.json();
         setEvents(data);
       } catch (error) {

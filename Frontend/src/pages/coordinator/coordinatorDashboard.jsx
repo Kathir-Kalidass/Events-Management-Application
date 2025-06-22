@@ -140,6 +140,8 @@ const CoordinatorDashboard = () => {
     setSelectedProgramme(programme);
     setClaimData(programme.budgetBreakdown.expenses);
     setOpenClaimDialog(true);
+    console.log(selectedProgramme)
+    console.log(claimData)
   };
 
   const handleClaimChange = (field, value, idx) => {
@@ -159,6 +161,7 @@ const CoordinatorDashboard = () => {
   };
 
   const handleSubmitClaim = async () => {
+    console.log(claimData);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
