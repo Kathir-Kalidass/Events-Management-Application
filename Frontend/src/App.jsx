@@ -50,6 +50,7 @@ function App() {
           </ProtectedRoute>
         } /> 
         <Route path="/participant/feedback" element={<Feedback />}></Route>
+        <Route path="/certificate" element={<CertificatePage/>}></Route>
       </Routes>
     </Router>
   );

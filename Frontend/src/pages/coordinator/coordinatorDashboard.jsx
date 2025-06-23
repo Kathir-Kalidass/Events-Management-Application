@@ -140,8 +140,6 @@ const CoordinatorDashboard = () => {
     setSelectedProgramme(programme);
     setClaimData(programme.budgetBreakdown.expenses);
     setOpenClaimDialog(true);
-    console.log(selectedProgramme)
-    console.log(claimData)
   };
 
   const handleClaimChange = (field, value, idx) => {
@@ -221,7 +219,7 @@ const CoordinatorDashboard = () => {
       const ep = Number(i.expectedParticipants || 0);
       const ppa = Number(i.perParticipantAmount || 0);
       const gst = Number(i.gstPercentage || 0);
-      const inc = ep * ppa * (1 + gst / 100);
+      const inc = ep * ppa * (1 - gst / 100);
       return { ...i, income: inc };
     });
 
@@ -1034,14 +1032,17 @@ const CoordinatorDashboard = () => {
                     {event.claimBill &&
                       event.claimBill.expenses?.length > 0 && (
                         <Button
+                          
                           size="small"
                           startIcon={<Receipt />}
                           onClick={async () => {
                             try {
+                              console.log("download pdf");
                               const response = await axios.get(
                                 `http://localhost:5050/api/coordinator/claims/${event._id}/pdf`,
                                 { responseType: "blob" }
                               );
+                              console.log("response came");
                               const blob = new Blob([response.data], {
                                 type: "application/pdf",
                               });

@@ -40,7 +40,7 @@ function convertToWords(num) {
   }
 }
 export const generateClaimBillPDF2 = async (req, res) => {
-  console.log(req.params.id);
+  console.log("creating pdf");
   try {
     const programme = await event.findById(req.params.id);
     console.log(programme.claimBill);
