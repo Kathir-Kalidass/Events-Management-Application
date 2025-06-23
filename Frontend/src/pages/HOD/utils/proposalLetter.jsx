@@ -24,17 +24,78 @@ const styles = {
 const ProposalLetter = ({ event, activePage, setActivePage }) => {
   const date = new Date();
   const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);
+
+  console.log(selectedEvent);
+
+  function getHonarariumCharge() {
+    let amount = 0;
+    const expense = selectedEvent.budgetBreakdown.expenses;
+    console.log(expense);
+
+    for (let i = 0; i < expense.length; i++) {
+      if (
+        expense[i].category == "HONARARIUM" ||
+        expense[i].category == "honararium"
+      ) {
+        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
+        break;
+      }
+    }
+    console.log(`honararium ${amount}`);
+    return amount;
+  }
+
+  function getRefreshmentCharge() {
+    let amount = 0;
+    const expense = selectedEvent.budgetBreakdown.expenses;
+    console.log(expense);
+
+    for (let i = 0; i < expense.length; i++) {
+      if (
+        expense[i].category == "REFRESHMENT" ||
+        expense[i].category == "refreshment"
+      ) {
+        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
+        break;
+      }
+    }
+    console.log(`refresh ${amount}`);
+    return amount;
+  }
+
+  function getUniversityOverhead() {
+    let amount = 0;
+    const expense = selectedEvent.budgetBreakdown.expenses;
+    console.log(expense);
+
+    for (let i = 0; i < expense.length; i++) {
+      if (
+        expense[i].category == "UNIVERSITY OVERHEAD" ||
+        expense[i].category == "university overhead"
+      ) {
+        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
+        break;
+      }
+    }
+    console.log(`univ overhead ${amount}`);
+    return amount;
+  }
+
+  const [loading, setLoading] = useState(false);
+
   const pdfRef = useRef();
+  const generatePDF = async () => {
+    setLoading(true); // Start loading
 
-  const generatePDF = () => {
-    const input = pdfRef.current;
+    setTimeout(async () => {
+      const input = pdfRef.current;
 
-    html2canvas(input, { scale: 2 }).then((canvas) => {
+      const canvas = await html2canvas(input, { scale: 2 });
       const imgData = canvas.toDataURL("image/png");
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210 mm
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
       const imgProps = pdf.getImageProperties(imgData);
       const imgWidth = pdfWidth;
@@ -44,10 +105,10 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
       let position = 0;
 
       // First page
-      pdf.addImage(imgData, "PNG", 20, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Add more pages if necessary
+      // Additional pages
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -55,8 +116,10 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
         heightLeft -= pdfHeight;
       }
 
-      pdf.save("multi-page.pdf");
-    });
+      pdf.save(`ProposalLetter-${selectedEvent._id}`);
+
+      setLoading(false); // Stop loading after PDF is generated
+    }, 100); // Allow UI to re-render before heavy processing starts
   };
 
   function handleBackToProposalPage() {
@@ -74,7 +137,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
         <ArrowBackIcon></ArrowBackIcon>
       </IconButton>
 
-      <Button variant="outlined" onClick={generatePDF}>
+      <Button loading={loading} variant="contained" onClick={generatePDF}>
         Download PDF
       </Button>
 
@@ -283,12 +346,12 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
               </tr>
             </thead>
             <tbody>
-              {selectedEvent.registrationFees.map((item, index) => (
+              {selectedEvent.budgetBreakdown.income.map((item, index) => (
                 <tr key={index}>
                   <td style={{ padding: "4px" }}>{index + 1}.</td>
                   <td style={{ padding: "4px" }}>{item.category}</td>
                   <td style={{ padding: "4px" }}>
-                    Rs.{item.amount}/- + {item.gstPercentage}%GST
+                    Rs.{item.perParticipantAmount}/- + {item.gstPercentage}%GST
                   </td>
                 </tr>
               ))}
@@ -510,23 +573,32 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                   <td rowSpan="4">
                     Registration fee
                     <br />
-                    = 30 × Rs. 944
-                    <br />= Rs. 28,320/-
+                    {selectedEvent.budgetBreakdown.income.map((item, index) => (
+                      <ul
+                        style={{
+                          margin: "0px",
+                        }}
+                        key={index}
+                      >
+                        {`${item.expectedParticipants} x ${item.perParticipantAmount}`}
+                      </ul>
+                    ))}
+                    <br />= {selectedEvent.budgetBreakdown.totalIncome}
                   </td>
                   <td>Honorarium</td>
-                  <td>16,500</td>
+                  <td>{getHonarariumCharge()}</td>
                 </tr>
                 <tr>
                   <td>Stationery and Refreshments</td>
-                  <td>300</td>
+                  <td>{getRefreshmentCharge()}</td>
                 </tr>
                 <tr>
-                  <td>University Overhead 30%</td>
+                  <td>University Overhead</td>
                   <td>{selectedEvent.budgetBreakdown.universityOverhead}</td>
                 </tr>
                 <tr>
                   <td>GST</td>
-                  <td>{selectedEvent.budgetBreakdown.gstAmount}</td>
+                  <td>18 %</td>
                 </tr>
                 <tr>
                   <td>

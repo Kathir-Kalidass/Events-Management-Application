@@ -17,8 +17,7 @@ import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { SelectedEventContext } from "../dashboard";
 
 const EventOverviewCard = ({ event, activePage, setActivePage }) => {
-
-  const {selectedEvent, setSelectedEvent} = useContext(SelectedEventContext); 
+  const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);
   const { user, events, setEvents } = eventState();
   const [open, setOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
@@ -32,12 +31,12 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     setOpen(true);
   }
 
-  function handleProposalLetterView(){
-    setActivePage('proposalLetterView');
+  function handleProposalLetterView() {
+    setActivePage("proposalLetterView");
     setSelectedEvent(event);
   }
 
-  function updatePendingEvents(){
+  function updatePendingEvents() {
     console.log("set pending");
   }
 
@@ -96,7 +95,6 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         setLoading(false);
       });
   }
-
 
   const eventData = {
     eventName: "Annual Tech Fest",
@@ -325,16 +323,18 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
                 ></CommentIcon>
               </IconButton>
 
-              <Button
-                variant="contained"
-                sx={{
-                  padding:0,
-                  textTransform: "none",
-                }}
-                onClick={handleProposalLetterView}
-              >
-                proposal
-              </Button>
+              {activePage == 'proposal' && (
+                  <Button
+                    variant="contained"
+                    sx={{
+                      padding: 0,
+                      textTransform: "none",
+                    }}
+                    onClick={handleProposalLetterView}
+                  >
+                    proposal
+                  </Button>
+                )}
 
               <ViewContentModal
                 event={event}
@@ -367,16 +367,18 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
                 ></CommentIcon>
               </IconButton>
 
-              <Button
-                variant="contained"
-                sx={{
-                  padding:0,
-                  textTransform: "none",
-                }}
-                onClick={handleProposalLetterView}
-              >
-                proposal
-              </Button>
+              {activePage == 'proposal' && (
+                  <Button
+                    variant="contained"
+                    sx={{
+                      padding: 0,
+                      textTransform: "none",
+                    }}
+                    onClick={handleProposalLetterView}
+                  >
+                    proposal
+                  </Button>
+                )}
 
               <ViewContentModal
                 event={event}
@@ -411,17 +413,18 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
                     }}
                   ></CommentIcon>
                 </IconButton>
-
-                <Button
-                variant="contained"
-                sx={{
-                  padding:0,
-                  textTransform: "none",
-                }}
-                onClick={handleProposalLetterView}
-              >
-                proposal
-              </Button>
+                {activePage == 'proposal' &&(
+                  <Button
+                    variant="contained"
+                    sx={{
+                      padding: 0,
+                      textTransform: "none",
+                    }}
+                    onClick={handleProposalLetterView}
+                  >
+                    proposal
+                  </Button>
+                )}
 
                 <ViewContentModal
                   event={event}
