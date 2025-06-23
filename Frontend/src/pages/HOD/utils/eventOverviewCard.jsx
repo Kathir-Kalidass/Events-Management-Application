@@ -413,7 +413,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
                     }}
                   ></CommentIcon>
                 </IconButton>
-                {activePage == 'proposal' && (
+                {activePage == 'proposal' &&(
                   <Button
                     variant="contained"
                     sx={{
