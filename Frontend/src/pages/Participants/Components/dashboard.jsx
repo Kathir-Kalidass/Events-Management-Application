@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -75,7 +75,7 @@ const darkTheme = createTheme({
 
 const menuItems = [
   { label: 'Events List', icon: <EventIcon />, view: 'list' },
-  { label: 'Register an event', icon: <AddCircleIcon />, view: 'form' },
+  // { label: 'Participant Details', icon: <AddCircleIcon />, view: 'form' }, // commented out to hide from drawer
   { label: 'My Events', icon: <AssignmentTurnedInIcon />, view: 'myevents' },
   { label: 'My Certificates', icon: <EmojiEventsIcon />, view: 'mycerts' },
   { label: 'Feedback', icon: <FeedbackIcon />, view: 'feedback' },
@@ -86,17 +86,17 @@ const ParticipantDashboard = () => {
   const [view, setView] = useState('list');
   const [fadeIn, setFadeIn] = useState(true);
   const [open, setOpen] = useState(true);
-  const [feedbackRating, setFeedbackRating] = useState(1); // Default to 1
-  const [feedbackEventId, setFeedbackEventId] = useState('');
-  const [feedbackParticipantId, setFeedbackParticipantId] = useState('');
-  const [feedbackComments, setFeedbackComments] = useState('');
-  const [regName, setRegName] = useState('');
-  const [regRoll, setRegRoll] = useState('');
-  const [regDept, setRegDept] = useState('');
-  const [regYear, setRegYear] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regEvents, setRegEvents] = useState('');
+  const [myEvents, setMyEvents] = useState([]);
+
+  useEffect(() => {
+    // Fetch my events for feedback form dropdown
+    const participantId = "6857dbb542e87e57a8748a61"; // Or get from context/localStorage
+    fetch(`http://localhost:5000/api/participant/my-events/${participantId}`)
+      .then(res => res.json())
+      .then(data => setMyEvents(data))
+      .catch(() => setMyEvents([]));
+  }, []);
+
   const userName = 'Siva';
   const firstLetter = userName.charAt(0).toUpperCase();
 
@@ -139,252 +139,10 @@ const ParticipantDashboard = () => {
 
   const viewComponents = {
     list: <PList />,
-    form: (
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 2,
-        width: '100%',
-      }}>
-        <Typography variant="h5" sx={{ mb: 2, mt: 2 }}>Add a New Participant</Typography>
-        <Box
-          component="form"
-          onSubmit={handleRegisterSubmit}
-          sx={{
-            width: { xs: '100%', sm: 500 },
-            bgcolor: 'rgba(30,30,30,0.4)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Name"
-            value={regName}
-            onChange={e => setRegName(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Roll no"
-            value={regRoll}
-            onChange={e => setRegRoll(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Department"
-            value={regDept}
-            onChange={e => setRegDept(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Year"
-            value={regYear}
-            onChange={e => setRegYear(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={regEmail}
-            onChange={e => setRegEmail(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={regPhone}
-            onChange={e => setRegPhone(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Events to Participate"
-            value={regEvents}
-            onChange={e => setRegEvents(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <Button type="submit" variant="contained" color="primary">
-            SUBMIT
-          </Button>
-        </Box>
-      </Box>
-    ),
     myevents: <MyEvents />,
     mycerts: <MyCertificates />,
     feedback: (
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 2,
-        width: '100%',
-      }}>
-        <Typography variant="h5" sx={{ mb: 2, mt: 2 }}>Feedback Form</Typography>
-        <Box
-          component="form"
-          onSubmit={handleFeedbackSubmit}
-          sx={{
-            width: { xs: '100%', sm: 500 },
-            bgcolor: 'rgba(30,30,30,0.4)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Event ID"
-            value={feedbackEventId}
-            onChange={e => setFeedbackEventId(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Participant ID"
-            value={feedbackParticipantId}
-            onChange={e => setFeedbackParticipantId(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-            }}
-            required
-          />
-          <label style={{ color: '#fff', fontSize: 14, marginBottom: 4 }}>
-            Rating (1–5)
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={5}
-            value={feedbackRating}
-            onChange={e => {
-              const val = Math.max(1, Math.min(5, Number(e.target.value)));
-              setFeedbackRating(val);
-            }}
-            style={{
-              width: 80,
-              fontSize: 18,
-              padding: 8,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-            required
-          />
-          <textarea
-            placeholder="Comments"
-            value={feedbackComments}
-            onChange={e => setFeedbackComments(e.target.value)}
-            rows={4}
-            style={{
-              padding: 10,
-              borderRadius: 4,
-              border: '1px solid #888',
-              background: 'rgba(40,40,40,0.7)',
-              color: '#fff',
-              fontSize: 16,
-              marginBottom: 8,
-              resize: 'vertical',
-            }}
-          />
-          <Button type="submit" variant="contained" color="primary">
-            SUBMIT FEEDBACK
-          </Button>
-        </Box>
-      </Box>
+      <FeedbackForm myEvents={myEvents} />
     ),
     home: <Home />,
   };

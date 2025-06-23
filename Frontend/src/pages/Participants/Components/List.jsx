@@ -3,15 +3,20 @@ import {
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Typography, Button
 } from '@mui/material';
+import { getAllEvents } from './api';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const PList = () => {
   const [events, setEvents] = useState([]);
+  const navigate = useNavigate();
+  // const location = useLocation();
+  // const params = new URLSearchParams(location.search);
+  // const eventId = params.get('eventId');
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/participants/events');
-        const data = await res.json();
+        const data = await getAllEvents();
         setEvents(data);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -20,6 +25,10 @@ const PList = () => {
 
     fetchEvents();
   }, []);
+
+  const handleRegister = (eventId) => {
+    navigate(`/participant/register?eventId=${eventId}`);
+  };
 
   return (
     <div>
@@ -47,7 +56,11 @@ const PList = () => {
                 <TableCell>{event.venue}</TableCell>
                 <TableCell>{event.mode}</TableCell>
                 <TableCell>
-                  <Button variant="outlined" color="primary">
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleRegister(event._id)}
+                  >
                     Register
                   </Button>
                 </TableCell>
