@@ -29,8 +29,31 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
     event.budgetBreakdown.totalIncome - event.budgetBreakdown.totalExpenditure;
   const profitPercentage = (profit / event.budget) * 100;
 
-  function handleViewFinalBudget() {
-    setActivePage("finalBudget");
+  function handleViewFinalBudget(id) {
+    fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}`, {
+      method: "GET",
+    })
+      .then((res) => {
+        // Check if response is successful
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        // Use 'blob' instead of 'data'
+        const pdfUrl = URL.createObjectURL(blob);
+        window.open(pdfUrl);
+
+        // Optional: Clean up the URL after some time to free memory
+        setTimeout(() => {
+          URL.revokeObjectURL(pdfUrl);
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error("Error fetching PDF:", err.message);
+        alert("Failed to load PDF. Please try again.");
+      });
   }
 
   return (
@@ -51,9 +74,9 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
     >
       <CardContent
         sx={{
-          display:"flex",
-          flexDirection:"column",
-          justifyContent:"space-evenly",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-evenly",
         }}
       >
         <Box
@@ -152,7 +175,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
             textTransform: "none",
             fontWeight: "bold",
           }}
-          onClick={handleViewFinalBudget}
+          onClick={() => handleViewFinalBudget(event._id)}
         >
           View Final Budget
         </Button>
