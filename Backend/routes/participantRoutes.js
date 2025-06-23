@@ -1,11 +1,12 @@
 import express from 'express';
-import { dashboard } from '../controllers/participant/dashboard.js';
-import getCompletedEvents from "../controllers/participant/getCompletedEventsController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+import * as participantController from '../controllers/participant/dashboard.js';
 
-const participantRoutes = express.Router();
+const router = express.Router();
 
-participantRoutes.get('/dashboard', dashboard);
-participantRoutes.get("/completed-events", authMiddleware, getCompletedEvents);
+router.get('/events', participantController.getEvents);
+router.post('/register', participantController.registerEvent);
+router.get('/my-events/:participantId', participantController.getMyEvents);
+router.get('/my-certificates/:participantId', participantController.getMyCertificates);
+router.post('/feedback', participantController.giveFeedback);
 
-export default participantRoutes;
+export default router;
