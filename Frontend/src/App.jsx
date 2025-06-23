@@ -2,8 +2,16 @@ import React from 'react';
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
 import Home from './pages/Home/Home';
 import ParticipantDashboard from './pages/Participants/Components/dashboard';
+import RegisterForm from './pages/Auth/RegisterForm';
+import LoginForm from './pages/Auth/LoginForm';
+import HodDashboard from './pages/HOD/dashboard';
+//import ParticipantDashboard from './pages/Participants/Components/dashboard';
 import Form from './pages/Participants/Components/Form';
 import Feedback from './pages/Feedback/feedback';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ProtectedRoute from './pages/Auth/ProtectedRoute';
+import CertificatePage from './pages/Participants/CertificatePage';
+import CoordinatorDashboard from './pages/coordinator/coordinatorDashboard'
 //import LoginForm from './pages/Auth/LoginForm';
 //import HodDashboard from './pages/HOD/dashboard';
 //import ForgotPassword from './pages/Auth/ForgotPassword';

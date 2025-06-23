@@ -32,36 +32,14 @@ const FeedbackForm = ({ myEvents = [] }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedEvent || !participantId) {
-      alert('Missing event or participant information.');
-      return;
-    }
-
-    // Find the event object in myEvents
-    const eventObj = myEvents.find(ev =>
-      (ev.eventId?._id || ev._id) === selectedEvent
-    );
-    const eventIdToSend = eventObj?.eventId?._id || eventObj?._id;
-
-    if (!eventIdToSend) {
-      alert('Invalid event selection.');
-      return;
-    }
-
-    try {
-      const data = await submitFeedback({
-        eventId: eventIdToSend,
-        participantId,
-        ...feedback
-      });
-      alert("Feedback submitted!");
-      setFeedback({ rating: '', comments: '' });
-      setSelectedEvent('');
-      console.log(data);
-    } catch (err) {
-      alert("Failed to submit feedback: " + (err.message || 'Unknown error'));
-      console.error(err);
-    }
+    const res = await fetch("http://localhost:5050/api/participants/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(feedback),
+    });
+    const data = await res.json();
+    alert("Feedback submitted!");
+    console.log(data);
   };
 
   return (

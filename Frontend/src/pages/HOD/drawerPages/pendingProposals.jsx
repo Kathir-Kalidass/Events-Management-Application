@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { eventState } from "../../../context/eventProvider";
 import EventOverviewCard from "../utils/eventOverviewCard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext} from "react";
 
 const PendingProposals = () => {
 
@@ -12,10 +12,11 @@ const PendingProposals = () => {
   
   useEffect(()=>{
     setPendingEvents(events.filter(event => event.status==="pending"));
-  }, []);
+  }, [events]);
 
 
   return (
+    <>
     <Box
       sx={{
         display: "flex",
@@ -137,6 +138,7 @@ const PendingProposals = () => {
         ))}
       </Box>
     </Box>
+    </>
   );
 };
 
