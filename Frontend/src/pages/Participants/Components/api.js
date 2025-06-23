@@ -1,6 +1,6 @@
 // api.js - Handles API requests for feedback and other participant actions
 
-const API_BASE = "http://localhost:5000/api/participant";
+const API_BASE = "http://localhost:5050/api/participant";
 
 export async function submitFeedback(feedback) {
   const response = await fetch(`${API_BASE}/participant/feedback`, {

@@ -11,7 +11,7 @@ const MyEventsWrapper = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const apiResponse = await fetch(`http://localhost:5000/api/participant/my-events/${participantId}`);
+        const apiResponse = await fetch(`http://localhost:5050/api/participant/my-events/${participantId}`);
         if (!apiResponse.ok) throw new Error("Failed to fetch events");
         const data = await apiResponse.json();
         console.log(data);

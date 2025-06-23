@@ -43,7 +43,7 @@ const MyEvents = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const apiResponse = await fetch(`http://localhost:5000/api/participant/my-events/${participantId}`);
+        const apiResponse = await fetch(`http://localhost:5050/api/participant/my-events/${participantId}`);
         if (!apiResponse.ok) throw new Error("Failed to fetch events");
         const data = await apiResponse.json();
         // For each item, fetch the event name from the events model if not present
@@ -51,7 +51,7 @@ const MyEvents = () => {
           let name = item.eventId?.name;
           if (!name && item.eventId?._id) {
             // Fetch event details from events model
-            const eventRes = await fetch(`http://localhost:5000/api/participant/events`);
+            const eventRes = await fetch(`http://localhost:5050/api/participant/events`);
             if (eventRes.ok) {
               const allEvents = await eventRes.json();
               const found = allEvents.find(ev => ev._id === item.eventId._id);

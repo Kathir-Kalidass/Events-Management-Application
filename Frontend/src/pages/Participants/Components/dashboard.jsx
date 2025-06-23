@@ -91,7 +91,7 @@ const ParticipantDashboard = () => {
   useEffect(() => {
     // Fetch my events for feedback form dropdown
     const participantId = "6857dbb542e87e57a8748a61"; // Or get from context/localStorage
-    fetch(`http://localhost:5000/api/participant/my-events/${participantId}`)
+    fetch(`http://localhost:5050/api/participant/my-events/${participantId}`)
       .then(res => res.json())
       .then(data => setMyEvents(data))
       .catch(() => setMyEvents([]));
