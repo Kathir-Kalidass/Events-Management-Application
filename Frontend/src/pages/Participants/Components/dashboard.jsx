@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -147,6 +148,13 @@ const ParticipantDashboard = () => {
     home: <Home />,
   };
 
+  const navigate = useNavigate();
+  const handleLogout = ()=>{
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    navigate('/');
+  }
+
   return (
     <ThemeProvider theme={darkTheme}>
       <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative', bgcolor: 'background.default' }}>
@@ -243,7 +251,7 @@ const ParticipantDashboard = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar>{firstLetter}</Avatar>
-              <Button color="inherit">Logout</Button>
+              <Button color="inherit" onClick={handleLogout}>Logout</Button>
             </Box>
           </Toolbar>
         </AppBar>
