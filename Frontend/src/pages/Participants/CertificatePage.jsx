@@ -9,12 +9,15 @@ const CertificatePage = () => {
 
   const fetchEligibleEvents = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem("userToken")); // replace with correct key if different
-      const res = await axios.get("http://localhost:5050/participant/completed-events", {
+      const user = JSON.parse(localStorage.getItem("user")); // assumes your user info has ID
+      const token = JSON.parse(localStorage.getItem("userToken"));
+
+      const res = await axios.get(`http://localhost:5050/api/participant/my-certificates/${user._id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
+
       setEvents(res.data);
     } catch (err) {
       alert("Failed to fetch eligible events");
@@ -43,7 +46,7 @@ const CertificatePage = () => {
     doc.text(`"${event.title}"`, 20, 80);
 
     doc.setFont("normal");
-    doc.text(`conducted from ${new Date(event.startDate).toDateString()} to ${new Date(event.endDate).toDateString()}.`, 20, 90);
+    doc.text(`held from ${new Date(event.startDate).toDateString()} to ${new Date(event.endDate).toDateString()}.`, 20, 90);
 
     doc.setFont("italic");
     doc.text(`Department of ${user.department}, Anna University, CEG`, 20, 110);
@@ -56,13 +59,13 @@ const CertificatePage = () => {
     fetchEligibleEvents();
   }, []);
 
-  if (loading) return <p className="center-text">Loading events...</p>;
+  if (loading) return <p className="center-text">Loading certificates...</p>;
 
   return (
     <div className="certificate-container">
-      <h2 className="certificate-heading">Download Your Certificates</h2>
+      <h2 className="certificate-heading">My Certificates</h2>
       {events.length === 0 ? (
-        <p className="center-text">No certificates available yet. Participate and wait for completion!</p>
+        <p className="center-text">No eligible certificates yet.</p>
       ) : (
         <ul className="certificate-list">
           {events.map((event) => (
