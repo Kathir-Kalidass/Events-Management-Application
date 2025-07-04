@@ -28,6 +28,7 @@ const RegisterForm = () => {
   };
 
   return (
+
     <div className="auth-container">
       <div className="auth-card">
         <h2>{role.toUpperCase()} Registration</h2>

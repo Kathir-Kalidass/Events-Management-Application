@@ -23,7 +23,7 @@ const Home = () => {
 
       {/* ===== Hero Section ===== */}
       <section className="hero">
-        <img src="/anna univ photo.avif" alt="Anna University" className="hero-image" /> {/* replace with your image name */}
+        <img src="/anna univ photo.avif" alt="Anna University" className="hero-image" />
       </section>
 
       {/* ===== Role Login Selector ===== */}
