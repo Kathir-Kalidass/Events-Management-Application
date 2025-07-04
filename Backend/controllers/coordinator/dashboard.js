@@ -174,6 +174,7 @@ export const deleteProgramme = async (req, res) => {
 // Handle claim bill submission
 export const handleClaimBillSubmission = async (req, res) => {
   console.log("claimbill submission");
+  console.log(req.body);
   try {
     const programme = await event.findById(req.params.id);
     if (!programme) {
@@ -213,7 +214,7 @@ export const handleClaimBillSubmission = async (req, res) => {
 
 // ... (your existing imports and other controller functions)
 export const generateProgrammePDF = async (req, res) => {
-  console.log("controller-1");
+  console.log("generateProgrammePDF");
   try {
     const programme = await event.findById(req.params.id);
     if (!programme) {

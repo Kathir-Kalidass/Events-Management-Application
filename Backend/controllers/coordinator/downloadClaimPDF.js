@@ -2,7 +2,7 @@ import event from "../../models/eventModel.js";
 import { isValidObjectId } from "mongoose";
 
 export const downloadClaimPDF = async (req, res) => {
-  console.log("coordinator pdf download");
+  console.log("coordinator download claim pdf");
   try {
     const { eventId } = req.params;
     

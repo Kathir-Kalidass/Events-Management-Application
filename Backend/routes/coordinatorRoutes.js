@@ -35,6 +35,9 @@ coordinatorRoutes.route('/programmes/:id')
 // Add the PDF routed
 //coordinatorRoutes.get('/programmes/:id/pdf',  generateProgrammePDF);
 
+//coordinator/claims/${event._id}/pdf
+//coordinator/event/claimPdf/${id}
+
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF)
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
 coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF2);
