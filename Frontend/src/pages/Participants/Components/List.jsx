@@ -93,7 +93,8 @@ const PList = () => {
     const fetchEvents = async () => {
       try {
         const data = await getAllEvents(); // ✅ Only use this
-        setEvents(data);
+        const approvedEvents = data.filter(ev => ev.status === "approved");
+        setEvents(approvedEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
       }

@@ -47,7 +47,11 @@ export const getMyCertificates = asyncHandler(async (req, res) => {
 // Submit feedback
 export const giveFeedback = asyncHandler(async (req, res) => {
   try {
-    const { participantId, eventId, rating, comments } = req.body;
+    // Destructure all fields expected by the feedback model
+    const {
+      participantId, eventId, email, name, designation, institute, contact,
+      q7, q8, q9, q10, q11, q12, q13, q14, q15
+    } = req.body;
     console.log("Received participantId:", participantId, "eventId:", eventId);
 
     // Validate ObjectId
@@ -55,7 +59,11 @@ export const giveFeedback = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Invalid participantId or eventId" });
     }
 
-    const feedback = await Feedback.create({ participantId, eventId, rating, comments });
+    // Create feedback with all fields
+    const feedback = await Feedback.create({
+      participantId, eventId, email, name, designation, institute, contact,
+      q7, q8, q9, q10, q11, q12, q13, q14, q15
+    });
     await ParticipantEvent.findOneAndUpdate({ participantId, eventId }, { feedbackGiven: true });
     res.status(201).json(feedback);
   } catch (err) {

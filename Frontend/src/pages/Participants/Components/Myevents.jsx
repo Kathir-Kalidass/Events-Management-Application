@@ -172,29 +172,25 @@ const MyEvents = () => {
         if (!apiResponse.ok) throw new Error("Failed to fetch events");
         const data = await apiResponse.json();
 
+        // Fetch all events and filter only approved
+        const eventRes = await fetch("http://localhost:5050/api/participant/events");
+        const allEvents = await eventRes.json();
+        const approvedEvents = allEvents.filter(ev => ev.status === "approved");
+
         const eventsWithNames = await Promise.all(data.map(async item => {
-          let name = item.eventId?.name;
-          if (!name && item.eventId?._id) {
-            const eventRes = await fetch(`http://localhost:5050/api/participant/events`);
-            if (eventRes.ok) {
-              const allEvents = await eventRes.json();
-              const found = allEvents.find(ev => ev._id === item.eventId._id);
-              name = found?.name || found?.title || 'No Name';
-            } else {
-              name = 'No Name';
-            }
-          }
+          let eventObj = approvedEvents.find(ev => ev._id === item.eventId?._id);
+          if (!eventObj) return null; // skip if not approved
           return {
             _id: item.eventId?._id,
-            name,
-            startDate: item.eventId?.startDate,
-            endDate: item.eventId?.endDate,
-            venue: item.eventId?.venue,
-            mode: item.eventId?.mode,
+            name: eventObj.name || eventObj.title,
+            startDate: eventObj.startDate,
+            endDate: eventObj.endDate,
+            venue: eventObj.venue,
+            mode: eventObj.mode,
           };
         }));
 
-        setEvents(eventsWithNames);
+        setEvents(eventsWithNames.filter(Boolean));
       } catch (err) {
         setError("Failed to fetch events");
       } finally {
