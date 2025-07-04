@@ -27,15 +27,15 @@ function App() {
       <Routes>
         <Route path="/" element={<Home/>}></Route>
         <Route path="/register/:role" element={<Form />} />
-        {/* <Route path="/login/:role" element={<LoginForm />} />
-        <Route path="/forgot-password/:role" element={<ForgotPassword />} /> */}
+        <Route path="/login/:role" element={<LoginForm />} />
+        <Route path="/forgot-password/:role" element={<ForgotPassword />} />
         <Route path="/participant/dashboard" element={
          // <ProtectedRoute allowedRole="participant">
             <ParticipantDashboard />
          // </ProtectedRoute>
         } />
         <Route path="/participant/register" element={<Form/>} />
-        {/* <Route path="/coordinator/dashboard" element={
+        <Route path="/coordinator/dashboard" element={
           <ProtectedRoute allowedRole="coordinator">
             <CoordinatorDashboard/>
           </ProtectedRoute>
@@ -45,7 +45,7 @@ function App() {
           <ProtectedRoute allowedRole="hod">
             <HodDashboard />
           </ProtectedRoute>
-        } /> */}
+        } />
         <Route path="/participant/feedback" element={<Feedback/>}></Route>  
       </Routes>
     </Router>
