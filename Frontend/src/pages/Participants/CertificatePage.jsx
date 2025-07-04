@@ -9,15 +9,14 @@ const CertificatePage = () => {
 
   const fetchEligibleEvents = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user")); // assumes your user info has ID
-      const token = JSON.parse(localStorage.getItem("userToken"));
+      const user = JSON.parse(localStorage.getItem("userInfo")); // assumes your user info has ID
+      const token = JSON.parse(localStorage.getItem("token"));
 
       const res = await axios.get(`http://localhost:5050/api/participant/my-certificates/${user._id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-
       setEvents(res.data);
     } catch (err) {
       alert("Failed to fetch eligible events");
@@ -27,7 +26,7 @@ const CertificatePage = () => {
   };
 
   const generatePDF = (event) => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("userInfo"));
     const doc = new jsPDF();
 
     doc.setFont("Helvetica", "bold");
@@ -43,16 +42,16 @@ const CertificatePage = () => {
     doc.setFont("normal");
     doc.text(`has participated in the event`, 20, 70);
     doc.setFont("bold");
-    doc.text(`"${event.title}"`, 20, 80);
+    doc.text(`"${event.eventId.title}"`, 20, 80);
 
     doc.setFont("normal");
-    doc.text(`held from ${new Date(event.startDate).toDateString()} to ${new Date(event.endDate).toDateString()}.`, 20, 90);
+    doc.text(`held from ${new Date(event.eventId.startDate).toDateString()} to ${new Date(event.eventId.endDate).toDateString()}.`, 20, 90);
 
     doc.setFont("italic");
-    doc.text(`Department of ${user.department}, Anna University, CEG`, 20, 110);
+    doc.text(`Department of CSE, Anna University, CEG`, 20, 110);
     doc.text("Coordinator Signature", 150, 140);
 
-    doc.save(`${user.name}_${event.title}_certificate.pdf`);
+    doc.save(`${user.name}_${event.eventId.title}_certificate.pdf`);
   };
 
   useEffect(() => {
@@ -70,7 +69,7 @@ const CertificatePage = () => {
         <ul className="certificate-list">
           {events.map((event) => (
             <li key={event.eventId} className="certificate-item">
-              <span>{event.title} ({new Date(event.startDate).toDateString()})</span>
+              <span>{event.eventId.title} ({new Date(event.eventId.startDate).toDateString()})</span>
               <button onClick={() => generatePDF(event)}>Download</button>
             </li>
           ))}
