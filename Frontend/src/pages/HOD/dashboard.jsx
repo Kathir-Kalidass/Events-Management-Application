@@ -18,7 +18,7 @@ const HodDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState("");
   const { user, events, setEvents } = eventState();
 
-  function fetchAllEvents(){
+  function fetchAllEvents() {
     const token = localStorage.getItem("token");
 
     try {

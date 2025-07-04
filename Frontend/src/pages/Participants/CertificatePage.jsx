@@ -10,7 +10,7 @@ const CertificatePage = () => {
   const fetchEligibleEvents = async () => {
     try {
       const token = JSON.parse(localStorage.getItem("userToken")); // replace with correct key if different
-      const res = await axios.get("http://localhost:5000/participant/completed-events", {
+      const res = await axios.get("http://localhost:5050/participant/completed-events", {
         headers: {
           Authorization: `Bearer ${token}`
         }

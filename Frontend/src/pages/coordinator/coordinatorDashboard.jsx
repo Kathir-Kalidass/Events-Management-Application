@@ -136,12 +136,113 @@ const CoordinatorDashboard = () => {
       });
   };
 
+  function handleViewFinalBudget(id) {
+
+    console.log('Fetching PDF for ID:', id);
+  
+  fetch(`http://localhost:5050/api/coordinator/claims/${id}/pdf`, {
+    method: "GET",
+    headers: {
+      'Accept': 'application/pdf', // Explicitly request PDF
+    },
+  })
+    .then((res) => {
+      console.log('Response status:', res.status);
+      console.log('Response headers:', res.headers.get('content-type'));
+      
+      // Check if response is successful
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      // Verify it's actually a PDF
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/pdf')) {
+        throw new Error('Response is not a PDF file');
+      }
+      
+      return res.blob();
+    })
+    .then((blob) => {
+      console.log('PDF blob size:', blob.size);
+      
+      // Check if blob is empty
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file');
+      }
+      
+      // Create URL and open PDF
+      const pdfUrl = URL.createObjectURL(blob);
+      const newWindow = window.open(pdfUrl);
+      
+      // Check if popup was blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: trigger download instead
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `ClaimBill_${id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert('PDF downloaded successfully!');
+      }
+
+      // Clean up the URL after a reasonable time
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 5000); // Increased timeout to 5 seconds
+    })
+    .catch((err) => {
+      console.error("Error fetching PDF:", err.message);
+      console.error("Full error:", err);
+      
+      // More specific error messages
+      if (err.message.includes('Failed to fetch')) {
+        alert('Network error: Please check your internet connection and try again.');
+      } else if (err.message.includes('404')) {
+        alert('PDF not found: The requested document may not exist.');
+      } else if (err.message.includes('500')) {
+        alert('Server error: Please try again later or contact support.');
+      } else {
+        alert(`Failed to load PDF: ${err.message}`);
+      }
+    });
+
+  }
+
+  /*function handleViewFinalBudget(id) {
+
+    fetch(`http://localhost:5050/api/coordinator/event/claimPdf/${id}`, {
+      method: "GET",
+    })
+      .then((res) => {
+        // Check if response is successful
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        // Use 'blob' instead of 'data'
+        const pdfUrl = URL.createObjectURL(blob);
+        window.open(pdfUrl);
+
+        // Optional: Clean up the URL after some time to free memory
+        setTimeout(() => {
+          URL.revokeObjectURL(pdfUrl);
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error("Error fetching PDF:", err.message);
+        alert("Failed to load PDF. Please try again.");
+      });
+  } */
+
   const handleApplyClaim = (programme) => {
     setSelectedProgramme(programme);
     setClaimData(programme.budgetBreakdown.expenses);
     setOpenClaimDialog(true);
-    console.log(selectedProgramme)
-    console.log(claimData)
   };
 
   const handleClaimChange = (field, value, idx) => {
@@ -221,7 +322,7 @@ const CoordinatorDashboard = () => {
       const ep = Number(i.expectedParticipants || 0);
       const ppa = Number(i.perParticipantAmount || 0);
       const gst = Number(i.gstPercentage || 0);
-      const inc = ep * ppa * (1 + gst / 100);
+      const inc = ep * ppa * (1 - gst / 100);
       return { ...i, income: inc };
     });
 
@@ -1030,18 +1131,23 @@ const CoordinatorDashboard = () => {
                       onClick={() => handleApplyClaim(event)}
                     >
                       Apply Claim Bill
-                    </Button>
-                    {event.claimBill &&
-                      event.claimBill.expenses?.length > 0 && (
+                    </Button> 
+
+                    {event.claimBill && (
                         <Button
+
                           size="small"
                           startIcon={<Receipt />}
                           onClick={async () => {
+                            handleViewFinalBudget(event._id);
+                            /*
                             try {
+                              console.log("download pdf");
                               const response = await axios.get(
                                 `http://localhost:5050/api/coordinator/claims/${event._id}/pdf`,
                                 { responseType: "blob" }
                               );
+                              console.log("response came");
                               const blob = new Blob([response.data], {
                                 type: "application/pdf",
                               });
@@ -1059,8 +1165,10 @@ const CoordinatorDashboard = () => {
                                   autoHideDuration: 4000,
                                 }
                               );
-                            }
-                          }}
+                            }  */
+                          }
+                        
+                        }
                         >
                           Claim PDF
                         </Button>

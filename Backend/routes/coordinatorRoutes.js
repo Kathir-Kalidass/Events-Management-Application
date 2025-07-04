@@ -1,7 +1,7 @@
 import express from 'express';
 import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard.js';
-import { generateClaimBillPDF } from '../controllers/coordinator/dashboard.js';
 import { generateClaimBillPDF2 } from '../controllers/coordinator/generateClaim.js'
+import { downloadClaimPDF } from '../controllers/coordinator/downloadClaimPDF.js';
 import {
   createProgramme,
   getProgrammes,
@@ -32,8 +32,13 @@ coordinatorRoutes.route('/programmes/:id')
   .put(upload.single('brochure'), updateProgramme)
   .delete(deleteProgramme);
 
-// Add the PDF route
-coordinatorRoutes.get('/programmes/:id/pdf',  generateProgrammePDF);
+// Add the PDF routed
+//coordinatorRoutes.get('/programmes/:id/pdf',  generateProgrammePDF);
+
+//coordinator/claims/${event._id}/pdf
+//coordinator/event/claimPdf/${id}
+
+coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF)
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
 coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF2);
 coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
