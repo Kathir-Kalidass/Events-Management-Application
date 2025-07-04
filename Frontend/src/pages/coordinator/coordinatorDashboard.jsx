@@ -136,6 +136,33 @@ const CoordinatorDashboard = () => {
       });
   };
 
+  function handleViewFinalBudget(id) {
+    fetch(`http://localhost:5050/api/coordinator/event/claimPdf/${id}`, {
+      method: "GET",
+    })
+      .then((res) => {
+        // Check if response is successful
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        // Use 'blob' instead of 'data'
+        const pdfUrl = URL.createObjectURL(blob);
+        window.open(pdfUrl);
+
+        // Optional: Clean up the URL after some time to free memory
+        setTimeout(() => {
+          URL.revokeObjectURL(pdfUrl);
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error("Error fetching PDF:", err.message);
+        alert("Failed to load PDF. Please try again.");
+      });
+  }
+
   const handleApplyClaim = (programme) => {
     setSelectedProgramme(programme);
     setClaimData(programme.budgetBreakdown.expenses);
@@ -1028,14 +1055,17 @@ const CoordinatorDashboard = () => {
                       onClick={() => handleApplyClaim(event)}
                     >
                       Apply Claim Bill
-                    </Button>
+                    </Button> 
+
                     {event.claimBill &&
                       event.claimBill.expenses?.length > 0 && (
                         <Button
-                          
+
                           size="small"
                           startIcon={<Receipt />}
                           onClick={async () => {
+                            handleViewFinalBudget(event._id);
+                            /*
                             try {
                               console.log("download pdf");
                               const response = await axios.get(
@@ -1060,8 +1090,10 @@ const CoordinatorDashboard = () => {
                                   autoHideDuration: 4000,
                                 }
                               );
-                            }
-                          }}
+                            }  */
+                          }
+                        
+                        }
                         >
                           Claim PDF
                         </Button>

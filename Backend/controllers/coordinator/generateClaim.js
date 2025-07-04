@@ -40,12 +40,13 @@ function convertToWords(num) {
   }
 }
 export const generateClaimBillPDF2 = async (req, res) => {
-  console.log("creating pdf");
+  console.log("creating pdf in generateClaimBillPDF2");
   try {
     const programme = await event.findById(req.params.id);
-    console.log(programme.claimBill);
     
     if (!programme || !programme.claimBill) {
+
+      console.log("404");
       return res
         .status(404)
         .json({ message: "Programme or Claim Bill not found" });
