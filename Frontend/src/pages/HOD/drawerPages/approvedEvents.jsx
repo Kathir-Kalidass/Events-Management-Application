@@ -1,0 +1,141 @@
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { useEffect, useState } from "react";
+import { eventState } from "../../../context/eventProvider";
+import EventOverviewCard from "../utils/eventOverviewCard";
+
+const ApprovedEvents = () => {
+
+  const { user, events, setEvents } = eventState();
+  const [pendingEvents, setPendingEvents] = useState([]);
+  
+  useEffect(()=>{
+    setPendingEvents(events.filter(event => event.status==="approved"));
+  }, []);
+
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-around",
+          margin: 2,
+          boxShadow: "0px 2px 12px rgba(0, 0, 0, 0.2)",
+          p: 3,
+          bgcolor: "rgb(238, 240, 241)",
+          mb: 0,
+        }}
+      >
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Proposal Details
+        </Typography>
+
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Coordinator
+        </Typography>
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Event Date
+        </Typography>
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Budget
+        </Typography>
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Status
+        </Typography>
+        <Typography
+          sx={{
+            color: "rgb(88, 90, 91)",
+            width: {
+              xs: 200,
+              sm: 250,
+              md: 300,
+              lg: 350,
+            },
+            mr: 1,
+          }}
+        >
+          Actions
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          ml: 2,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {pendingEvents.map((event) => (
+          <EventOverviewCard 
+            key={event._id} 
+            event={event}
+          ></EventOverviewCard>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+export default ApprovedEvents
