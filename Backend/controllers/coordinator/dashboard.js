@@ -33,6 +33,8 @@ export const createProgramme = async (req, res) => {
       organizingDepartments: JSON.parse(req.body.organizingDepartments || '{"primary":"DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)","associative":[]}'),
       // Handle department approvers
       departmentApprovers: JSON.parse(req.body.departmentApprovers || '[{"department":"DCSE","hodName":"","hodDesignation":"HOD of DCSE","approved":false,"approvedDate":null,"signature":""}]'),
+      // Handle registration procedure
+      registrationProcedure: JSON.parse(req.body.registrationProcedure || '{"enabled":false}'),
       createdBy: req.body.createdBy,
       reviewedBy: req.body.reviewedBy,
     });
@@ -77,7 +79,23 @@ export const getProgrammeById = async (req, res) => {
     if (!programme) {
       return res.status(404).json({ message: "Programme not found" });
     }
-    res.json(programme);
+
+    // Fetch organizing committee data
+    const organizingCommittee = await ConvenorCommittee.find({ 
+      isActive: true
+    }).sort({ 
+      roleCategory: 1, 
+      role: 1,
+      createdAt: -1 
+    });
+
+    // Add organizing committee to the response
+    const programmeWithCommittee = {
+      ...programme.toObject(),
+      organizingCommittee
+    };
+
+    res.json(programmeWithCommittee);
   } catch (error) {
     console.error("❌ Error fetching programme:", error);
     res.status(500).json({ message: "Server Error" });
@@ -91,6 +109,24 @@ export const updateProgramme = async (req, res) => {
     if (!programme) {
       return res.status(404).json({ message: "Programme not found" });
     }
+
+    // Helper function to safely parse JSON
+    const safeJSONParse = (jsonString, fieldName) => {
+      if (!jsonString) return null;
+      
+      // Handle case where jsonString might be an array (due to duplicate form submissions)
+      if (Array.isArray(jsonString)) {
+        jsonString = jsonString[0];
+      }
+      
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error(`❌ Error parsing ${fieldName} JSON:`, error.message);
+        console.error(`Raw ${fieldName} data:`, jsonString);
+        throw new Error(`Invalid ${fieldName} JSON format: ${error.message}`);
+      }
+    };
 
     const {
       title,
@@ -112,6 +148,7 @@ export const updateProgramme = async (req, res) => {
       budgetBreakdown,
       organizingDepartments,
       departmentApprovers,
+      registrationProcedure,
     } = req.body;
 
     programme.title = title || programme.title;
@@ -124,32 +161,37 @@ export const updateProgramme = async (req, res) => {
     programme.objectives = objectives || programme.objectives;
     programme.outcomes = outcomes || programme.outcomes;
     programme.budget = budget ? Number(budget) : programme.budget;
+    
+    // Use safe JSON parsing for all complex fields
     programme.coordinators = coordinators
-      ? JSON.parse(coordinators)
+      ? safeJSONParse(coordinators, "coordinators")
       : programme.coordinators;
     programme.targetAudience = targetAudience
-      ? JSON.parse(targetAudience)
+      ? safeJSONParse(targetAudience, "targetAudience")
       : programme.targetAudience;
     programme.resourcePersons = resourcePersons
-      ? JSON.parse(resourcePersons)
+      ? safeJSONParse(resourcePersons, "resourcePersons")
       : programme.resourcePersons;
-
     programme.approvers = approvers
-      ? JSON.parse(approvers)
+      ? safeJSONParse(approvers, "approvers")
       : programme.approvers;
-
     programme.budgetBreakdown = budgetBreakdown
-      ? JSON.parse(budgetBreakdown)
+      ? safeJSONParse(budgetBreakdown, "budgetBreakdown")
       : programme.budgetBreakdown;
 
     // Handle organizing departments and department approvers
     programme.organizingDepartments = organizingDepartments
-      ? JSON.parse(organizingDepartments)
+      ? safeJSONParse(organizingDepartments, "organizingDepartments")
       : programme.organizingDepartments;
     
     programme.departmentApprovers = departmentApprovers
-      ? JSON.parse(departmentApprovers)
+      ? safeJSONParse(departmentApprovers, "departmentApprovers")
       : programme.departmentApprovers;
+
+    // Handle registration procedure with safe parsing
+    if (registrationProcedure) {
+      programme.registrationProcedure = safeJSONParse(registrationProcedure, "registrationProcedure");
+    }
 
     if (req.file) {
       programme.brochure = {

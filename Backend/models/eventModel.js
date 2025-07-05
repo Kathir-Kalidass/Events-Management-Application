@@ -81,6 +81,12 @@ const eventSchema = mongoose.Schema(
       fileName: String,
     },
 
+    brochurePDF: {
+      data: Buffer,
+      contentType: String,
+      fileName: String,
+    },
+
     claimSubmitted: { type: Boolean, default: false },
 
     createdBy: {
@@ -139,6 +145,144 @@ const eventSchema = mongoose.Schema(
     resourcePersons: {
       type: [String],
       required: true,
+    },
+
+    // Registration procedure (optional, for brochure generation)
+    registrationProcedure: {
+      enabled: {
+        type: Boolean,
+        default: false
+      },
+      instructions: {
+        type: String,
+        default: ""
+      },
+      submissionMethod: {
+        type: String,
+        enum: ["email", "online", "physical", "other"],
+        default: "email"
+      },
+      deadline: {
+        type: Date
+      },
+      participantLimit: {
+        type: Number
+      },
+      selectionCriteria: {
+        type: String,
+        default: "first come first served basis"
+      },
+      confirmationDate: {
+        type: Date
+      },
+      confirmationMethod: {
+        type: String,
+        enum: ["email", "phone", "website", "other"],
+        default: "email"
+      },
+      certificateRequirements: {
+        enabled: {
+          type: Boolean,
+          default: false
+        },
+        attendanceRequired: {
+          type: Boolean,
+          default: true
+        },
+        evaluation: {
+          quiz: {
+            enabled: { type: Boolean, default: false },
+            percentage: { type: Number, default: 0 }
+          },
+          assignment: {
+            enabled: { type: Boolean, default: false },
+            percentage: { type: Number, default: 0 }
+          },
+          labWork: {
+            enabled: { type: Boolean, default: false },
+            percentage: { type: Number, default: 0 }
+          },
+          finalTest: {
+            enabled: { type: Boolean, default: false },
+            percentage: { type: Number, default: 0 }
+          }
+        }
+      },
+      additionalNotes: {
+        type: String,
+        default: ""
+      },
+      paymentDetails: {
+        enabled: {
+          type: Boolean,
+          default: false
+        },
+        accountName: {
+          type: String,
+          default: "DIRECTOR, CSRC"
+        },
+        accountNumber: {
+          type: String,
+          default: "37614464781"
+        },
+        accountType: {
+          type: String,
+          default: "SAVINGS"
+        },
+        bankBranch: {
+          type: String,
+          default: "State Bank of India, Anna University"
+        },
+        ifscCode: {
+          type: String,
+          default: "SBIN0006463"
+        },
+        additionalPaymentInfo: {
+          type: String,
+          default: ""
+        }
+      },
+      registrationForm: {
+        enabled: {
+          type: Boolean,
+          default: false
+        },
+        fields: {
+          name: { type: Boolean, default: true },
+          ageAndDob: { type: Boolean, default: true },
+          qualification: { type: Boolean, default: true },
+          institution: { type: Boolean, default: true },
+          category: {
+            enabled: { type: Boolean, default: true },
+            options: {
+              type: [String],
+              default: [
+                "Student from a Non-Government School",
+                "Student of / who has just passed Class XII from a Government School*",
+                "A programming enthusiast"
+              ]
+            }
+          },
+          address: { type: Boolean, default: true },
+          email: { type: Boolean, default: true },
+          mobile: { type: Boolean, default: true },
+          signature: { type: Boolean, default: true }
+        },
+        additionalRequirements: {
+          type: String,
+          default: "*Proof has to be submitted with the application"
+        },
+        customFields: [{
+          fieldName: String,
+          fieldType: {
+            type: String,
+            enum: ["text", "number", "email", "date", "select", "checkbox"],
+            default: "text"
+          },
+          required: { type: Boolean, default: false },
+          options: [String] // For select type
+        }]
+      }
     },
 
     approvers: [

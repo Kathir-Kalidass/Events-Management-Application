@@ -10,7 +10,9 @@ import {
   getConvenorCommitteeMembers, 
   addConvenorCommitteeMember, 
   updateConvenorCommitteeMember, 
-  deleteConvenorCommitteeMember 
+  deleteConvenorCommitteeMember,
+  initializeDefaultCommittee,
+  getAvailableRoles
 } from '../controllers/hod/convenorCommitteeController.js';
 import { getProgrammeById } from '../controllers/coordinator/dashboard.js';
 
@@ -31,6 +33,8 @@ hodRoutes.get('/convenor-committee', getConvenorCommitteeMembers);
 hodRoutes.post('/convenor-committee', addConvenorCommitteeMember);
 hodRoutes.put('/convenor-committee/:id', updateConvenorCommitteeMember);
 hodRoutes.delete('/convenor-committee/:id', deleteConvenorCommitteeMember);
+hodRoutes.post('/convenor-committee/initialize-default', initializeDefaultCommittee);
+hodRoutes.get('/convenor-committee/available-roles', getAvailableRoles);
 
 
 export default hodRoutes;

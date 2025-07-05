@@ -18,8 +18,38 @@ const convenorCommitteeSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Member', 'Chairman', 'Secretary', 'Vice-Chairman', 'Treasurer'],
+    enum: [
+      // Patron roles
+      'Chief Patron', 'Patron', 'Co-Patron',
+      // Administration roles
+      'Vice-Chancellor', 'Pro-Vice-Chancellor', 'Registrar', 'Controller of Examinations', 'Finance Officer',
+      // Academic roles
+      'Dean', 'Associate Dean', 'Head of Department', 'Associate Head of Department',
+      // Organizing roles
+      'Chairman', 'Vice-Chairman', 'Secretary', 'Joint Secretary', 'Treasurer', 'Convener', 'Co-Convener',
+      // Coordination roles
+      'Coordinator', 'Co-Coordinator', 'Technical Coordinator', 'Program Coordinator', 'Registration Coordinator',
+      // Committee roles
+      'Member', 'Student Member', 'External Member', 'Industry Representative', 'Guest Member', 'Honorary Member', 'Advisory Member',
+      // External participant roles
+      'Industry Expert', 'Government Official', 'Research Scholar', 'International Delegate', 'Distinguished Guest', 'Resource Person', 'Subject Matter Expert'
+    ],
     default: 'Member'
+  },
+  roleCategory: {
+    type: String,
+    enum: ['PATRON', 'ADMINISTRATION', 'ACADEMIC', 'ORGANIZING', 'COORDINATION', 'COMMITTEE', 'EXTERNAL'],
+    default: 'COMMITTEE'
+  },
+  isDefault: {
+    type: Boolean,
+    default: false,
+    description: 'Whether this is a default role that appears in all events'
+  },
+  description: {
+    type: String,
+    trim: true,
+    description: 'Brief description of the role responsibilities'
   },
   isActive: {
     type: Boolean,

@@ -31,7 +31,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
+  MenuItem
 } from "@mui/material";
 import {
   ArrowBack,
@@ -60,6 +60,7 @@ import {
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../context/eventProvider";
+import { generateEventBrochure } from "../../services/brochureGenerator";
 
 const HODEventDashboard = () => {
   const { eventId } = useParams();
@@ -237,6 +238,38 @@ const HODEventDashboard = () => {
     return 0;
   };
 
+  const downloadCompleteBrochure = async () => {
+    try {
+      // Generate the styled brochure using the frontend generator
+      const doc = await generateEventBrochure(event);
+      
+      // Save as PDF blob and download
+      const pdfBlob = doc.output('blob');
+      
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      enqueueSnackbar("Professional brochure downloaded successfully!", { 
+        variant: "success" 
+      });
+      
+    } catch (error) {
+      console.error("Error generating brochure:", error);
+      enqueueSnackbar("Failed to generate brochure. Please try again.", { 
+        variant: "error" 
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -296,6 +329,13 @@ const HODEventDashboard = () => {
             onClick={downloadProposalLetter}
           >
             Download Proposal
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Download />}
+            onClick={downloadCompleteBrochure}
+          >
+            Download Professional Brochure (PDF)
           </Button>
         </Box>
       </Box>
@@ -515,18 +555,179 @@ const HODEventDashboard = () => {
                       Objectives
                     </Typography>
                     <Typography variant="body1" paragraph>
-                      {event.objectives}
+                      {event.objectives || 'No objectives specified'}
                     </Typography>
                     
                     <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                       Expected Outcomes
                     </Typography>
                     <Typography variant="body1">
-                      {event.outcomes}
+                      {event.outcomes || 'No expected outcomes specified'}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
+
+              {/* Registration Procedure */}
+              {event.registrationProcedure && event.registrationProcedure.enabled && (
+                <Grid item xs={12}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Registration Information
+                      </Typography>
+                      
+                      {event.registrationProcedure.instructions && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                            Instructions
+                          </Typography>
+                          <Typography variant="body1" paragraph>
+                            {event.registrationProcedure.instructions}
+                          </Typography>
+                        </>
+                      )}
+
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {event.registrationProcedure.registrationDeadline && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">Registration Deadline</Typography>
+                            <Typography variant="body1">
+                              {new Date(event.registrationProcedure.registrationDeadline).toLocaleDateString()}
+                            </Typography>
+                          </Grid>
+                        )}
+                        
+                        {event.registrationProcedure.participantLimit && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">Participant Limit</Typography>
+                            <Typography variant="body1">{event.registrationProcedure.participantLimit}</Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.selectionCriteria && 
+                         event.registrationProcedure.selectionCriteria !== 'first come first served basis' && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Selection Criteria</Typography>
+                            <Typography variant="body1">{event.registrationProcedure.selectionCriteria}</Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.confirmation && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Confirmation Process</Typography>
+                            <Typography variant="body1">{event.registrationProcedure.confirmation}</Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.certificateRequirements && 
+                         event.registrationProcedure.certificateRequirements.enabled && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Certificate Requirements</Typography>
+                            <Typography variant="body1">Certificate will be provided based on specified criteria</Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+
+                      {/* Payment Details */}
+                      {event.registrationProcedure.paymentDetails && 
+                       event.registrationProcedure.paymentDetails.enabled && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+                            Payment Information
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {event.registrationProcedure.paymentDetails.accountName && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Account Name</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.accountName}</Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.accountNumber && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Account Number</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.accountNumber}</Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.ifscCode && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">IFSC Code</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.ifscCode}</Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.bankName && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Bank Name</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.bankName}</Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.upiId && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">UPI ID</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.upiId}</Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.notes && (
+                              <Grid item xs={12}>
+                                <Typography variant="body2" color="text.secondary">Payment Notes</Typography>
+                                <Typography variant="body1">{event.registrationProcedure.paymentDetails.notes}</Typography>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </>
+                      )}
+
+                      {/* Registration Form Template */}
+                      {event.registrationProcedure.registrationForm && 
+                       event.registrationProcedure.registrationForm.enabled && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+                            Registration Form Fields
+                          </Typography>
+                          <Box sx={{ mt: 2 }}>
+                            {event.registrationProcedure.registrationForm.fields && 
+                             Object.entries(event.registrationProcedure.registrationForm.fields).map(([fieldKey, fieldValue]) => {
+                              if (fieldKey === 'category' && fieldValue.enabled) {
+                                return (
+                                  <Chip 
+                                    key={fieldKey} 
+                                    label={`Category (select, Required)`}
+                                    size="small" 
+                                    sx={{ mr: 1, mb: 1 }}
+                                    variant="outlined"
+                                  />
+                                );
+                              } else if (typeof fieldValue === 'boolean' && fieldValue) {
+                                return (
+                                  <Chip 
+                                    key={fieldKey} 
+                                    label={`${fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1)} (text, Required)`}
+                                    size="small" 
+                                    sx={{ mr: 1, mb: 1 }}
+                                    variant="outlined"
+                                  />
+                                );
+                              }
+                              return null;
+                            })}
+                            {event.registrationProcedure.registrationForm.customFields && 
+                             event.registrationProcedure.registrationForm.customFields.length > 0 && 
+                             event.registrationProcedure.registrationForm.customFields.map((field, index) => (
+                              <Chip 
+                                key={`custom-${index}`} 
+                                label={`${field.fieldName} (${field.fieldType}${field.required ? ', Required' : ''})`}
+                                size="small" 
+                                sx={{ mr: 1, mb: 1 }}
+                                variant="outlined"
+                              />
+                            ))}
+                          </Box>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
             </Grid>
           )}
 

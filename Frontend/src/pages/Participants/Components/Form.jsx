@@ -73,8 +73,10 @@ const PForm = ({ user }) => {
       {/* Foreground content */}
       <Paper sx={{
         p: 5,
-        minWidth: 400,
-        maxWidth: 500,
+        minWidth: 500,
+        maxWidth: 700,
+        maxHeight: '90vh',
+        overflowY: 'auto',
         boxShadow: 6,
         zIndex: 1,
         position: 'relative',
@@ -90,12 +92,96 @@ const PForm = ({ user }) => {
           Register for Event
         </Typography>
         {eventDetails && (
-          <Box sx={{ mb: 3, width: '100%', textAlign: 'center' }}>
-            <Typography sx={{ color: '#fff', fontSize: '1.15rem', mb: 1, fontWeight: 500, fontFamily: 'inherit' }}><b>Event Name:</b> {eventDetails.title || eventDetails.name}</Typography>
-            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}><b>Start Date:</b> {eventDetails.startDate ? new Date(eventDetails.startDate).toLocaleDateString() : '-'}</Typography>
-            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}><b>End Date:</b> {eventDetails.endDate ? new Date(eventDetails.endDate).toLocaleDateString() : '-'}</Typography>
-            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}><b>Venue:</b> {eventDetails.venue}</Typography>
-            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}><b>Mode:</b> {eventDetails.mode}</Typography>
+          <Box sx={{ mb: 3, width: '100%', textAlign: 'left' }}>
+            <Typography sx={{ color: '#fff', fontSize: '1.15rem', mb: 2, fontWeight: 500, fontFamily: 'inherit', textAlign: 'center' }}>
+              <b>Event: {eventDetails.title || eventDetails.name}</b>
+            </Typography>
+            
+            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+              <b>Start Date:</b> {eventDetails.startDate ? new Date(eventDetails.startDate).toLocaleDateString() : '-'}
+            </Typography>
+            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+              <b>End Date:</b> {eventDetails.endDate ? new Date(eventDetails.endDate).toLocaleDateString() : '-'}
+            </Typography>
+            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+              <b>Venue:</b> {eventDetails.venue}
+            </Typography>
+            <Typography sx={{ color: '#fff', fontSize: '1.05rem', mb: 2, fontWeight: 400, fontFamily: 'inherit' }}>
+              <b>Mode:</b> {eventDetails.mode}
+            </Typography>
+
+            {/* Registration Procedure Information */}
+            {eventDetails.registrationProcedure && (
+              <Box sx={{ mt: 3, p: 2, border: '1px solid rgba(255,255,255,0.3)', borderRadius: 1 }}>
+                <Typography sx={{ color: '#fff', fontSize: '1.1rem', mb: 2, fontWeight: 500, fontFamily: 'inherit' }}>
+                  Registration Information
+                </Typography>
+                
+                {eventDetails.registrationProcedure.instructions && (
+                  <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                    <b>Instructions:</b> {eventDetails.registrationProcedure.instructions}
+                  </Typography>
+                )}
+
+                {eventDetails.registrationProcedure.registrationDeadline && (
+                  <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+                    <b>Registration Deadline:</b> {new Date(eventDetails.registrationProcedure.registrationDeadline).toLocaleDateString()}
+                  </Typography>
+                )}
+
+                {eventDetails.registrationProcedure.participantLimit && (
+                  <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+                    <b>Participant Limit:</b> {eventDetails.registrationProcedure.participantLimit}
+                  </Typography>
+                )}
+
+                {eventDetails.registrationProcedure.selectionCriteria && (
+                  <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+                    <b>Selection Criteria:</b> {eventDetails.registrationProcedure.selectionCriteria}
+                  </Typography>
+                )}
+
+                {eventDetails.registrationProcedure.certificateRequirements && (
+                  <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
+                    <b>Certificate Requirements:</b> {eventDetails.registrationProcedure.certificateRequirements}
+                  </Typography>
+                )}
+
+                {/* Payment Information */}
+                {eventDetails.registrationProcedure.paymentDetails && (
+                  <Box sx={{ mt: 2, p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
+                    <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 500, fontFamily: 'inherit' }}>
+                      Payment Details:
+                    </Typography>
+                    {eventDetails.registrationProcedure.paymentDetails.accountName && (
+                      <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 0.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                        Account: {eventDetails.registrationProcedure.paymentDetails.accountName}
+                      </Typography>
+                    )}
+                    {eventDetails.registrationProcedure.paymentDetails.accountNumber && (
+                      <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 0.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                        Account Number: {eventDetails.registrationProcedure.paymentDetails.accountNumber}
+                      </Typography>
+                    )}
+                    {eventDetails.registrationProcedure.paymentDetails.ifscCode && (
+                      <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 0.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                        IFSC: {eventDetails.registrationProcedure.paymentDetails.ifscCode}
+                      </Typography>
+                    )}
+                    {eventDetails.registrationProcedure.paymentDetails.upiId && (
+                      <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 0.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                        UPI ID: {eventDetails.registrationProcedure.paymentDetails.upiId}
+                      </Typography>
+                    )}
+                    {eventDetails.registrationProcedure.paymentDetails.notes && (
+                      <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 0.5, fontWeight: 400, fontFamily: 'inherit' }}>
+                        Notes: {eventDetails.registrationProcedure.paymentDetails.notes}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            )}
           </Box>
         )}
         <Box component="form" onSubmit={handleSubmit} noValidate autoComplete="off" sx={{ width: '100%', textAlign: 'center' }}>

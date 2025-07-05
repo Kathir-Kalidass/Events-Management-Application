@@ -16,11 +16,14 @@ import DownloadPDF from "./downloadEventDetails";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { SelectedEventContext } from "../dashboard";
+import { generateEventBrochure } from "../../../services/brochureGenerator";
+import { useSnackbar } from "notistack";
 
 const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);
   const { user, events, setEvents } = eventState();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,39 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   const handleClose = () => setOpen(false);
   const handleCommentOpen = () => setCommentOpen(true);
   const handleCommentClose = () => setCommentOpen(false);
+
+  // Download professional brochure
+  const downloadBrochure = async () => {
+    try {
+      // Generate the styled brochure using the frontend generator
+      const doc = await generateEventBrochure(event);
+      
+      // Save as PDF blob and download
+      const pdfBlob = doc.output('blob');
+      
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      enqueueSnackbar("Professional brochure downloaded successfully!", { 
+        variant: "success" 
+      });
+      
+    } catch (error) {
+      console.error("Error generating brochure:", error);
+      enqueueSnackbar("Failed to generate brochure. Please try again.", { 
+        variant: "error" 
+      });
+    }
+  };
 
   function handleOpen() {
     setOpen(true);
@@ -353,6 +389,14 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
                     proposal
                   </Button>
                 )}
+
+              <IconButton onClick={downloadBrochure} title="Download Professional Brochure">
+                <DownloadIcon
+                  sx={{
+                    color: "rgb(25, 118, 210)",
+                  }}
+                ></DownloadIcon>
+              </IconButton>
 
               <ViewContentModal
                 event={event}

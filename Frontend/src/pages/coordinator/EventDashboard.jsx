@@ -7,7 +7,6 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
   Chip,
   IconButton,
   Avatar,
@@ -30,6 +29,7 @@ import {
   LinearProgress,
   Tooltip,
   Collapse,
+  Grid,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -62,6 +62,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../context/eventProvider";
+import { generateEventBrochure } from "../../services/brochureGenerator";
 
 const CoordinatorEventDashboard = () => {
   const { eventId } = useParams();
@@ -73,7 +74,6 @@ const CoordinatorEventDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [participants, setParticipants] = useState([]);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [claimData, setClaimData] = useState([]);
   const [showProgressDetails, setShowProgressDetails] = useState(false);
@@ -108,9 +108,18 @@ const CoordinatorEventDashboard = () => {
 
   const fetchParticipants = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/api/coordinator/events/${eventId}/participants`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      // Try multiple possible endpoints for participants
+      let response;
+      try {
+        response = await axios.get(`http://localhost:5050/api/coordinator/programmes/${eventId}/participants`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+      } catch (error) {
+        // Fallback to alternative endpoint
+        response = await axios.get(`http://localhost:5050/api/coordinator/events/${eventId}/participants`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+      }
       setParticipants(response.data || []);
     } catch (error) {
       console.log("Participants not found or error:", error);
@@ -119,7 +128,13 @@ const CoordinatorEventDashboard = () => {
   };
 
   const handleEdit = () => {
-    setEditDialogOpen(true);
+    // Navigate to coordinator dashboard with event data for editing
+    navigate("/coordinator/dashboard", { 
+      state: { 
+        editingEvent: event,
+        editMode: true 
+      } 
+    });
   };
 
   const handleDelete = async () => {
@@ -237,6 +252,259 @@ const CoordinatorEventDashboard = () => {
     return { progress: Math.min(progress, 100), steps };
   };
 
+  // Generate complete brochure with event details and registration procedure
+  const generateCompleteBrochure = () => {
+    let brochureText = `${event.title?.toUpperCase() || 'EVENT'}\n`;
+    brochureText += `${'='.repeat(event.title?.length || 5)}\n\n`;
+
+    // Event Details
+    brochureText += "EVENT DETAILS\n";
+    brochureText += "-".repeat(20) + "\n";
+    brochureText += `Date: ${new Date(event.startDate).toLocaleDateString()}`;
+    if (event.endDate && event.endDate !== event.startDate) {
+      brochureText += ` - ${new Date(event.endDate).toLocaleDateString()}`;
+    }
+    brochureText += `\n`;
+    brochureText += `Venue: ${event.venue || 'TBA'}\n`;
+    brochureText += `Mode: ${event.mode || 'TBA'}\n`;
+    brochureText += `Duration: ${event.duration || 'TBA'}\n`;
+    brochureText += `Type: ${event.type || 'TBA'}\n\n`;
+
+    // Objectives
+    if (event.objectives) {
+      brochureText += "OBJECTIVES\n";
+      brochureText += "-".repeat(20) + "\n";
+      brochureText += `${event.objectives}\n\n`;
+    }
+
+    // Expected Outcomes
+    if (event.outcomes) {
+      brochureText += "EXPECTED OUTCOMES\n";
+      brochureText += "-".repeat(20) + "\n";
+      brochureText += `${event.outcomes}\n\n`;
+    }
+
+    // Target Audience
+    if (event.targetAudience?.length > 0) {
+      brochureText += "TARGET AUDIENCE\n";
+      brochureText += "-".repeat(20) + "\n";
+      event.targetAudience.forEach(audience => {
+        brochureText += `• ${audience}\n`;
+      });
+      brochureText += "\n";
+    }
+
+    // Resource Persons
+    if (event.resourcePersons?.length > 0) {
+      brochureText += "RESOURCE PERSONS\n";
+      brochureText += "-".repeat(20) + "\n";
+      event.resourcePersons.forEach(person => {
+        brochureText += `• ${person}\n`;
+      });
+      brochureText += "\n";
+    }
+
+    // Registration Procedure
+    if (event.registrationProcedure && event.registrationProcedure.enabled) {
+      brochureText += "REGISTRATION INFORMATION\n";
+      brochureText += "-".repeat(30) + "\n";
+
+      if (event.registrationProcedure.instructions) {
+        brochureText += `Instructions: ${event.registrationProcedure.instructions}\n\n`;
+      }
+
+      if (event.registrationProcedure.registrationDeadline) {
+        brochureText += `Registration Deadline: ${new Date(event.registrationProcedure.registrationDeadline).toLocaleDateString()}\n`;
+      }
+
+      if (event.registrationProcedure.participantLimit) {
+        brochureText += `Participant Limit: ${event.registrationProcedure.participantLimit}\n`;
+      }
+
+      if (event.registrationProcedure.selectionCriteria && 
+          event.registrationProcedure.selectionCriteria !== 'first come first served basis') {
+        brochureText += `Selection Criteria: ${event.registrationProcedure.selectionCriteria}\n`;
+      }
+
+      if (event.registrationProcedure.confirmation) {
+        brochureText += `Confirmation Process: ${event.registrationProcedure.confirmation}\n`;
+      }
+
+      if (event.registrationProcedure.certificateRequirements && event.registrationProcedure.certificateRequirements.enabled) {
+        brochureText += `Certificate Requirements: Certificate will be provided based on specified criteria\n`;
+      }
+
+      brochureText += "\n";
+
+      // Payment Details
+      if (event.registrationProcedure.paymentDetails && event.registrationProcedure.paymentDetails.enabled) {
+        brochureText += "PAYMENT DETAILS\n";
+        brochureText += "-".repeat(20) + "\n";
+        
+        if (event.registrationProcedure.paymentDetails.accountName) {
+          brochureText += `Account Name: ${event.registrationProcedure.paymentDetails.accountName}\n`;
+        }
+        if (event.registrationProcedure.paymentDetails.accountNumber) {
+          brochureText += `Account Number: ${event.registrationProcedure.paymentDetails.accountNumber}\n`;
+        }
+        if (event.registrationProcedure.paymentDetails.ifscCode) {
+          brochureText += `IFSC Code: ${event.registrationProcedure.paymentDetails.ifscCode}\n`;
+        }
+        if (event.registrationProcedure.paymentDetails.bankName) {
+          brochureText += `Bank Name: ${event.registrationProcedure.paymentDetails.bankName}\n`;
+        }
+        if (event.registrationProcedure.paymentDetails.upiId) {
+          brochureText += `UPI ID: ${event.registrationProcedure.paymentDetails.upiId}\n`;
+        }
+        if (event.registrationProcedure.paymentDetails.notes) {
+          brochureText += `Notes: ${event.registrationProcedure.paymentDetails.notes}\n`;
+        }
+        brochureText += "\n";
+      }
+
+      // Registration Form Template
+      if (event.registrationProcedure.registrationForm && event.registrationProcedure.registrationForm.enabled) {
+        brochureText += "REGISTRATION FORM FIELDS\n";
+        brochureText += "-".repeat(25) + "\n";
+        
+        if (event.registrationProcedure.registrationForm.fields) {
+          Object.entries(event.registrationProcedure.registrationForm.fields).forEach(([fieldKey, fieldValue]) => {
+            if (fieldKey === 'category' && fieldValue.enabled) {
+              brochureText += `• Category (select, Required)\n`;
+            } else if (typeof fieldValue === 'boolean' && fieldValue) {
+              brochureText += `• ${fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1)} (text, Required)\n`;
+            }
+          });
+        }
+        
+        if (event.registrationProcedure.registrationForm.customFields?.length > 0) {
+          event.registrationProcedure.registrationForm.customFields.forEach(field => {
+            brochureText += `• ${field.fieldName} (${field.fieldType}${field.required ? ', Required' : ''})\n`;
+          });
+        }
+        
+        if (event.registrationProcedure.registrationForm.additionalRequirements) {
+          brochureText += `\nAdditional Requirements: ${event.registrationProcedure.registrationForm.additionalRequirements}\n`;
+        }
+        
+        brochureText += "\n";
+      }
+    }
+
+    // Coordinators
+    if (event.coordinators?.length > 0) {
+      brochureText += "COORDINATORS\n";
+      brochureText += "-".repeat(20) + "\n";
+      event.coordinators.forEach(coordinator => {
+        brochureText += `${coordinator.name}\n`;
+        brochureText += `${coordinator.designation}\n`;
+        if (coordinator.department) {
+          brochureText += `${coordinator.department}\n`;
+        }
+        brochureText += "\n";
+      });
+    }
+
+    return brochureText;
+  };
+
+  // Generate brochure using frontend generator (with designs and logo)
+  const generateStyledBrochure = async () => {
+    try {
+      console.log("Generating styled brochure with frontend generator...");
+      const brochureDoc = await generateEventBrochure(event);
+      
+      if (brochureDoc) {
+        const pdfBlob = brochureDoc.output('blob');
+        
+        // Create download link
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure_styled.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        enqueueSnackbar("Styled brochure generated successfully!", { variant: "success" });
+      }
+    } catch (error) {
+      console.error("Error generating styled brochure:", error);
+      enqueueSnackbar(`Failed to generate styled brochure: ${error.message}`, { variant: "error" });
+    }
+  };
+
+  const downloadCompleteBrochure = async () => {
+    try {
+      console.log("Generating styled brochure with organizing committee data...");
+      
+      // Fetch event data with organizing committee from HOD API
+      let eventWithOrganizingCommittee;
+      try {
+        const response = await axios.get(`http://localhost:5050/api/hod/events/${eventId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        eventWithOrganizingCommittee = response.data;
+        console.log("Event data fetched from HOD API with organizing committee");
+      } catch (hodApiError) {
+        console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
+        eventWithOrganizingCommittee = event;
+      }
+      
+      // Generate the professional styled brochure using frontend jsPDF
+      const doc = await generateEventBrochure(eventWithOrganizingCommittee);
+      
+      // Convert to blob
+      const pdfBlob = doc.output('blob');
+      
+      // Also save a copy to the backend for future access
+      try {
+        const formData = new FormData();
+        formData.append('brochurePDF', pdfBlob, `Brochure_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
+        
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:5050/api/coordinator/brochures/${event._id}/save`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData
+        });
+        console.log("Brochure saved to backend successfully");
+      } catch (saveError) {
+        console.warn("Failed to save brochure to backend:", saveError.message);
+        // Continue with download even if save fails
+      }
+      
+      // Download the styled brochure
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const newWindow = window.open(pdfUrl);
+      
+      // Check if popup was blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: trigger download instead
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert('Professional brochure PDF downloaded successfully!');
+      }
+
+      // Clean up the URL after a reasonable time
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 5000);
+      
+    } catch (error) {
+      console.error("Error generating styled brochure:", error.message);
+      alert(`Failed to generate brochure: ${error.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -283,6 +551,13 @@ const CoordinatorEventDashboard = () => {
           >
             Delete
           </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Download />}
+            onClick={downloadCompleteBrochure}
+          >
+            Download Professional Brochure (PDF)
+          </Button>
         </Box>
       </Box>
 
@@ -320,28 +595,26 @@ const CoordinatorEventDashboard = () => {
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 2 }}>
               Progress Breakdown:
-            </Typography>
-            
-            <Grid container spacing={1}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                  Completed Steps:
-                </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
-                  {getProgress().steps.map((step, index) => (
-                    <Chip
-                      key={index}
-                      label={step}
-                      size="small"
-                      color={step.includes("Rejected") ? "error" : "success"}
-                      variant="filled"
-                      icon={step.includes("Rejected") ? <Cancel /> : <CheckCircle />}
-                    />
-                  ))}
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
+            </Typography>              <Grid container spacing={1}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                    Completed Steps:
+                  </Typography>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    {getProgress().steps.map((step, index) => (
+                      <Chip
+                        key={index}
+                        label={step}
+                        size="small"
+                        color={step.includes("Rejected") ? "error" : "success"}
+                        variant="filled"
+                        icon={step.includes("Rejected") ? <Cancel /> : <CheckCircle />}
+                      />
+                    ))}
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
                 <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
                   Progress Steps (% each):
                 </Typography>
@@ -572,18 +845,215 @@ const CoordinatorEventDashboard = () => {
                       Objectives
                     </Typography>
                     <Typography variant="body1" paragraph>
-                      {event.objectives}
+                      {typeof event.objectives === 'string' ? event.objectives : 'No objectives specified'}
                     </Typography>
                     
                     <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                       Expected Outcomes
                     </Typography>
                     <Typography variant="body1">
-                      {event.outcomes}
+                      {typeof event.outcomes === 'string' ? event.outcomes : 'No expected outcomes specified'}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
+
+              {/* Registration Procedure */}
+              {event.registrationProcedure && event.registrationProcedure.enabled && (
+                <Grid item xs={12}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Registration Information
+                      </Typography>
+                      
+                      {event.registrationProcedure.instructions && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                            Instructions
+                          </Typography>
+                          <Typography variant="body1" paragraph>
+                            {typeof event.registrationProcedure.instructions === 'string' 
+                              ? event.registrationProcedure.instructions 
+                              : 'No instructions specified'}
+                          </Typography>
+                        </>
+                      )}
+
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {event.registrationProcedure.registrationDeadline && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">Registration Deadline</Typography>
+                            <Typography variant="body1">
+                              {new Date(event.registrationProcedure.registrationDeadline).toLocaleDateString()}
+                            </Typography>
+                          </Grid>
+                        )}
+                        
+                        {event.registrationProcedure.participantLimit && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">Participant Limit</Typography>
+                            <Typography variant="body1">{event.registrationProcedure.participantLimit}</Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.selectionCriteria && 
+                         event.registrationProcedure.selectionCriteria !== 'first come first served basis' && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Selection Criteria</Typography>
+                            <Typography variant="body1">
+                              {typeof event.registrationProcedure.selectionCriteria === 'string' 
+                                ? event.registrationProcedure.selectionCriteria 
+                                : 'Not specified'}
+                            </Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.confirmation && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Confirmation Process</Typography>
+                            <Typography variant="body1">
+                              {typeof event.registrationProcedure.confirmation === 'string' 
+                                ? event.registrationProcedure.confirmation 
+                                : 'Not specified'}
+                            </Typography>
+                          </Grid>
+                        )}
+
+                        {event.registrationProcedure.certificateRequirements && 
+                         event.registrationProcedure.certificateRequirements.enabled && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">Certificate Requirements</Typography>
+                            <Typography variant="body1">
+                              Certificate will be provided based on specified criteria
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+
+                      {/* Payment Details */}
+                      {event.registrationProcedure.paymentDetails && 
+                       event.registrationProcedure.paymentDetails.enabled && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+                            Payment Information
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {event.registrationProcedure.paymentDetails.accountName && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Account Name</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.accountName === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.accountName 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.accountNumber && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Account Number</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.accountNumber === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.accountNumber 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.ifscCode && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">IFSC Code</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.ifscCode === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.ifscCode 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.bankName && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">Bank Name</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.bankName === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.bankName 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.upiId && (
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" color="text.secondary">UPI ID</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.upiId === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.upiId 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                            {event.registrationProcedure.paymentDetails.notes && (
+                              <Grid item xs={12}>
+                                <Typography variant="body2" color="text.secondary">Payment Notes</Typography>
+                                <Typography variant="body1">
+                                  {typeof event.registrationProcedure.paymentDetails.notes === 'string' 
+                                    ? event.registrationProcedure.paymentDetails.notes 
+                                    : 'Not specified'}
+                                </Typography>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </>
+                      )}
+
+                      {/* Registration Form Template */}
+                      {event.registrationProcedure.registrationForm && 
+                       event.registrationProcedure.registrationForm.enabled && (
+                        <>
+                          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+                            Registration Form Fields
+                          </Typography>
+                          <Box sx={{ mt: 2 }}>
+                            {event.registrationProcedure.registrationForm.fields && 
+                             Object.entries(event.registrationProcedure.registrationForm.fields).map(([fieldKey, fieldValue]) => {
+                              if (fieldKey === 'category' && fieldValue.enabled) {
+                                return (
+                                  <Chip 
+                                    key={fieldKey} 
+                                    label={`Category (select, Required)`}
+                                    size="small" 
+                                    sx={{ mr: 1, mb: 1 }}
+                                    variant="outlined"
+                                  />
+                                );
+                              } else if (typeof fieldValue === 'boolean' && fieldValue) {
+                                return (
+                                  <Chip 
+                                    key={fieldKey} 
+                                    label={`${fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1)} (text, Required)`}
+                                    size="small" 
+                                    sx={{ mr: 1, mb: 1 }}
+                                    variant="outlined"
+                                  />
+                                );
+                              }
+                              return null;
+                            })}
+                            {event.registrationProcedure.registrationForm.customFields && 
+                             event.registrationProcedure.registrationForm.customFields.length > 0 && 
+                             event.registrationProcedure.registrationForm.customFields.map((field, index) => (
+                              <Chip 
+                                key={`custom-${index}`} 
+                                label={`${field.fieldName} (${field.fieldType}${field.required ? ', Required' : ''})`}
+                                size="small" 
+                                sx={{ mr: 1, mb: 1 }}
+                                variant="outlined"
+                              />
+                            ))}
+                          </Box>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
             </Grid>
           )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Container,
@@ -28,6 +28,8 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  FormControlLabel,
+  Checkbox,
   CircularProgress,
   Alert,
 } from "@mui/material";
@@ -46,6 +48,8 @@ import {
   AccountBalance,
   EventAvailable,
   Visibility,
+  Download,
+  FileCopy,
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -60,6 +64,7 @@ const CoordinatorDashboard = () => {
   const { user, setUser } = eventState();
   const [hod, setHod] = useState();
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState(null);
   const [editId, setEditId] = useState(null);
   const [claimData, setClaimData] = useState([]);
@@ -72,6 +77,10 @@ const CoordinatorDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [view, setView] = useState("home"); // 'home' or 'form'
+  
+  // Check if we're in edit mode
+  const editingEvent = location.state?.editingEvent;
+  const isEditMode = location.state?.editMode;
   
   // State for new input fields
   const [newTargetAudience, setNewTargetAudience] = useState("");
@@ -98,6 +107,61 @@ const CoordinatorDashboard = () => {
     ],
     targetAudience: [],
     resourcePersons: [],
+
+    // Registration procedure (optional, for brochure generation)
+    registrationProcedure: {
+      enabled: false,
+      instructions: "",
+      submissionMethod: "email",
+      deadline: null,
+      participantLimit: "",
+      selectionCriteria: "first come first served basis",
+      confirmationDate: null,
+      confirmationMethod: "email",
+      certificateRequirements: {
+        enabled: false,
+        attendanceRequired: true,
+        evaluation: {
+          quiz: { enabled: false, percentage: 0 },
+          assignment: { enabled: false, percentage: 0 },
+          labWork: { enabled: false, percentage: 0 },
+          finalTest: { enabled: false, percentage: 0 }
+        }
+      },
+      additionalNotes: "",
+      paymentDetails: {
+        enabled: false,
+        accountName: "DIRECTOR, CSRC",
+        accountNumber: "37614464781",
+        accountType: "SAVINGS",
+        bankBranch: "State Bank of India, Anna University",
+        ifscCode: "SBIN0006463",
+        additionalPaymentInfo: ""
+      },
+      registrationForm: {
+        enabled: false,
+        fields: {
+          name: true,
+          ageAndDob: true,
+          qualification: true,
+          institution: true,
+          category: {
+            enabled: true,
+            options: [
+              "Student from a Non-Government School",
+              "Student of / who has just passed Class XII from a Government School*",
+              "A programming enthusiast"
+            ]
+          },
+          address: true,
+          email: true,
+          mobile: true,
+          signature: true
+        },
+        additionalRequirements: "*Proof has to be submitted with the application",
+        customFields: []
+      }
+    },
 
     approvers: [{ name: "", role: "" }],
 
@@ -384,6 +448,7 @@ const CoordinatorDashboard = () => {
     "Basic Details",
     "Coordinators",
     "Participants",
+    "Registration",
     "Financials",
     "Review",
   ];
@@ -793,6 +858,77 @@ const CoordinatorDashboard = () => {
     }
   };
 
+  // Generate professional styled brochure
+  const handleGenerateBrochure = async (eventData) => {
+    try {
+      console.log("Generating styled brochure for event:", eventData.title);
+      
+      // Fetch event data with organizing committee from HOD API
+      let eventWithOrganizingCommittee;
+      try {
+        const response = await axios.get(`http://localhost:5050/api/hod/events/${eventData._id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        eventWithOrganizingCommittee = response.data;
+        console.log("Event data fetched from HOD API with organizing committee");
+      } catch (hodApiError) {
+        console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
+        eventWithOrganizingCommittee = eventData;
+      }
+      
+      // Import the brochure generator dynamically
+      const { generateEventBrochure } = await import('../../services/brochureGenerator');
+      
+      // Generate the professional styled brochure
+      const doc = await generateEventBrochure(eventWithOrganizingCommittee);
+      
+      // Convert to blob and download
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const newWindow = window.open(pdfUrl);
+      
+      // Check if popup was blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: trigger download instead
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `${eventData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        enqueueSnackbar('Professional brochure downloaded successfully!', { variant: 'success' });
+      }
+
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 5000);
+      
+      // Also try to save to backend
+      try {
+        const formData = new FormData();
+        formData.append('brochurePDF', pdfBlob, `Brochure_${eventData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
+        
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:5050/api/coordinator/brochures/${eventData._id}/save`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData
+        });
+        console.log("Brochure saved to backend successfully");
+      } catch (saveError) {
+        console.warn("Failed to save brochure to backend:", saveError.message);
+      }
+      
+    } catch (error) {
+      console.error("Error generating brochure:", error.message);
+      enqueueSnackbar(`Failed to generate brochure: ${error.message}`, { variant: 'error' });
+    }
+  };
+
   const validateCurrentStep = () => {
     switch (activeStep) {
       case 0: // Basic Details
@@ -810,12 +946,14 @@ const CoordinatorDashboard = () => {
         );
       case 2: // Participants
         return formData.targetAudience.length > 0;
-      case 3: // Financials
+      case 3: // Registration (optional step, always valid)
+        return true;
+      case 4: // Financials
         return (
           formData.budgetBreakdown.income.length > 0 &&
           formData.budgetBreakdown.expenses.length > 0
         );
-      case 4: // Review
+      case 5: // Review
         return validateForm();
       default:
         return true;
@@ -839,10 +977,14 @@ const CoordinatorDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
+    
     console.log("✅ Submit clicked");
-    console.log();
 
-    if (submitting) return;
+    if (submitting) {
+      console.log("⚠️ Already submitting, ignoring duplicate submission");
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -914,6 +1056,12 @@ const CoordinatorDashboard = () => {
         JSON.stringify(formData.resourcePersons || [])
       );
 
+      // Add registration procedure data
+      formPayload.append(
+        "registrationProcedure",
+        JSON.stringify(formData.registrationProcedure)
+      );
+
       formPayload.append("approvers", JSON.stringify(formData.approvers || []));
 
       // Add organizing departments and department approvers
@@ -938,6 +1086,50 @@ const CoordinatorDashboard = () => {
           totalExpenditure: formData.budgetBreakdown?.totalExpenditure || 0,
           universityOverhead: formData.budgetBreakdown?.universityOverhead || 0,
         })
+      );
+
+      // Add registration procedure data with proper date handling
+      const registrationProcedureData = formData.registrationProcedure || {
+        enabled: false,
+        instructions: "",
+        submissionMethod: "email",
+        deadline: null,
+        participantLimit: "",
+        selectionCriteria: "first come first served basis",
+        confirmationDate: null,
+        confirmationMethod: "email",
+        certificateRequirements: {
+          enabled: false,
+          attendanceRequired: true,
+          evaluation: {
+            quiz: { enabled: false, percentage: 0 },
+            assignment: { enabled: false, percentage: 0 },
+            labWork: { enabled: false, percentage: 0 },
+            finalTest: { enabled: false, percentage: 0 }
+          }
+        },
+        additionalNotes: "",
+        paymentDetails: {
+          enabled: false
+        },
+        registrationForm: {
+          enabled: false
+        }
+      };
+
+      // Convert dates to ISO strings to ensure proper JSON serialization
+      if (registrationProcedureData.deadline && registrationProcedureData.deadline instanceof Date) {
+        registrationProcedureData.deadline = registrationProcedureData.deadline.toISOString();
+      }
+      if (registrationProcedureData.confirmationDate && registrationProcedureData.confirmationDate instanceof Date) {
+        registrationProcedureData.confirmationDate = registrationProcedureData.confirmationDate.toISOString();
+      }
+
+      console.log("Sending registrationProcedure:", registrationProcedureData);
+      
+      formPayload.append(
+        "registrationProcedure",
+        JSON.stringify(registrationProcedureData)
       );
 
       if (formData.brochure instanceof File) {
@@ -1152,6 +1344,71 @@ const CoordinatorDashboard = () => {
       }));
     }
   }, [user]);
+
+  // Handle edit mode from navigation
+  useEffect(() => {
+    if (isEditMode && editingEvent) {
+      // Populate form with editing event data
+      const populateFormData = () => {
+        const eventData = {
+          ...initialFormState,
+          title: editingEvent.title || "",
+          startDate: editingEvent.startDate ? new Date(editingEvent.startDate) : null,
+          endDate: editingEvent.endDate ? new Date(editingEvent.endDate) : null,
+          venue: editingEvent.venue || "",
+          mode: editingEvent.mode || "Online",
+          duration: editingEvent.duration || "",
+          type: editingEvent.type || "",
+          objectives: editingEvent.objectives || "",
+          outcomes: editingEvent.outcomes || "",
+          budget: editingEvent.budget || "",
+          coordinators: editingEvent.coordinators || initialFormState.coordinators,
+          targetAudience: editingEvent.targetAudience || [],
+          resourcePersons: editingEvent.resourcePersons || [],
+          organizingDepartments: editingEvent.organizingDepartments || initialFormState.organizingDepartments,
+          departmentApprovers: editingEvent.departmentApprovers || initialFormState.departmentApprovers,
+          budgetBreakdown: editingEvent.budgetBreakdown || initialFormState.budgetBreakdown,
+          registrationProcedure: {
+            enabled: editingEvent.registrationProcedure?.enabled || false,
+            instructions: editingEvent.registrationProcedure?.instructions || "",
+            submissionMethod: editingEvent.registrationProcedure?.submissionMethod || "email",
+            deadline: editingEvent.registrationProcedure?.deadline ? new Date(editingEvent.registrationProcedure.deadline) : null,
+            participantLimit: editingEvent.registrationProcedure?.participantLimit || "",
+            selectionCriteria: editingEvent.registrationProcedure?.selectionCriteria || "first come first served basis",
+            confirmationDate: editingEvent.registrationProcedure?.confirmationDate ? new Date(editingEvent.registrationProcedure.confirmationDate) : null,
+            confirmationMethod: editingEvent.registrationProcedure?.confirmationMethod || "email",
+            certificateRequirements: editingEvent.registrationProcedure?.certificateRequirements || initialFormState.registrationProcedure.certificateRequirements,
+            additionalNotes: editingEvent.registrationProcedure?.additionalNotes || "",
+            paymentDetails: {
+              enabled: editingEvent.registrationProcedure?.paymentDetails?.enabled || false,
+              accountName: editingEvent.registrationProcedure?.paymentDetails?.accountName || "DIRECTOR, CSRC",
+              accountNumber: editingEvent.registrationProcedure?.paymentDetails?.accountNumber || "37614464781",
+              accountType: editingEvent.registrationProcedure?.paymentDetails?.accountType || "SAVINGS",
+              bankBranch: editingEvent.registrationProcedure?.paymentDetails?.bankBranch || "State Bank of India, Anna University",
+              ifscCode: editingEvent.registrationProcedure?.paymentDetails?.ifscCode || "SBIN0006463",
+              additionalPaymentInfo: editingEvent.registrationProcedure?.paymentDetails?.additionalPaymentInfo || ""
+            },
+            registrationForm: {
+              enabled: editingEvent.registrationProcedure?.registrationForm?.enabled || false,
+              fields: editingEvent.registrationProcedure?.registrationForm?.fields || initialFormState.registrationProcedure.registrationForm.fields,
+              additionalRequirements: editingEvent.registrationProcedure?.registrationForm?.additionalRequirements || "*Proof has to be submitted with the application",
+              customFields: editingEvent.registrationProcedure?.registrationForm?.customFields || []
+            }
+          }
+        };
+
+        setFormData(eventData);
+        setEditId(editingEvent._id);
+        setView("form");
+        setOpenForm(true);
+      };
+
+      populateFormData();
+      
+      // Clear the location state to prevent interference with future navigations
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [isEditMode, editingEvent, navigate, location.pathname]);
 
   if (error) {
     return (
@@ -1435,6 +1692,15 @@ const CoordinatorDashboard = () => {
                           Claim PDF
                         </Button>
                       )}
+                      <Button
+                        size="small"
+                        startIcon={<FileCopy />}
+                        onClick={async () => {
+                          handleGenerateBrochure(event);
+                        }}
+                      >
+                        Professional Brochure
+                      </Button>
                   </CardActions>
                 </Card>
               </Grid>
@@ -1520,7 +1786,7 @@ const CoordinatorDashboard = () => {
         >
           <DialogTitle sx={{ borderBottom: "1px solid #eee", py: 2 }}>
             <Typography variant="h6" component="div">
-              Create New Note Order
+              {editId ? "Edit Note Order" : "Create New Note Order"}
             </Typography>
             <Stepper activeStep={activeStep} alternativeLabel sx={{ mt: 2 }}>
               {steps.map((label) => (
@@ -2069,6 +2335,658 @@ const CoordinatorDashboard = () => {
               )}
 
               {activeStep === 3 && (
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main", mb: 3 }}>
+                    Registration Procedure (Optional)
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
+                    {/* Enable Registration Procedure */}
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.registrationProcedure.enabled}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              registrationProcedure: {
+                                ...formData.registrationProcedure,
+                                enabled: e.target.checked
+                              }
+                            })}
+                          />
+                        }
+                        label="Include registration procedure in brochure"
+                      />
+                    </Grid>
+
+                    {formData.registrationProcedure.enabled && (
+                      <>
+                        {/* Registration Instructions */}
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            label="Registration Instructions"
+                            name="registrationInstructions"
+                            value={formData.registrationProcedure.instructions}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              registrationProcedure: {
+                                ...formData.registrationProcedure,
+                                instructions: e.target.value
+                              }
+                            })}
+                            multiline
+                            rows={3}
+                            placeholder="e.g., Registration can be done using photo copy of the form..."
+                          />
+                        </Grid>
+
+                        {/* Submission Method */}
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>Submission Method</InputLabel>
+                            <Select
+                              value={formData.registrationProcedure.submissionMethod}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                registrationProcedure: {
+                                  ...formData.registrationProcedure,
+                                  submissionMethod: e.target.value
+                                }
+                              })}
+                            >
+                              <MenuItem value="email">Email</MenuItem>
+                              <MenuItem value="online">Online Portal</MenuItem>
+                              <MenuItem value="physical">Physical Submission</MenuItem>
+                              <MenuItem value="other">Other</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        {/* Registration Deadline */}
+                        <Grid item xs={12} md={6}>
+                          <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                              label="Registration Deadline"
+                              value={formData.registrationProcedure.deadline}
+                              onChange={(date) => setFormData({
+                                ...formData,
+                                registrationProcedure: {
+                                  ...formData.registrationProcedure,
+                                  deadline: date
+                                }
+                              })}
+                              renderInput={(params) => <TextField {...params} fullWidth />}
+                            />
+                          </LocalizationProvider>
+                        </Grid>
+
+                        {/* Participant Limit */}
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Participant Limit"
+                            name="participantLimit"
+                            type="number"
+                            value={formData.registrationProcedure.participantLimit}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              registrationProcedure: {
+                                ...formData.registrationProcedure,
+                                participantLimit: e.target.value
+                              }
+                            })}
+                            placeholder="e.g., 60"
+                          />
+                        </Grid>
+
+                        {/* Selection Criteria */}
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Selection Criteria"
+                            name="selectionCriteria"
+                            value={formData.registrationProcedure.selectionCriteria}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              registrationProcedure: {
+                                ...formData.registrationProcedure,
+                                selectionCriteria: e.target.value
+                              }
+                            })}
+                            placeholder="first come first served basis"
+                          />
+                        </Grid>
+
+                        {/* Confirmation Date */}
+                        <Grid item xs={12} md={6}>
+                          <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                              label="Confirmation Date"
+                              value={formData.registrationProcedure.confirmationDate}
+                              onChange={(date) => setFormData({
+                                ...formData,
+                                registrationProcedure: {
+                                  ...formData.registrationProcedure,
+                                  confirmationDate: date
+                                }
+                              })}
+                              renderInput={(params) => <TextField {...params} fullWidth />}
+                            />
+                          </LocalizationProvider>
+                        </Grid>
+
+                        {/* Confirmation Method */}
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>Confirmation Method</InputLabel>
+                                                       <Select
+                              value={formData.registrationProcedure.confirmationMethod}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                registrationProcedure: {
+                                  ...formData.registrationProcedure,
+                                  confirmationMethod: e.target.value
+                                }
+                              })}
+                            >
+                              <MenuItem value="email">Email</MenuItem>
+                              <MenuItem value="phone">Phone</MenuItem>
+                              <MenuItem value="website">Website</MenuItem>
+                              <MenuItem value="other">Other</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        {/* Certificate Requirements */}
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                            Certificate Requirements
+                          </Typography>
+                          
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.registrationProcedure.certificateRequirements.enabled}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  registrationProcedure: {
+                                    ...formData.registrationProcedure,
+                                    certificateRequirements: {
+                                      ...formData.registrationProcedure.certificateRequirements,
+                                      enabled: e.target.checked
+                                    }
+                                  }
+                                })}
+                              />
+                            }
+                            label="Include certificate requirements in brochure"
+                            sx={{ mb: 2 }}
+                          />
+
+                          {formData.registrationProcedure.certificateRequirements.enabled && (
+                            <Grid container spacing={2}>
+                              {/* Attendance Required */}
+                              <Grid item xs={12}>
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      checked={formData.registrationProcedure.certificateRequirements.attendanceRequired}
+                                      onChange={(e) => setFormData({
+                                        ...formData,
+                                        registrationProcedure: {
+                                          ...formData.registrationProcedure,
+                                          certificateRequirements: {
+                                            ...formData.registrationProcedure.certificateRequirements,
+                                            attendanceRequired: e.target.checked
+                                          }
+                                        }
+                                      })}
+                                    />
+                                  }
+                                  label="Full attendance required for certificate"
+                                />
+                              </Grid>
+
+                              {/* Evaluation Methods */}
+                              <Grid item xs={12}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                  Evaluation Methods:
+                                </Typography>
+                                
+                                {['quiz', 'assignment', 'labWork', 'finalTest'].map((method) => (
+                                  <Box key={method} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          checked={formData.registrationProcedure.certificateRequirements.evaluation[method].enabled}
+                                          onChange={(e) => setFormData({
+                                            ...formData,
+                                            registrationProcedure: {
+                                              ...formData.registrationProcedure,
+                                              certificateRequirements: {
+                                                ...formData.registrationProcedure.certificateRequirements,
+                                                evaluation: {
+                                                  ...formData.registrationProcedure.certificateRequirements.evaluation,
+                                                  [method]: {
+                                                    ...formData.registrationProcedure.certificateRequirements.evaluation[method],
+                                                    enabled: e.target.checked
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          })}
+                                      />}
+                                      label={method.charAt(0).toUpperCase() + method.slice(1)}
+                                    />
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      placeholder="0"
+                                      value={formData.registrationProcedure.certificateRequirements.evaluation[method].percentage}
+                                      onChange={(e) => setFormData({
+                                        ...formData,
+                                        registrationProcedure: {
+                                          ...formData.registrationProcedure,
+                                          certificateRequirements: {
+                                            ...formData.registrationProcedure.certificateRequirements,
+                                            evaluation: {
+                                              ...formData.registrationProcedure.certificateRequirements.evaluation,
+                                              [method]: {
+                                                ...formData.registrationProcedure.certificateRequirements.evaluation[method],
+                                                percentage: parseInt(e.target.value) || 0
+                                              }
+                                            }
+                                          }
+                                        }
+                                      })}
+                                      disabled={!formData.registrationProcedure.certificateRequirements.evaluation[method].enabled}
+                                      sx={{ width: 80 }}
+                                    />
+                                    <Typography variant="body2">%</Typography>
+                                  </Box>
+                                ))}
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Grid>
+
+                        {/* Additional Notes */}
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            label="Additional Notes"
+                            name="additionalNotes"
+                            value={formData.registrationProcedure.additionalNotes}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              registrationProcedure: {
+                                ...formData.registrationProcedure,
+                                additionalNotes: e.target.value
+                              }
+                            })}
+                            multiline
+                            rows={2}
+                            placeholder="Any additional instructions or requirements..."
+                          />
+                        </Grid>
+
+                        {/* Payment Details Section */}
+                        <Grid item xs={12}>
+                          <Divider sx={{ my: 2 }} />
+                          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                            Payment Details (Optional)
+                          </Typography>
+                          
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.registrationProcedure.paymentDetails.enabled}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  registrationProcedure: {
+                                    ...formData.registrationProcedure,
+                                    paymentDetails: {
+                                      ...formData.registrationProcedure.paymentDetails,
+                                      enabled: e.target.checked
+                                    }
+                                  }
+                                })}
+                              />
+                            }
+                            label="Include payment details in brochure"
+                            sx={{ mb: 2 }}
+                          />
+
+                          {formData.registrationProcedure.paymentDetails.enabled && (
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} md={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Account Name"
+                                  value={formData.registrationProcedure.paymentDetails.accountName}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      paymentDetails: {
+                                        ...formData.registrationProcedure.paymentDetails,
+                                        accountName: e.target.value
+                                      }
+                                    }
+                                  })}
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Account Number"
+                                  value={formData.registrationProcedure.paymentDetails.accountNumber}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      paymentDetails: {
+                                        ...formData.registrationProcedure.paymentDetails,
+                                        accountNumber: e.target.value
+                                      }
+                                    }
+                                  })}
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <FormControl fullWidth>
+                                  <InputLabel>Account Type</InputLabel>
+                                  <Select
+                                    value={formData.registrationProcedure.paymentDetails.accountType}
+                                    onChange={(e) => setFormData({
+                                      ...formData,
+                                      registrationProcedure: {
+                                        ...formData.registrationProcedure,
+                                        paymentDetails: {
+                                          ...formData.registrationProcedure.paymentDetails,
+                                          accountType: e.target.value
+                                        }
+                                      }
+                                    })}
+                                  >
+                                    <MenuItem value="SAVINGS">Savings</MenuItem>
+                                    <MenuItem value="CURRENT">Current</MenuItem>
+                                    <MenuItem value="OTHER">Other</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <TextField
+                                  fullWidth
+                                  label="IFSC Code"
+                                  value={formData.registrationProcedure.paymentDetails.ifscCode}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      paymentDetails: {
+                                        ...formData.registrationProcedure.paymentDetails,
+                                        ifscCode: e.target.value
+                                      }
+                                    }
+                                  })}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Bank & Branch"
+                                  value={formData.registrationProcedure.paymentDetails.bankBranch}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      paymentDetails: {
+                                        ...formData.registrationProcedure.paymentDetails,
+                                        bankBranch: e.target.value
+                                      }
+                                    }
+                                  })}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Additional Payment Information"
+                                  value={formData.registrationProcedure.paymentDetails.additionalPaymentInfo}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      paymentDetails: {
+                                        ...formData.registrationProcedure.paymentDetails,
+                                        additionalPaymentInfo: e.target.value
+                                      }
+                                    }
+                                  })}
+                                  multiline
+                                  rows={2}
+                                  placeholder="Any additional payment instructions..."
+                                />
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Grid>
+
+                        {/* Registration Form Section */}
+                        <Grid item xs={12}>
+                          <Divider sx={{ my: 2 }} />
+                          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                            Registration Form Template (Optional)
+                          </Typography>
+                          
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.registrationProcedure.registrationForm.enabled}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  registrationProcedure: {
+                                    ...formData.registrationProcedure,
+                                    registrationForm: {
+                                      ...formData.registrationProcedure.registrationForm,
+                                      enabled: e.target.checked
+                                    }
+                                  }
+                                })}
+                              />
+                            }
+                            label="Include registration form template in brochure"
+                            sx={{ mb: 2 }}
+                          />
+
+                          {formData.registrationProcedure.registrationForm.enabled && (
+                            <Grid container spacing={2}>
+                              <Grid item xs={12}>
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                  Select which fields to include in the registration form:
+                                </Typography>
+                                
+                                <Grid container spacing={1}>
+                                  {Object.entries(formData.registrationProcedure.registrationForm.fields).map(([fieldKey, fieldValue]) => {
+                                    if (fieldKey === 'category') {
+                                      return (
+                                        <Grid item xs={12} key={fieldKey}>
+                                          <FormControlLabel
+                                            control={
+                                              <Checkbox
+                                                checked={fieldValue.enabled}
+                                                onChange={(e) => setFormData({
+                                                  ...formData,
+                                                  registrationProcedure: {
+                                                    ...formData.registrationProcedure,
+                                                    registrationForm: {
+                                                      ...formData.registrationProcedure.registrationForm,
+                                                      fields: {
+                                                        ...formData.registrationProcedure.registrationForm.fields,
+                                                        category: {
+                                                          ...formData.registrationProcedure.registrationForm.fields.category,
+                                                          enabled: e.target.checked
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                })}
+                                              />
+                                            }
+                                            label="Category Selection"
+                                          />
+                                          
+                                          {fieldValue.enabled && (
+                                            <Box sx={{ ml: 4, mt: 1 }}>
+                                              <Typography variant="body2" sx={{ mb: 1 }}>
+                                                Category Options:
+                                              </Typography>
+                                              {fieldValue.options.map((option, index) => (
+                                                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                  <TextField
+                                                    size="small"
+                                                    value={option}
+                                                    onChange={(e) => {
+                                                      const newOptions = [...fieldValue.options];
+                                                      newOptions[index] = e.target.value;
+                                                      setFormData({
+                                                        ...formData,
+                                                        registrationProcedure: {
+                                                          ...formData.registrationProcedure,
+                                                          registrationForm: {
+                                                            ...formData.registrationProcedure.registrationForm,
+                                                            fields: {
+                                                              ...formData.registrationProcedure.registrationForm.fields,
+                                                              category: {
+                                                                ...formData.registrationProcedure.registrationForm.fields.category,
+                                                                options: newOptions
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      });
+                                                    }}
+                                                    sx={{ flexGrow: 1 }}
+                                                  />
+                                                  <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                      const newOptions = fieldValue.options.filter((_, i) => i !== index);
+                                                      setFormData({
+                                                        ...formData,
+                                                        registrationProcedure: {
+                                                          ...formData.registrationProcedure,
+                                                          registrationForm: {
+                                                            ...formData.registrationProcedure.registrationForm,
+                                                            fields: {
+                                                              ...formData.registrationProcedure.registrationForm.fields,
+                                                              category: {
+                                                                ...formData.registrationProcedure.registrationForm.fields.category,
+                                                                options: newOptions
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      });
+                                                    }}
+                                                  >
+                                                    <Delete />
+                                                  </IconButton>
+                                                </Box>
+                                              ))}
+                                              <Button
+                                                size="small"
+                                                onClick={() => {
+                                                  const newOptions = [...fieldValue.options, ""];
+                                                  setFormData({
+                                                    ...formData,
+                                                    registrationProcedure: {
+                                                      ...formData.registrationProcedure,
+                                                      registrationForm: {
+                                                        ...formData.registrationProcedure.registrationForm,
+                                                        fields: {
+                                                          ...formData.registrationProcedure.registrationForm.fields,
+                                                          category: {
+                                                            ...formData.registrationProcedure.registrationForm.fields.category,
+                                                            options: newOptions
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  });
+                                                }}
+                                              >
+                                                Add Option
+                                              </Button>
+                                            </Box>
+                                          )}
+                                        </Grid>
+                                      );
+                                    } else {
+                                      const fieldLabel = fieldKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                      return (
+                                        <Grid item xs={6} md={3} key={fieldKey}>
+                                          <FormControlLabel
+                                            control={
+                                              <Checkbox
+                                                checked={fieldValue}
+                                                onChange={(e) => setFormData({
+                                                  ...formData,
+                                                  registrationProcedure: {
+                                                    ...formData.registrationProcedure,
+                                                    registrationForm: {
+                                                      ...formData.registrationProcedure.registrationForm,
+                                                      fields: {
+                                                        ...formData.registrationProcedure.registrationForm.fields,
+                                                        [fieldKey]: e.target.checked
+                                                      }
+                                                    }
+                                                  }
+                                                })}
+                                              />
+                                            }
+                                            label={fieldLabel}
+                                          />
+                                        </Grid>
+                                      );
+                                    }
+                                  })}
+                                </Grid>
+                              </Grid>
+                              
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Additional Requirements"
+                                  value={formData.registrationProcedure.registrationForm.additionalRequirements}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    registrationProcedure: {
+                                      ...formData.registrationProcedure,
+                                      registrationForm: {
+                                        ...formData.registrationProcedure.registrationForm,
+                                        additionalRequirements: e.target.value
+                                      }
+                                    }
+                                  })}
+                                  placeholder="*Proof has to be submitted with the application"
+                                  multiline
+                                  rows={2}
+                                />
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+
+              {activeStep === 4 && (
                 <Grid container spacing={3}>
                   <Grid item xs={12}>
                     <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
@@ -2188,20 +3106,12 @@ const CoordinatorDashboard = () => {
                       </Grid>
 
                       <Grid item xs={12}>
-                        <Typography sx={{ mt: 2 }}>
-                          <strong>Total Income:</strong> ₹
-                          {Number(
-                            formData.budgetBreakdown?.totalIncome || 0
-                          ).toFixed(2)}
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                          Expenses
                         </Typography>
                       </Grid>
 
-                      {/* Expenses Section */}
-                      <Grid item xs={12} sx={{ mt: 4 }}>
-                        <Typography variant="h6">Expenses</Typography>
-                      </Grid>
-
-                      {Array.isArray(formData.budgetBreakdown.expenses) &&
+                      {Array.isArray(formData.budgetBreakdown?.expenses) &&
                         formData.budgetBreakdown.expenses.map((exp, idx) => (
                           <Grid
                             container
@@ -2211,7 +3121,7 @@ const CoordinatorDashboard = () => {
                           >
                             <Grid item xs={5}>
                               <TextField
-                                label="Expense Category"
+                                label="Category"
                                 fullWidth
                                 value={exp.category}
                                 onChange={(e) =>
@@ -2280,7 +3190,7 @@ const CoordinatorDashboard = () => {
                 </Grid>
               )}
 
-              {activeStep === 4 && (
+              {activeStep === 5 && (
                 <Box>
                   <Typography variant="h6" gutterBottom>
                     Review Your Note Order
@@ -2387,8 +3297,8 @@ const CoordinatorDashboard = () => {
 
               {activeStep === steps.length - 1 ? (
                 <Button
+                  type="submit"
                   variant="contained"
-                  onClick={handleSubmit}
                   disabled={!validateForm()}
                   sx={{
                     minWidth: 150,
@@ -2400,7 +3310,7 @@ const CoordinatorDashboard = () => {
                   {submitting ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Submit Note Order"
+                    editId ? "Update Note Order" : "Submit Note Order"
                   )}
                 </Button>
               ) : (

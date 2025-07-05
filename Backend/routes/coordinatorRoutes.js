@@ -1,6 +1,7 @@
 import express from 'express';
 import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard.js';
 import { downloadClaimPDF } from '../controllers/coordinator/downloadClaimPDF.js';
+import { generateBrochurePDF, downloadBrochurePDF, saveBrochurePDF } from '../controllers/coordinator/brochureController.js';
 import {
   createProgramme,
   getProgrammes,
@@ -50,6 +51,11 @@ coordinatorRoutes.get('/programmes/:id/pdf', generateProgrammePDF);
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF)
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
 coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF);
+
+// Brochure PDF routes
+coordinatorRoutes.get('/brochures/:id/pdf', generateBrochurePDF);
+coordinatorRoutes.get('/brochures/:eventId/download', downloadBrochurePDF);
+coordinatorRoutes.post('/brochures/:id/save', upload.single('brochurePDF'), saveBrochurePDF);
 
 // Participant Management Routes
 coordinatorRoutes.get('/participants', getParticipants);

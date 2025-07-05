@@ -65,6 +65,30 @@ export const convenorCommitteeAPI = {
       throw new Error('Failed to delete convenor committee member');
     }
     return response.json();
+  },
+
+  // Initialize default organizing committee
+  initializeDefault: async () => {
+    const response = await fetch(`${API_BASE}/hod/convenor-committee/initialize-default`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to initialize default committee');
+    }
+    return response.json();
+  },
+
+  // Get available roles
+  getAvailableRoles: async () => {
+    const response = await fetch(`${API_BASE}/hod/convenor-committee/available-roles`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch available roles');
+    }
+    return response.json();
   }
 };
 

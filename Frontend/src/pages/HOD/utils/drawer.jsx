@@ -42,7 +42,7 @@ export default function TemporaryDrawer({
     onClose();
   }
 
-  function handleConvenorCommittee(){
+  function handleEventOrganizers(){
     setActivePage("convenorCommittee");
     onClose();
   }
@@ -106,9 +106,9 @@ export default function TemporaryDrawer({
         <ListItem
           sx={{ margin: "4px", cursor: "pointer" }}
           component="button"
-          onClick={handleConvenorCommittee}
+          onClick={handleEventOrganizers}
         >
-          <ListItemText primary="Convenor Committee" />
+          <ListItemText primary="Event Organizers" />
         </ListItem>
 
         <ListItem
