@@ -38,11 +38,32 @@ export const getMyEvents = asyncHandler(async (req, res) => {
 });
 
 // Get participant's certificates (assuming certificates are part of ParticipantEvent)
-export const getMyCertificates = asyncHandler(async (req, res) => {
-  const { participantId } = req.params;
-  const certificates = await ParticipantEvent.find({ participantId, attended: true }).populate("eventId");
-  res.json(certificates);
-});
+export const getMyCertificates = async (req, res) => {
+  try {
+    const { participantId } = req.params;
+
+    // Find all events where participant attended and gave feedback
+    const eligible = await ParticipantEvent.find({
+      participantId,
+      attended: true, 
+      feedbackGiven: true
+    }).populate("eventId");
+
+    // Map to clean response
+    const certificates = eligible.map(record => ({
+      eventId: record.eventId._id,
+      title: record.eventId.title,
+      startDate: record.eventId.startDate,
+      endDate: record.eventId.endDate
+    }));
+
+    res.status(200).json(certificates);
+
+  } catch (err) {
+    console.error("Error fetching certificates:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
 
 // Submit feedback
 export const giveFeedback = asyncHandler(async (req, res) => {
