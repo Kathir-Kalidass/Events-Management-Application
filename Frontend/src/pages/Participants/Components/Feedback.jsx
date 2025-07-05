@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, TextField, Button, Typography, Box, MenuItem, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import Rating from '@mui/material/Rating';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 
 const participantId = "6857dbb542e87e57a8748a61"; // Or get from context/localStorage if needed
 
@@ -15,8 +17,6 @@ const designationOptions = [
 ];
 
 const FeedbackForm = ({ myEvents = [] }) => {
-  // Remove useLocation and URL param logic
-  // Use selectedEvent from dropdown only
   const [selectedEvent, setSelectedEvent] = useState('');
 
   useEffect(() => {
@@ -42,6 +42,8 @@ const FeedbackForm = ({ myEvents = [] }) => {
     q15: '',
   });
 
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -52,9 +54,33 @@ const FeedbackForm = ({ myEvents = [] }) => {
 
   const handleEventChange = (e) => {
     setSelectedEvent(e.target.value);
+    // Show popups for event not completed or not attended or already submitted
+    const ev = myEvents.find(ev => (ev.eventId?._id || ev._id) === e.target.value);
+    if (ev) {
+      const completed = new Date(ev.eventId?.endDate || ev.endDate) < new Date();
+      if (!completed) {
+        setSnackbar({ open: true, message: 'The event is not completed.', severity: 'warning' });
+      } else if (!ev.attended) {
+        setSnackbar({ open: true, message: 'You did not attend this event.', severity: 'warning' });
+      } else if (ev.feedbackGiven) {
+        setSnackbar({ open: true, message: 'Feedback already submitted for this event.', severity: 'info' });
+      }
+    }
   };
 
-  const canSubmit = selectedEvent && participantId;
+  // Find the selected event object
+  const selectedEventObj = myEvents.find(ev =>
+    (ev.eventId?._id || ev._id) === selectedEvent
+  );
+
+  // Check if event is completed
+  const isEventCompleted = selectedEventObj && new Date(selectedEventObj.eventId?.endDate || selectedEventObj.endDate) < new Date();
+
+  // Check if user attended
+  const isUserAttended = selectedEventObj && selectedEventObj.attended;
+
+  // Only allow feedback if both are true
+  const canSubmit = selectedEvent && participantId && isEventCompleted && isUserAttended;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,14 +98,30 @@ const FeedbackForm = ({ myEvents = [] }) => {
       });
       const data = await res.json();
       if (!res.ok) {
-        // Show backend error message if available
-        alert(data.message || "Error submitting feedback.");
+        setSnackbar({ open: true, message: data.message || 'Error submitting feedback.', severity: 'error' });
         return;
       }
-      alert("Feedback submitted!");
-      console.log(data);
+      setSnackbar({ open: true, message: 'Feedback submitted!', severity: 'success' });
+      // Reset form after successful submit
+      setForm({
+        email: '',
+        name: '',
+        designation: '',
+        institute: '',
+        contact: '',
+        q7: 0,
+        q8: 0,
+        q9: 0,
+        q10: 0,
+        q11: 0,
+        q12: '',
+        q13: 0,
+        q14: '',
+        q15: '',
+      });
+      setSelectedEvent('');
     } catch (err) {
-      alert("Network error. Please try again later.");
+      setSnackbar({ open: true, message: 'Network error. Please try again later.', severity: 'error' });
     }
   };
 
@@ -148,6 +190,17 @@ const FeedbackForm = ({ myEvents = [] }) => {
         <TextField name="q15" label="Which topics or aspects of the sessions did you find most interesting or useful?" fullWidth multiline rows={2} sx={{ mb: 3 }} value={form.q15} onChange={handleChange} required />
         <Button variant="contained" color="primary" type="submit" disabled={!canSubmit}>Submit Feedback</Button>
       </Box>
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <MuiAlert 
+          elevation={6} 
+          variant="filled" 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%', bgcolor: '#111', color: '#fff' }}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Paper>
   );
 };

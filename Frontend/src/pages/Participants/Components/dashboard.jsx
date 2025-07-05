@@ -80,7 +80,7 @@ const menuItems = [
   { label: 'My Events', icon: <AssignmentTurnedInIcon />, view: 'myevents' },
   { label: 'My Certificates', icon: <EmojiEventsIcon />, view: 'mycerts' },
   { label: 'Feedback', icon: <FeedbackIcon />, view: 'feedback' },
-  { label: 'Home', icon: <HomeIcon />, view: 'home' },
+  // { label: 'Home', icon: <HomeIcon />, view: 'home' }, // Home page menu item commented out
 ];
 
 const ParticipantDashboard = () => {
@@ -98,7 +98,9 @@ const ParticipantDashboard = () => {
       .catch(() => setMyEvents([]));
   }, []);
 
-  const userName = 'Siva';
+  // Get user name from localStorage or fallback to 'User'
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  const userName = userInfo && userInfo.name ? userInfo.name : 'User';
   const firstLetter = userName.charAt(0).toUpperCase();
 
   // Handle view change with fade transition
@@ -145,7 +147,7 @@ const ParticipantDashboard = () => {
     feedback: (
       <FeedbackForm myEvents={myEvents} />
     ),
-    home: <Home />,
+    // home: <Home />, // Home page view commented out
   };
 
   const navigate = useNavigate();
