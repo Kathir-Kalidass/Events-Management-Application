@@ -1,14 +1,16 @@
 {
-  "name": "frontend",
+  "name": "events-management-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "React frontend for Events Management Application - provides role-based dashboards, event management interfaces, and professional document generation for Anna University events system.",
   "type": "module",
   "scripts": {
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "@date-io/date-fns": "^3.2.1",
