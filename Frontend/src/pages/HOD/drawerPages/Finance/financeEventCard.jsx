@@ -17,17 +17,28 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 const FinancialEventCard = ({ event, activePage, setActivePage }) => {
   const theme = useTheme();
 
+  // Debug logging to track data updates
+  console.log(`💰 Finance Card Debug for "${event.title}":`, {
+    totalIncome: event.budgetBreakdown?.totalIncome,
+    totalExpenditure: event.budgetBreakdown?.totalExpenditure,
+    expenses: event.budgetBreakdown?.expenses,
+    claimBill: event.claimBill,
+    hasClaimSubmitted: !!event.claimBill
+  });
+
+  // Use claimed expenditure if available, otherwise use budget breakdown
+  const actualExpenditure = event.claimBill?.totalExpenditure || event.budgetBreakdown?.totalExpenditure || 0;
+  
   // Data for the pie chart
   const pieData = [
-    { name: "Income", value: event.budgetBreakdown.totalIncome },
-    { name: "Expenses", value: event.budgetBreakdown.totalExpenditure },
+    { name: "Income", value: event.budgetBreakdown?.totalIncome || 0 },
+    { name: "Expenses", value: actualExpenditure },
   ];
 
   const COLORS = [theme.palette.success.main, theme.palette.error.main];
 
-  const profit =
-    event.budgetBreakdown.totalIncome - event.budgetBreakdown.totalExpenditure;
-  const profitPercentage = (profit / event.budget) * 100;
+  const profit = (event.budgetBreakdown?.totalIncome || 0) - actualExpenditure;
+  const profitPercentage = event.budget ? (profit / event.budget) * 100 : 0;
 
   function handleViewFinalBudget(id) {
     fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}`, {
@@ -88,16 +99,27 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
           <Typography variant="h6" component="div" fontWeight="bold">
             {event.title}
           </Typography>
-          <Chip
-            avatar={
-              <Avatar>
-                <CurrencyRupeeIcon fontSize="small" />
-              </Avatar>
-            }
-            label={`Estimated Budget: ₹${event.budget.toLocaleString()}`}
-            color="primary"
-            size="small"
-          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+            <Chip
+              avatar={
+                <Avatar>
+                  <CurrencyRupeeIcon fontSize="small" />
+                </Avatar>
+              }
+              label={`Estimated Budget: ₹${event.budget.toLocaleString()}`}
+              color="primary"
+              size="small"
+            />
+            {/* Show claim status */}
+            {event.claimBill && (
+              <Chip
+                label="Claim Submitted"
+                color="success"
+                size="small"
+                variant="outlined"
+              />
+            )}
+          </Box>
         </Box>
 
         <Divider sx={{ my: 1 }} />
@@ -110,19 +132,19 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
             <Box display="flex" alignItems="center" justifyContent="center">
               <ArrowUpward color="success" fontSize="small" />
               <Typography variant="h6" color="success.main">
-                ₹{event.budgetBreakdown.totalIncome.toLocaleString()}
+                ₹{(event.budgetBreakdown?.totalIncome || 0).toLocaleString()}
               </Typography>
             </Box>
           </Box>
 
           <Box textAlign="center">
             <Typography variant="body2" color="text.secondary">
-              Expenses
+              Expenses {event.claimBill ? "(Claimed)" : "(Estimated)"}
             </Typography>
             <Box display="flex" alignItems="center" justifyContent="center">
               <ArrowDownward color="error" fontSize="small" />
               <Typography variant="h6" color="error.main">
-                ₹{event.budgetBreakdown.totalExpenditure.toLocaleString()}
+                ₹{actualExpenditure.toLocaleString()}
               </Typography>
             </Box>
           </Box>

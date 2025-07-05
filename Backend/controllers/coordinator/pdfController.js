@@ -57,8 +57,8 @@ const labelWidth = 20; // adjust spacing here
 const programmeDetails = [
   ['Mode', `${programme.mode} (via MS Teams)`],
   ['Duration', `${programme.duration} (4 sessions per day)`],
-  ['Target Audience', programme.targetAudience.join(', ')],
-  ['Resource Persons', programme.resourcePersons.join(', ')]
+  ['Target Audience', Array.isArray(programme.targetAudience) ? programme.targetAudience.join(', ') : programme.targetAudience.split(',').map(item => item.trim()).join(', ')],
+  ['Resource Persons', Array.isArray(programme.resourcePersons) ? programme.resourcePersons.join(', ') : programme.resourcePersons.split(',').map(item => item.trim()).join(', ')]
 ];
 
 // Format and print each line

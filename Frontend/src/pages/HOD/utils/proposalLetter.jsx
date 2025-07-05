@@ -1,4 +1,4 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import jsPDF from "jspdf";
@@ -7,6 +7,7 @@ import { SelectedEventContext } from "../dashboard";
 import { getMonthName, getYear } from "./dateUtils";
 import { getDate } from "./getDate";
 import { getTargetAudience, getResourcePersons } from "./getUserDetails";
+import { convenorCommitteeAPI } from "../../../services/api";
 
 const styles = {
   standard: {
@@ -21,67 +22,234 @@ const styles = {
   },
 };
 
+// Helper functions for dynamic department handling
+const getDeptAbbreviation = (deptName) => {
+  if (!deptName) return "DEPT";
+  if (deptName.includes("ELECTRICAL") && deptName.includes("ELECTRONICS")) return "EEE";
+  if (deptName.includes("CYBER SECURITY")) return "CCS";
+  if (deptName.includes("INFORMATION TECHNOLOGY")) return "IT";
+  if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "ECE";
+  if (deptName.includes("MECHANICAL")) return "MECH";
+  if (deptName.includes("CIVIL")) return "CIVIL";
+  if (deptName.includes("COMPUTER SCIENCE")) return "DCSE";
+  return deptName.replace(/[^A-Z]/g, '') || "DEPT";
+};
+
+const getDeptFullName = (deptName) => {
+  if (!deptName) return "UNKNOWN DEPARTMENT";
+  if (deptName.includes("CYBER SECURITY")) return "Centre for Cyber Security (CCS)";
+  if (deptName.includes("COMPUTER SCIENCE")) return "Department of Computer Science and Engineering (DCSE)";
+  if (deptName.includes("ELECTRICAL") && deptName.includes("ELECTRONICS")) return "Department of Electrical and Electronics Engineering (EEE)";
+  if (deptName.includes("INFORMATION TECHNOLOGY")) return "Department of Information Technology (IT)";
+  if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "Department of Electronics and Communication Engineering (ECE)";
+  if (deptName.includes("MECHANICAL")) return "Department of Mechanical Engineering (MECH)";
+  if (deptName.includes("CIVIL")) return "Department of Civil Engineering (CIVIL)";
+  return deptName;
+};
+
+const getCentreHeaderText = (primary, associative) => {
+  const primaryAbbrev = getDeptAbbreviation(primary);
+  if (!associative || associative.length === 0) {
+    return `DEPARTMENT OF ${primaryAbbrev}`;
+  }
+  const associativeAbbrevs = associative.map(d => getDeptAbbreviation(d));
+  return `DEPARTMENT OF ${primaryAbbrev} & ${associativeAbbrevs.map(abbrev => 
+    abbrev === 'CCS' ? 'CENTRE FOR CYBER SECURITY' : `DEPARTMENT OF ${abbrev}`
+  ).join(' & ')}`;
+};
+
+const getLetterNoAbbrev = (primary, associative) => {
+  const primaryAbbrev = getDeptAbbreviation(primary);
+  if (!associative || associative.length === 0) {
+    return primaryAbbrev;
+  }
+  const associativeAbbrevs = associative.map(d => getDeptAbbreviation(d));
+  return `${primaryAbbrev}&${associativeAbbrevs.join('&')}`;
+};
+
+const getSubjectDepts = (primary, associative) => {
+  const primaryAbbrev = getDeptAbbreviation(primary);
+  if (!associative || associative.length === 0) {
+    return primaryAbbrev;
+  }
+  const associativeAbbrevs = associative.map(d => getDeptAbbreviation(d));
+  return `${primaryAbbrev} & ${associativeAbbrevs.join(" & ")}`;
+};
+
+const getParagraphDeptText = (primary, associative) => {
+  const primaryFullName = getDeptFullName(primary);
+  if (!associative || associative.length === 0) {
+    return primaryFullName;
+  }
+  
+  const associativeFullNames = associative.map(d => getDeptFullName(d));
+  if (associativeFullNames.length === 1) {
+    return `${primaryFullName} and the ${associativeFullNames[0]}`;
+  } else {
+    const lastDept = associativeFullNames.pop();
+    return `${primaryFullName}, ${associativeFullNames.join(", ")} and the ${lastDept}`;
+  }
+};
+
 const ProposalLetter = ({ event, activePage, setActivePage }) => {
   const date = new Date();
   const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);
+  const [convenorCommitteeMembers, setConvenorCommitteeMembers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   console.log(selectedEvent);
+  console.log('Current convenorCommitteeMembers:', convenorCommitteeMembers);
+
+  // Fetch convenor committee members on component mount
+  useEffect(() => {
+    const fetchConvenorCommitteeMembers = async () => {
+      try {
+        const response = await convenorCommitteeAPI.getAll();
+        console.log('API Response:', response);
+        
+        // Extract the data array from the response - backend returns {success: true, data: [...]}
+        const members = response.data || response;
+        console.log('Fetched convenor committee members:', members);
+        
+        if (Array.isArray(members) && members.length > 0) {
+          setConvenorCommitteeMembers(members);
+        } else {
+          console.warn('No convenor committee members found in API response, using fallback');
+          // Use fallback only if no data received
+          setConvenorCommitteeMembers([
+            {
+              name: "Dr. S. Usa",
+              designation: "Professor and Chairperson",
+              department: "Faculty of Electrical Engg., Anna University, Chennai - 25.",
+              role: "Member"
+            },
+            {
+              name: "Commissioner of Technical Education",
+              designation: "Directorate of Technical Education",
+              department: "Government of Tamil Nadu.",
+              role: "Member"
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching convenor committee members:', error);
+        // Set default members if API fails
+        setConvenorCommitteeMembers([
+          {
+            name: "Dr. S. Usa",
+            designation: "Professor and Chairperson",
+            department: "Faculty of Electrical Engg., Anna University, Chennai - 25.",
+            role: "Member"
+          },
+          {
+            name: "Commissioner of Technical Education",
+            designation: "Directorate of Technical Education",
+            department: "Government of Tamil Nadu.",
+            role: "Member"
+          }
+        ]);
+      }
+    };
+
+    fetchConvenorCommitteeMembers();
+  }, []);
+
+  // Enhanced budget calculation functions - prioritize claim bill data
+  function getActiveExpenses() {
+    // Use claim bill expenses if available, otherwise use budget breakdown
+    return selectedEvent.claimBill?.expenses || selectedEvent.budgetBreakdown?.expenses || [];
+  }
 
   function getHonarariumCharge() {
     let amount = 0;
-    const expense = selectedEvent.budgetBreakdown.expenses;
-    console.log(expense);
+    const expense = getActiveExpenses();
+    console.log('📊 Calculating honorarium from expenses:', expense);
 
     for (let i = 0; i < expense.length; i++) {
-      if (
-        expense[i].category == "HONARARIUM" ||
-        expense[i].category == "honararium"
-      ) {
-        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
-        break;
+      const category = expense[i].category.toLowerCase();
+      if (category.includes("honorarium") || category.includes("honararium") || 
+          category.includes("resource person") || category.includes("speaker")) {
+        amount += parseFloat(expense[i].amount) || 0;
       }
     }
-    console.log(`honararium ${amount}`);
+    console.log(`💰 Total honorarium: ${amount}`);
     return amount;
   }
 
   function getRefreshmentCharge() {
     let amount = 0;
-    const expense = selectedEvent.budgetBreakdown.expenses;
-    console.log(expense);
+    const expense = getActiveExpenses();
+    console.log('📊 Calculating refreshments from expenses:', expense);
 
     for (let i = 0; i < expense.length; i++) {
-      if (
-        expense[i].category == "REFRESHMENT" ||
-        expense[i].category == "refreshment"
-      ) {
-        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
-        break;
+      const category = expense[i].category.toLowerCase();
+      if (category.includes("refreshment") || category.includes("stationery") || 
+          category.includes("materials") || category.includes("catering")) {
+        amount += parseFloat(expense[i].amount) || 0;
       }
     }
-    console.log(`refresh ${amount}`);
+    console.log(`🍿 Total refreshment/stationery: ${amount}`);
     return amount;
   }
 
   function getUniversityOverhead() {
-    let amount = 0;
-    const expense = selectedEvent.budgetBreakdown.expenses;
-    console.log(expense);
-
-    for (let i = 0; i < expense.length; i++) {
-      if (
-        expense[i].category == "UNIVERSITY OVERHEAD" ||
-        expense[i].category == "university overhead"
-      ) {
-        amount = selectedEvent.budgetBreakdown.expenses[i].amount;
-        break;
-      }
-    }
-    console.log(`univ overhead ${amount}`);
-    return amount;
+    return parseFloat(selectedEvent.budgetBreakdown.universityOverhead) || 0;
   }
 
-  const [loading, setLoading] = useState(false);
+  // Calculate GST amount based on income
+  function calculateGSTAmount() {
+    let totalGST = 0;
+    selectedEvent.budgetBreakdown.income.forEach(item => {
+      const expectedParticipants = parseFloat(item.expectedParticipants) || 0;
+      const perParticipantAmount = parseFloat(item.perParticipantAmount) || 0;
+      const gstPercentage = parseFloat(item.gstPercentage) || 0;
+      
+      // Calculate total income for this category
+      const totalIncome = expectedParticipants * perParticipantAmount;
+      
+      // Calculate GST on this income
+      const gstAmount = (totalIncome * gstPercentage) / 100;
+      totalGST += gstAmount;
+    });
+    return Math.round(totalGST);
+  }
+
+  // Calculate total expenditure dynamically - prioritize claim bill data
+  function calculateTotalExpenditure() {
+    console.log('📊 Calculating total expenditure...');
+    console.log('Claim bill data:', selectedEvent.claimBill);
+    console.log('Budget breakdown data:', selectedEvent.budgetBreakdown);
+    
+    // If claim bill exists, calculate total from claim expenses + university overhead
+    if (selectedEvent.claimBill?.expenses) {
+      let claimExpensesTotal = 0;
+      selectedEvent.claimBill.expenses.forEach(expense => {
+        claimExpensesTotal += parseFloat(expense.amount) || 0;
+      });
+      const universityOverhead = parseFloat(selectedEvent.budgetBreakdown?.universityOverhead) || 0;
+      const total = claimExpensesTotal + universityOverhead;
+      console.log(`💰 Using claim expenses (${claimExpensesTotal}) + overhead (${universityOverhead}) = ${total}`);
+      return total;
+    }
+    
+    // Fallback: use budget breakdown total if available
+    if (selectedEvent.budgetBreakdown?.totalExpenditure) {
+      const budgetTotal = parseFloat(selectedEvent.budgetBreakdown.totalExpenditure) || 0;
+      console.log(`💰 Using budget breakdown total: ${budgetTotal}`);
+      return budgetTotal;
+    }
+    
+    // Last resort: calculate from budget breakdown expenses + university overhead
+    let totalExpenses = 0;
+    (selectedEvent.budgetBreakdown?.expenses || []).forEach(expense => {
+      totalExpenses += parseFloat(expense.amount) || 0;
+    });
+    
+    const universityOverhead = parseFloat(selectedEvent.budgetBreakdown?.universityOverhead) || 0;
+    const total = totalExpenses + universityOverhead;
+    console.log(`💰 Calculated from budget expenses (${totalExpenses}) + overhead (${universityOverhead}) = ${total}`);
+    return total;
+  }
 
   const pdfRef = useRef();
   const generatePDF = async () => {
@@ -166,8 +334,14 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
               fontFamily: "Times New Roman",
             }}
           >
-            Centre : DEPARTMENT OF CSE & CENTRE FOR CYBER SECURITY <br></br>
-            Letter No.: Lr. No. 1/TrainingProgramme/CSE&CCS/{date.getFullYear()}{" "}
+            Centre : {getCentreHeaderText(
+              selectedEvent?.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+              selectedEvent?.organizingDepartments?.associative || []
+            )} <br></br>
+            Letter No.: Lr. No. 1/TrainingProgramme/{getLetterNoAbbrev(
+              selectedEvent?.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+              selectedEvent?.organizingDepartments?.associative || []
+            )}/{date.getFullYear()}{" "}
             <br></br>
             Date: {date.toLocaleDateString()}
           </Typography>
@@ -248,14 +422,14 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             }}
           >
             • <b>Mode</b>{" "}
-            <Box
-              sx={{
+            <span
+              style={{
                 display: "inline-block",
                 paddingLeft: "83px",
               }}
             >
               : {selectedEvent.mode}
-            </Box>
+            </span>
           </Typography>
           <Typography
             sx={{
@@ -265,14 +439,14 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             }}
           >
             • <b>Duration</b>{" "}
-            <Box
-              sx={{
+            <span
+              style={{
                 display: "inline-block",
                 paddingLeft: "60px",
               }}
             >
               : {selectedEvent.duration}
-            </Box>
+            </span>
           </Typography>
           <Typography
             sx={{
@@ -282,14 +456,14 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             }}
           >
             • <b>Target Audience</b>
-            <Box
-              sx={{
+            <span
+              style={{
                 display: "inline-block",
                 paddingLeft: "13px",
               }}
             >
               : {getTargetAudience(selectedEvent)}
-            </Box>
+            </span>
           </Typography>
           <Typography
             sx={{
@@ -299,13 +473,13 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             }}
           >
             • <b>Resource Persons</b>{" "}
-            <Box
-              sx={{
+            <span
+              style={{
                 display: "inline-block",
               }}
             >
               : {getResourcePersons(selectedEvent)}
-            </Box>
+            </span>
           </Typography>
           <br></br>
           <br></br>
@@ -410,7 +584,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                 fontSize: "18px",
               }}
             >
-              HoD, DCSE
+              HOD of {getDeptAbbreviation(selectedEvent?.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)")}
             </b>
             <b
               sx={{
@@ -419,7 +593,11 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                 fontSize: "18px",
               }}
             >
-              Director, CCS
+              {selectedEvent?.organizingDepartments?.associative?.length > 0 && 
+                selectedEvent.organizingDepartments.associative.map((dept, index) => (
+                  `${index > 0 ? ', ' : ''}Director, ${getDeptAbbreviation(dept)}`
+                )).join('')
+              }
             </b>
             <b
               sx={{
@@ -470,36 +648,71 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             sx={{
               display: "flex",
               justifyContent: "space-around",
-              alignItems: "center",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: 2
             }}
           >
-            <Box>
-              <Typography sx={styles.standard}>Dr. S. Usa </Typography>
-              <Typography sx={styles.standard}>
-                Professor and Chairperson
-              </Typography>
-              <Typography sx={styles.standard}>
-                Faculty of Electrical Engg.,
-              </Typography>
-              <Typography sx={styles.standard}>
-                Anna University, Chennai - 25.
-              </Typography>
-              <b style={styles.bold}>(Member)</b>
-            </Box>
-            <Box>
-              <Typography sx={styles.standard}>
-                Commissioner of Technical Education
-              </Typography>
-              <Typography sx={styles.standard}>
-                {" "}
-                Directorate of Technical Education,
-              </Typography>
-              <Typography sx={styles.standard}>
-                {" "}
-                Government of Tamil Nadu.
-              </Typography>
-              <b style={styles.bold}>(Member)</b>
-            </Box>
+            {convenorCommitteeMembers.length > 0 ? (
+              convenorCommitteeMembers
+                .filter(member => member.role !== 'Chairman') // Exclude Chairman as they appear at the end
+                .sort((a, b) => {
+                  // Sort by role priority: Secretary first, then Member
+                  const roleOrder = { 'Secretary': 1, 'Member': 2 };
+                  return (roleOrder[a.role] || 3) - (roleOrder[b.role] || 3);
+                })
+                .slice(0, 4) // Limit to 4 members to fit the layout
+                .map((member, index) => (
+                  <Box key={member._id || index} sx={{ minWidth: "200px", textAlign: "center" }}>
+                    <Typography sx={styles.standard}>{member.name}</Typography>
+                    <Typography sx={styles.standard}>
+                      {member.designation}
+                    </Typography>
+                    {member.department && (
+                      <Typography sx={styles.standard}>
+                        {member.department}
+                      </Typography>
+                    )}
+                    {member.address && (
+                      <Typography sx={styles.standard}>
+                        {member.address}
+                      </Typography>
+                    )}
+                    <b style={styles.bold}>({member.role})</b>
+                  </Box>
+                ))
+            ) : (
+              // Fallback to hardcoded members if no dynamic data available
+              <>
+                <Box>
+                  <Typography sx={styles.standard}>Dr. S. Usa </Typography>
+                  <Typography sx={styles.standard}>
+                    Professor and Chairperson
+                  </Typography>
+                  <Typography sx={styles.standard}>
+                    Faculty of Electrical Engg.,
+                  </Typography>
+                  <Typography sx={styles.standard}>
+                    Anna University, Chennai - 25.
+                  </Typography>
+                  <b style={styles.bold}>(Member)</b>
+                </Box>
+                <Box>
+                  <Typography sx={styles.standard}>
+                    Commissioner of Technical Education
+                  </Typography>
+                  <Typography sx={styles.standard}>
+                    {" "}
+                    Directorate of Technical Education,
+                  </Typography>
+                  <Typography sx={styles.standard}>
+                    {" "}
+                    Government of Tamil Nadu.
+                  </Typography>
+                  <b style={styles.bold}>(Member)</b>
+                </Box>
+              </>
+            )}
           </Box>
 
           <Typography
@@ -523,7 +736,23 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
               mt: 10,
             }}
           >
-            <b>CHAIRMAN</b>
+            {(() => {
+              // Find Chairman from fetched convenor committee members
+              const chairman = convenorCommitteeMembers.find(member => member.role === 'Chairman');
+              if (chairman) {
+                return (
+                  <>
+                    <div>{chairman.name}</div>
+                    <div>{chairman.designation}</div>
+                    {chairman.department && <div>{chairman.department}</div>}
+                    {chairman.address && <div>{chairman.address}</div>}
+                    <div><b>CHAIRMAN</b></div>
+                  </>
+                );
+              } else {
+                return <b>CHAIRMAN</b>;
+              }
+            })()}
           </Typography>
 
           <Typography
@@ -570,10 +799,13 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
               </thead>
               <tbody>
                 <tr>
-                  <td rowSpan="4">
+                  <td rowSpan={
+                    getActiveExpenses().length + 
+                    (selectedEvent.budgetBreakdown?.universityOverhead ? 3 : 2) // +1 for GST, +1 for Total, +1 for overhead if exists
+                  }>
                     Registration fee
                     <br />
-                    {selectedEvent.budgetBreakdown.income.map((item, index) => (
+                    {selectedEvent.budgetBreakdown?.income?.map((item, index) => (
                       <ul
                         style={{
                           margin: "0px",
@@ -583,22 +815,38 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                         {`${item.expectedParticipants} x ${item.perParticipantAmount}`}
                       </ul>
                     ))}
-                    <br />= {selectedEvent.budgetBreakdown.totalIncome}
+                    <br />= ₹{selectedEvent.budgetBreakdown?.totalIncome || 0}
                   </td>
-                  <td>Honorarium</td>
-                  <td>{getHonarariumCharge()}</td>
+                  {/* Show all active expenses (claim bill or budget breakdown) */}
+                  {getActiveExpenses().length > 0 ? (
+                    <>
+                      <td>{getActiveExpenses()[0].category}</td>
+                      <td>₹{getActiveExpenses()[0].amount}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td>No expenses</td>
+                      <td>₹0</td>
+                    </>
+                  )}
                 </tr>
+                {/* Render remaining expenses */}
+                {getActiveExpenses().slice(1).map((expense, index) => (
+                  <tr key={`expense-${index}`}>
+                    <td>{expense.category}</td>
+                    <td>₹{expense.amount}</td>
+                  </tr>
+                ))}
+                {/* Add University Overhead if it exists */}
+                {selectedEvent.budgetBreakdown?.universityOverhead && (
+                  <tr>
+                    <td>University Overhead (30%)</td>
+                    <td>₹{selectedEvent.budgetBreakdown.universityOverhead}</td>
+                  </tr>
+                )}
                 <tr>
-                  <td>Stationery and Refreshments</td>
-                  <td>{getRefreshmentCharge()}</td>
-                </tr>
-                <tr>
-                  <td>University Overhead</td>
-                  <td>{selectedEvent.budgetBreakdown.universityOverhead}</td>
-                </tr>
-                <tr>
-                  <td>GST</td>
-                  <td>18 %</td>
+                  <td>GST (Combined)</td>
+                  <td>₹{calculateGSTAmount()}</td>
                 </tr>
                 <tr>
                   <td>
@@ -606,7 +854,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                   </td>
                   <td></td>
                   <td>
-                    <b>{selectedEvent.budgetBreakdown.totalExpenditure}</b>
+                    <b>₹{calculateTotalExpenditure()}</b>
                   </td>
                 </tr>
               </tbody>
@@ -619,7 +867,18 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
           </Typography>
 
           <Typography sx={styles.bold} textAlign="center" marginTop="60px">
-            HoD, DCSE & Director, CCS
+            {(() => {
+              const primary = selectedEvent?.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)";
+              const associative = selectedEvent?.organizingDepartments?.associative || [];
+              const primaryAbbrev = getDeptAbbreviation(primary);
+              
+              if (associative.length === 0) {
+                return `HOD of ${primaryAbbrev}`;
+              }
+              
+              const associativeAbbrevs = associative.map(d => getDeptAbbreviation(d));
+              return `HOD of ${primaryAbbrev} & ${associativeAbbrevs.map(abbrev => `HOD of ${abbrev}`).join(' & ')}`;
+            })()}
           </Typography>
         </Box>
       </Box>

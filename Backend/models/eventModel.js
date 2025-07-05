@@ -105,6 +105,33 @@ const eventSchema = mongoose.Schema(
       },
     ],
 
+    // Organizing departments
+    organizingDepartments: {
+      primary: {
+        type: String,
+        default: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+      },
+      associative: {
+        type: [String], // Array of additional departments like "CENTRE FOR CYBER SECURITY (CCS)"
+        default: [],
+      }
+    },
+
+    // HOD approvers for different departments
+    departmentApprovers: [
+      {
+        department: String, // e.g., "DCSE", "CCS", etc.
+        hodName: String,
+        hodDesignation: String,
+        approved: {
+          type: Boolean,
+          default: false,
+        },
+        approvedDate: Date,
+        signature: String, // Path to signature image or base64
+      },
+    ],
+
     targetAudience: {
       type: [String],
       required: true,
@@ -127,7 +154,7 @@ const eventSchema = mongoose.Schema(
           category: String,
           expectedParticipants: Number,
           perParticipantAmount: Number,
-          gstPercentage: Number,
+          gstPercentage: { type: Number, default: 0 },
           income: Number, // auto-calculated value from frontend
         },
       ],

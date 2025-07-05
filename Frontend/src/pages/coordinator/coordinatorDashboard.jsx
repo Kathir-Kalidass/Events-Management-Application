@@ -45,6 +45,7 @@ import {
   Receipt,
   AccountBalance,
   EventAvailable,
+  Visibility,
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -71,6 +72,11 @@ const CoordinatorDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [view, setView] = useState("home"); // 'home' or 'form'
+  
+  // State for new input fields
+  const [newTargetAudience, setNewTargetAudience] = useState("");
+  const [newResourcePerson, setNewResourcePerson] = useState("");
+
   const initialFormState = {
     title: "",
     startDate: null,
@@ -83,11 +89,35 @@ const CoordinatorDashboard = () => {
     outcomes: "",
     budget: "",
     brochure: null,
-    coordinators: [{ name: "", designation: "", department: "" }],
+    coordinators: [
+      { 
+        name: user?.name || "", 
+        designation: user?.designation || "", 
+        department: user?.department || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)" 
+      }
+    ],
     targetAudience: [],
     resourcePersons: [],
 
     approvers: [{ name: "", role: "" }],
+
+    // Organizing departments
+    organizingDepartments: {
+      primary: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+      associative: [], // Can include "CENTRE FOR CYBER SECURITY (CCS)" and others
+    },
+
+    // Department approvers for signatures
+    departmentApprovers: [
+      {
+        department: "DCSE",
+        hodName: "",
+        hodDesignation: "HoD, DCSE & Director, CCS",
+        approved: false,
+        approvedDate: null,
+        signature: ""
+      }
+    ],
 
     budgetBreakdown: {
       income: [
@@ -240,8 +270,39 @@ const CoordinatorDashboard = () => {
   } */
 
   const handleApplyClaim = (programme) => {
+    console.log('=== Apply Claim Debug ===');
+    console.log('Programme:', programme);
+    console.log('Programme budgetBreakdown:', programme.budgetBreakdown);
+    console.log('Programme budgetBreakdown.expenses:', programme.budgetBreakdown?.expenses);
+    console.log('Programme claimBill:', programme.claimBill);
+    
     setSelectedProgramme(programme);
-    setClaimData(programme.budgetBreakdown.expenses);
+    
+    // Check if there are existing claim bill expenses, otherwise use budget breakdown expenses
+    let expensesToUse = [];
+    
+    if (programme.claimBill && programme.claimBill.expenses && programme.claimBill.expenses.length > 0) {
+      // If claim bill already exists, use those expenses for editing
+      expensesToUse = programme.claimBill.expenses.map(expense => ({
+        category: expense.category || '',
+        amount: expense.amount || ''
+      }));
+      console.log('Using existing claim bill expenses:', expensesToUse);
+    } else if (programme.budgetBreakdown && programme.budgetBreakdown.expenses && programme.budgetBreakdown.expenses.length > 0) {
+      // Use original budget breakdown expenses as starting point
+      expensesToUse = programme.budgetBreakdown.expenses.map(expense => ({
+        category: expense.category || '',
+        amount: expense.amount || ''
+      }));
+      console.log('Using budget breakdown expenses:', expensesToUse);
+    } else {
+      // Default to one empty expense row
+      expensesToUse = [{ category: "", amount: "" }];
+      console.log('Using default empty expense');
+    }
+    
+    console.log('Final expenses to use:', expensesToUse);
+    setClaimData(expensesToUse);
     setOpenClaimDialog(true);
   };
 
@@ -265,7 +326,7 @@ const CoordinatorDashboard = () => {
     console.log(claimData);
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
+      const response = await axios.post(
         `http://localhost:5050/api/coordinator/claims/${selectedProgramme._id}`,
         {
           expenses: claimData,
@@ -276,11 +337,46 @@ const CoordinatorDashboard = () => {
           },
         }
       );
-      enqueueSnackbar("Claim Bill submitted successfully!", {
+      
+      enqueueSnackbar("Claim Bill submitted successfully! The HOD will see the updated financial data.", {
         variant: "success",
       });
+      
+      // Update the local event data to reflect the submission
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event._id === selectedProgramme._id 
+            ? { 
+                ...event, 
+                claimBill: { expenses: claimData },
+                budgetBreakdown: {
+                  ...event.budgetBreakdown,
+                  expenses: claimData,
+                  totalExpenditure: claimData.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+                }
+              }
+            : event
+        )
+      );
+      
       setOpenClaimDialog(false);
+      
+      // Refetch data from server to ensure consistency
+      setTimeout(async () => {
+        try {
+          const response = await axios.get("http://localhost:5050/api/coordinator/programmes");
+          setEvents(Array.isArray(response.data) ? response.data : []);
+          console.log("Events refreshed after claim submission");
+        } catch (error) {
+          console.error("Failed to refresh events after claim submission:", error);
+        }
+      }, 1000); // Wait 1 second to allow server processing
+      
+      // Clear the claim data form - reset to default
+      setClaimData([{ category: "", amount: "" }]);
+      setSelectedProgramme(null);
     } catch (error) {
+      console.error("Claim submission error:", error);
       enqueueSnackbar("Failed to submit claim bill", { variant: "error" });
     }
   };
@@ -373,6 +469,10 @@ const CoordinatorDashboard = () => {
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
       });
+
+      // Clear input fields
+      setNewTargetAudience("");
+      setNewResourcePerson("");
 
       setEditId(id);
       setOpenForm(true);
@@ -506,6 +606,106 @@ const CoordinatorDashboard = () => {
     const updated = formData.coordinators.filter((_, i) => i !== index);
     setFormData({ ...formData, coordinators: updated });
   };
+
+  // Helper functions for managing associative departments
+  const handleAddAssociativeDepartment = () => {
+    setFormData({
+      ...formData,
+      organizingDepartments: {
+        ...formData.organizingDepartments,
+        associative: [...formData.organizingDepartments.associative, ""]
+      }
+    });
+  };
+
+  const handleRemoveAssociativeDepartment = (index) => {
+    const updated = formData.organizingDepartments.associative.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      organizingDepartments: {
+        ...formData.organizingDepartments,
+        associative: updated
+      }
+    });
+    
+    // Also remove the corresponding department approver if it exists
+    const deptToRemove = formData.organizingDepartments.associative[index];
+    const updatedApprovers = formData.departmentApprovers.filter(
+      (approver) => getDeptAbbreviation(approver.department) !== getDeptAbbreviation(deptToRemove)
+    );
+    setFormData(prev => ({
+      ...prev,
+      departmentApprovers: updatedApprovers
+    }));
+  };
+
+  const handleAssociativeDepartmentChange = (index, value) => {
+    const updated = [...formData.organizingDepartments.associative];
+    const oldValue = updated[index];
+    updated[index] = value;
+    
+    setFormData({
+      ...formData,
+      organizingDepartments: {
+        ...formData.organizingDepartments,
+        associative: updated
+      }
+    });
+
+    // Remove old department approver if it exists
+    if (oldValue) {
+      const filteredApprovers = formData.departmentApprovers.filter(
+        (approver) => !getDeptAbbreviation(approver.department).includes(getDeptAbbreviation(oldValue))
+      );
+      setFormData(prev => ({
+        ...prev,
+        departmentApprovers: filteredApprovers
+      }));
+    }
+
+    // Add department approver if the department name is provided and doesn't already exist
+    if (value.trim()) {
+      const departmentAbbrev = getDeptAbbreviation(value);
+      const exists = formData.departmentApprovers.find(approver => 
+        getDeptAbbreviation(approver.department) === departmentAbbrev
+      );
+      
+      if (!exists) {
+        const newApprover = {
+          department: departmentAbbrev,
+          hodName: "",
+          hodDesignation: `HoD, ${departmentAbbrev}`,
+          approved: false,
+          approvedDate: null,
+          signature: ""
+        };
+        setFormData(prev => ({
+          ...prev,
+          departmentApprovers: [...prev.departmentApprovers, newApprover]
+        }));
+      }
+    }
+  };
+
+  // Helper function to get department abbreviation
+  const getDeptAbbreviation = (deptName) => {
+    if (!deptName) return "";
+    const name = deptName.toUpperCase();
+    if (name.includes("ELECTRICAL") && name.includes("ELECTRONICS")) return "EEE";
+    if (name.includes("CYBER SECURITY")) return "CCS";
+    if (name.includes("INFORMATION TECHNOLOGY")) return "IT";
+    if (name.includes("ELECTRONICS") && name.includes("COMMUNICATION")) return "ECE";
+    if (name.includes("MECHANICAL")) return "MECH";
+    if (name.includes("CIVIL")) return "CIVIL";
+    if (name.includes("COMPUTER SCIENCE")) return "DCSE";
+    // For simple cases like "EEE", "ECE", etc.
+    if (name === "EEE" || name === "ECE" || name === "IT" || name === "MECH" || name === "CIVIL" || name === "CCS") {
+      return name;
+    }
+    // Extract capital letters as fallback
+    return name.replace(/[^A-Z]/g, '') || name;
+  };
+
   const handleRemoveIncome = (index) => {
     setFormData((prev) => ({
       ...prev,
@@ -716,6 +916,19 @@ const CoordinatorDashboard = () => {
 
       formPayload.append("approvers", JSON.stringify(formData.approvers || []));
 
+      // Add organizing departments and department approvers
+      formPayload.append(
+        "organizingDepartments",
+        JSON.stringify(formData.organizingDepartments || {
+          primary: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+          associative: []
+        })
+      );
+      formPayload.append(
+        "departmentApprovers",
+        JSON.stringify(formData.departmentApprovers || [])
+      );
+
       formPayload.append(
         "budgetBreakdown",
         JSON.stringify({
@@ -809,6 +1022,8 @@ const CoordinatorDashboard = () => {
   // Helper function to reset form
   const resetForm = () => {
     setFormData(initialFormState);
+    setNewTargetAudience("");
+    setNewResourcePerson("");
   };
   // Validation function
   const validateForm = () => {
@@ -920,6 +1135,23 @@ const CoordinatorDashboard = () => {
         );
     }
   };
+
+  // Auto-populate coordinator info when user data is available
+  useEffect(() => {
+    if (user && formData.coordinators[0] && !formData.coordinators[0].name) {
+      setFormData(prev => ({
+        ...prev,
+        coordinators: [
+          {
+            name: user.name || "",
+            designation: user.designation || "",
+            department: user.department || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)"
+          },
+          ...prev.coordinators.slice(1)
+        ]
+      }));
+    }
+  }, [user]);
 
   if (error) {
     return (
@@ -1098,6 +1330,15 @@ const CoordinatorDashboard = () => {
                   </CardContent>
 
                   <CardActions sx={{ justifyContent: "flex-end", p: 2 }}>
+                    <Button
+                      size="small"
+                      startIcon={<Visibility />}
+                      onClick={() => navigate(`/coordinator/event/${event._id}`)}
+                      variant="contained"
+                      sx={{ mr: 1 }}
+                    >
+                      View Details
+                    </Button>
                     <Button
                       size="small"
                       startIcon={<Receipt />}
@@ -1474,6 +1715,7 @@ const CoordinatorDashboard = () => {
                           }
                           required
                           margin="normal"
+                          disabled={index === 0} // First coordinator is auto-filled and disabled
                         />
                       </Grid>
                       <Grid item xs={12} md={4}>
@@ -1536,57 +1778,216 @@ const CoordinatorDashboard = () => {
                       Add Coordinator
                     </Button>
                   </Grid>
+
+                  {/* Organizing Departments Section */}
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 3 }} />
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+                      Organizing Departments
+                    </Typography>
+                  </Grid>
+
+                  {/* Primary Department (Always DCSE) */}
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      label="Primary Department"
+                      value={formData.organizingDepartments.primary}
+                      disabled
+                      margin="normal"
+                      helperText="Primary department is always DCSE"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={8}>
+                    {/* Empty space to balance the row */}
+                  </Grid>
+
+                  {/* Associative Departments */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: "medium" }}>
+                      Associative Departments (Optional)
+                    </Typography>
+                  </Grid>
+
+                  {formData.organizingDepartments.associative.map((dept, index) => (
+                    <React.Fragment key={index}>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label={`Associative Department ${index + 1}`}
+                          value={dept}
+                          onChange={(e) => handleAssociativeDepartmentChange(index, e.target.value)}
+                          margin="normal"
+                          placeholder="Enter department name (e.g., CENTRE FOR CYBER SECURITY)"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={7}>
+                        {/* Empty space */}
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        md={1}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <IconButton
+                          onClick={() => handleRemoveAssociativeDepartment(index)}
+                          color="error"
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Grid>
+                    </React.Fragment>
+                  ))}
+
+                  <Grid item xs={12}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Add />}
+                      onClick={handleAddAssociativeDepartment}
+                    >
+                      Add Associative Department
+                    </Button>
+                  </Grid>
+
+
                 </Grid>
               )}
 
               {activeStep === 2 && (
                 <Grid container spacing={3}>
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Target Audience (comma separated) *"
-                      value={
-                        Array.isArray(formData.targetAudience)
-                          ? formData.targetAudience.join(", ")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const values = e.target.value
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter((s) => s !== "");
-                        setFormData({
-                          ...formData,
-                          targetAudience: values,
-                        });
-                      }}
-                      required
-                      margin="normal"
-                      multiline
-                      rows={2}
-                      helperText="Enter comma-separated values (e.g., Students, Faculty, Researchers)"
-                    />
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                      Target Audience *
+                    </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      {formData.targetAudience.map((audience, index) => (
+                        <Chip
+                          key={index}
+                          label={audience}
+                          onDelete={() => {
+                            const newAudience = formData.targetAudience.filter(
+                              (_, i) => i !== index
+                            );
+                            setFormData({
+                              ...formData,
+                              targetAudience: newAudience,
+                            });
+                          }}
+                          sx={{ mr: 1, mb: 1 }}
+                        />
+                      ))}
+                    </Box>
+                    <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                      <TextField
+                        size="small"
+                        label="Add Target Audience"
+                        value={newTargetAudience || ""}
+                        onChange={(e) => setNewTargetAudience(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && newTargetAudience?.trim()) {
+                            setFormData({
+                              ...formData,
+                              targetAudience: [
+                                ...formData.targetAudience,
+                                newTargetAudience.trim(),
+                              ],
+                            });
+                            setNewTargetAudience("");
+                          }
+                        }}
+                        sx={{ flexGrow: 1 }}
+                        helperText="Press Enter to add or click the button"
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          if (newTargetAudience?.trim()) {
+                            setFormData({
+                              ...formData,
+                              targetAudience: [
+                                ...formData.targetAudience,
+                                newTargetAudience.trim(),
+                              ],
+                            });
+                            setNewTargetAudience("");
+                          }
+                        }}
+                        disabled={!newTargetAudience?.trim()}
+                      >
+                        Add
+                      </Button>
+                    </Box>
+                    <Typography variant="caption" color="textSecondary">
+                      Examples: UG Students, PG Students, Faculty Members, Research Scholars, Industry Professionals
+                    </Typography>
                   </Grid>
+                  
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Resource Persons (comma separated)"
-                      value={
-                        Array.isArray(formData.resourcePersons)
-                          ? formData.resourcePersons.join(", ")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const values = e.target.value
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean);
-                        setFormData({ ...formData, resourcePersons: values });
-                      }}
-                      margin="normal"
-                      multiline
-                      rows={2}
-                    />
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                      Resource Persons
+                    </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      {formData.resourcePersons.map((person, index) => (
+                        <Chip
+                          key={index}
+                          label={person}
+                          onDelete={() => {
+                            const newPersons = formData.resourcePersons.filter(
+                              (_, i) => i !== index
+                            );
+                            setFormData({
+                              ...formData,
+                              resourcePersons: newPersons,
+                            });
+                          }}
+                          sx={{ mr: 1, mb: 1 }}
+                        />
+                      ))}
+                    </Box>
+                    <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                      <TextField
+                        size="small"
+                        label="Add Resource Person"
+                        value={newResourcePerson || ""}
+                        onChange={(e) => setNewResourcePerson(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && newResourcePerson?.trim()) {
+                            setFormData({
+                              ...formData,
+                              resourcePersons: [
+                                ...formData.resourcePersons,
+                                newResourcePerson.trim(),
+                              ],
+                            });
+                            setNewResourcePerson("");
+                          }
+                        }}
+                        sx={{ flexGrow: 1 }}
+                        helperText="Press Enter to add or click the button"
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          if (newResourcePerson?.trim()) {
+                            setFormData({
+                              ...formData,
+                              resourcePersons: [
+                                ...formData.resourcePersons,
+                                newResourcePerson.trim(),
+                              ],
+                            });
+                            setNewResourcePerson("");
+                          }
+                        }}
+                        disabled={!newResourcePerson?.trim()}
+                      >
+                        Add
+                      </Button>
+                    </Box>
+                    <Typography variant="caption" color="textSecondary">
+                      Examples: Dr. John Smith (IIT Delhi), Prof. Jane Doe (Industry Expert), Mr. Alex Kumar (Google)
+                    </Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
@@ -1693,7 +2094,7 @@ const CoordinatorDashboard = () => {
                           >
                             <Grid item xs={3}>
                               <TextField
-                                label="Category"
+                                label="Category (e.g., Faculty,Participants)"
                                 fullWidth
                                 value={income.category}
                                 onChange={(e) =>
@@ -1708,7 +2109,7 @@ const CoordinatorDashboard = () => {
                             </Grid>
                             <Grid item xs={2}>
                               <TextField
-                                label="Participants"
+                                label="No. of Participants"
                                 type="number"
                                 fullWidth
                                 value={income.expectedParticipants}

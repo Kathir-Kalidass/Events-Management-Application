@@ -10,6 +10,7 @@ import PendingProposals from "./drawerPages/pendingProposals";
 import Finance from "./drawerPages/Finance/Finance";
 import FinalBudget from "./drawerPages/Finance/finalBudget";
 import ProposalLetter from "./utils/proposalLetter";
+import ConvenorCommitteeManagement from "./Components/ConvenorCommitteeManagement";
 
 export const SelectedEventContext = createContext();
 
@@ -17,9 +18,11 @@ const HodDashboard = () => {
   const [activePage, setActivePage] = useState("overview");
   const [selectedEvent, setSelectedEvent] = useState("");
   const { user, events, setEvents } = eventState();
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
 
   function fetchAllEvents() {
     const token = localStorage.getItem("token");
+    console.log("🔄 Fetching all events for HOD dashboard...");
 
     try {
       fetch("http://localhost:5050/api/hod/allEvents/", {
@@ -31,16 +34,44 @@ const HodDashboard = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log("✅ Events fetched successfully:", data.length, "events");
+          console.log("Sample event budget data:", data[0]?.budgetBreakdown);
           setEvents(data);
+          setLastRefresh(Date.now());
+        })
+        .catch((error) => {
+          console.error("❌ Error fetching events:", error);
         });
     } catch (error) {
       console.log(error.message);
     }
   }
 
+  // Manual refresh function
+  const handleRefreshData = () => {
+    fetchAllEvents();
+  };
+
   useEffect(() => {
     fetchAllEvents();
   }, []);
+
+  // Auto-refresh every 30 seconds when user is on finance page
+  useEffect(() => {
+    let interval;
+    if (activePage === "finance" || activePage === "finalBudget") {
+      interval = setInterval(() => {
+        console.log("Auto-refreshing data for finance page...");
+        fetchAllEvents();
+      }, 30000); // 30 seconds
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [activePage]);
 
   return (
     <SelectedEventContext.Provider value={{ selectedEvent, setSelectedEvent }}>
@@ -48,6 +79,7 @@ const HodDashboard = () => {
         <NavbarHod
           activePage={activePage}
           setActivePage={setActivePage}
+          onRefresh={handleRefreshData}
         ></NavbarHod>
         <Box>
           {activePage === "overview" && (
@@ -62,7 +94,11 @@ const HodDashboard = () => {
           {activePage === "approved" && <ApprovedEvents />}
           {activePage === "pendingProposal" && <PendingProposals />}
           {activePage === "finance" && (
-            <Finance activePage={activePage} setActivePage={setActivePage} />
+            <Finance 
+              activePage={activePage} 
+              setActivePage={setActivePage} 
+              lastRefresh={lastRefresh}
+            />
           )}
           {activePage === "finalBudget" && (
             <FinalBudget
@@ -76,6 +112,10 @@ const HodDashboard = () => {
               activePage={activePage}
               setActivePage={setActivePage}
             />
+          )}
+
+          {activePage === "convenorCommittee" && (
+            <ConvenorCommitteeManagement />
           )}
         </Box>
       </Box>

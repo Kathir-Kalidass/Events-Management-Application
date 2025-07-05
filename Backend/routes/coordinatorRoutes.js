@@ -1,6 +1,5 @@
 import express from 'express';
 import { handleClaimBillSubmission } from '../controllers/coordinator/dashboard.js';
-import { generateClaimBillPDF2 } from '../controllers/coordinator/generateClaim.js'
 import { downloadClaimPDF } from '../controllers/coordinator/downloadClaimPDF.js';
 import {
   createProgramme,
@@ -9,8 +8,22 @@ import {
   updateProgramme,
   deleteProgramme,
   generateProgrammePDF,
+  generateClaimBillPDF,
   getHod
 } from '../controllers/coordinator/dashboard.js';
+// Import participant management controllers
+import {
+  getParticipants,
+  getEventParticipants,
+  addParticipant,
+  approveParticipant,
+  bulkApproveParticipants,
+  uploadParticipants,
+  generateTemplate,
+  updateParticipant,
+  deleteParticipant,
+  exportParticipants
+} from '../controllers/coordinator/participantManagement.js';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
@@ -32,16 +45,24 @@ coordinatorRoutes.route('/programmes/:id')
   .put(upload.single('brochure'), updateProgramme)
   .delete(deleteProgramme);
 
-// Add the PDF routed
-//coordinatorRoutes.get('/programmes/:id/pdf',  generateProgrammePDF);
+// Add the PDF routes
 coordinatorRoutes.get('/programmes/:id/pdf', generateProgrammePDF);
-
-//coordinator/claims/${event._id}/pdf
-//coordinator/event/claimPdf/${id}
-
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF)
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
-coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF2);
+coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF);
+
+// Participant Management Routes
+coordinatorRoutes.get('/participants', getParticipants);
+coordinatorRoutes.get('/participants/event/:eventId', getEventParticipants);
+coordinatorRoutes.get('/events/:eventId/participants', getEventParticipants); // Alias for the frontend
+coordinatorRoutes.post('/participants/add', addParticipant);
+coordinatorRoutes.put('/participants/approve', approveParticipant);
+coordinatorRoutes.put('/participants/bulk-approve', bulkApproveParticipants);
+coordinatorRoutes.post('/participants/upload', upload.single('file'), uploadParticipants);
+coordinatorRoutes.get('/participants/template', generateTemplate);
+coordinatorRoutes.put('/participants/:participantId', updateParticipant);
+coordinatorRoutes.delete('/participants/:participantId', deleteParticipant);
+coordinatorRoutes.get('/participants/export/:eventId', exportParticipants);
 coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
   try {
     const programme = await TrainingProgramme.findById(req.params.id);

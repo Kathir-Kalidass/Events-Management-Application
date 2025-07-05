@@ -12,6 +12,8 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ProtectedRoute from "./pages/Auth/ProtectedRoute";
 import CertificatePage from "./pages/Participants/CertificatePage";
 import CoordinatorDashboard from "./pages/coordinator/coordinatorDashboard";
+import CoordinatorEventDashboard from "./pages/coordinator/EventDashboard";
+import HODEventDashboard from "./pages/HOD/EventDashboard";
 //import LoginForm from './pages/Auth/LoginForm';
 //import HodDashboard from './pages/HOD/dashboard';
 //import ForgotPassword from './pages/Auth/ForgotPassword';
@@ -47,6 +49,16 @@ function App() {
         <Route path="/hod/dashboard" element={
           <ProtectedRoute allowedRole="hod">
             <HodDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/hod/event/:eventId" element={
+          <ProtectedRoute allowedRole="hod">
+            <HODEventDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/coordinator/event/:eventId" element={
+          <ProtectedRoute allowedRole="coordinator">
+            <CoordinatorEventDashboard />
           </ProtectedRoute>
         } /> 
         <Route path="/participant/feedback" element={<Feedback />}></Route>

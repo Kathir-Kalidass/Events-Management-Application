@@ -9,12 +9,19 @@ import {
   useTheme,
   useMediaQuery,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
 
-const FinanceHeader = () => {
+const FinanceHeader = ({ lastRefresh }) => {
+  const formatLastRefresh = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return `Last updated: ${date.toLocaleTimeString()}`;
+  };
+
   return (
     <Box>
       <AppBar position="static" color="default" elevation={1}>
@@ -30,6 +37,14 @@ const FinanceHeader = () => {
                     <Typography variant="body2" color="text.secondary">
                       Manage budgets, expenses and revenue of events
                     </Typography>
+                    {lastRefresh && (
+                      <Chip 
+                        label={formatLastRefresh(lastRefresh)} 
+                        variant="outlined" 
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    )}
                   </Box>
                 </Box>
       

@@ -42,6 +42,11 @@ export default function TemporaryDrawer({
     onClose();
   }
 
+  function handleConvenorCommittee(){
+    setActivePage("convenorCommittee");
+    onClose();
+  }
+
   function handleLogOut() {
     onClose();
     localStorage.removeItem('userInfo');
@@ -96,6 +101,14 @@ export default function TemporaryDrawer({
           onClick={handleFinance}
         >
           <ListItemText primary="Finance View" />
+        </ListItem>
+
+        <ListItem
+          sx={{ margin: "4px", cursor: "pointer" }}
+          component="button"
+          onClick={handleConvenorCommittee}
+        >
+          <ListItemText primary="Convenor Committee" />
         </ListItem>
 
         <ListItem

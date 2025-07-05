@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { eventState } from "../../../context/eventProvider";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -19,6 +20,7 @@ import { SelectedEventContext } from "../dashboard";
 const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);
   const { user, events, setEvents } = eventState();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -273,6 +275,14 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
               </Button>
 
               <Box>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate(`/hod/event/${event._id}`)}
+                  sx={{ mr: 1, mb: 1 }}
+                >
+                  View Details
+                </Button>
                 <IconButton onClick={() => approveEvent(event._id)}>
                   <CheckCircleOutlineIcon
                     sx={{
@@ -307,6 +317,14 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         <Box>
           {event.status === "approved" && (
             <Box sx={{}}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate(`/hod/event/${event._id}`)}
+                sx={{ mr: 1, mb: 1 }}
+              >
+                View Details
+              </Button>
               <IconButton onClick={handleOpen}>
                 <RemoveRedEyeIcon
                   sx={{
@@ -351,6 +369,14 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
           )}
           {event.status === "rejected" && (
             <Box sx={{}}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate(`/hod/event/${event._id}`)}
+                sx={{ mr: 1, mb: 1 }}
+              >
+                View Details
+              </Button>
               <IconButton onClick={handleOpen}>
                 <RemoveRedEyeIcon
                   sx={{

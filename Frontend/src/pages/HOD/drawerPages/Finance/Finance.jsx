@@ -5,7 +5,7 @@ import FinanceHeader from "./financeHeader";
 import FinancialEventCard from "./financeEventCard";
 import { useEffect } from "react";
 
-const Finance = ({activePage, setActivePage}) => {
+const Finance = ({activePage, setActivePage, lastRefresh}) => {
 
   const {user, events, setEvents} = eventState();
   const [completedEvents, setCompletedEvents] = useState([]);
@@ -19,7 +19,7 @@ const Finance = ({activePage, setActivePage}) => {
       <Box sx={{
         mb:1.5,
       }}>
-        <FinanceHeader />
+        <FinanceHeader lastRefresh={lastRefresh} />
       </Box>
 
       <Box sx={{

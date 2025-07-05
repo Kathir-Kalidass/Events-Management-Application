@@ -51,6 +51,35 @@ export const generateClaimBillPDF2 = async (req, res) => {
         .json({ message: "Programme or Claim Bill not found" });
     }
 
+    // Get dynamic department information
+    const primaryDept = programme.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)";
+    const associativeDepts = programme.organizingDepartments?.associative || [];
+    
+    // Helper function for department abbreviations
+    const getDeptAbbreviation = (deptName) => {
+      if (!deptName) return "UNKNOWN";
+      if (deptName.includes("ELECTRICAL") && deptName.includes("ELECTRONICS")) return "EEE";
+      if (deptName.includes("CYBER SECURITY")) return "CCS";
+      if (deptName.includes("INFORMATION TECHNOLOGY")) return "IT";
+      if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "ECE";
+      if (deptName.includes("MECHANICAL")) return "MECH";
+      if (deptName.includes("CIVIL")) return "CIVIL";
+      if (deptName.includes("COMPUTER SCIENCE")) return "DCSE";
+      return deptName.replace(/[^A-Z]/g, '') || "DEPT";
+    };
+    
+    // Create department header text
+    let deptHeaderText = primaryDept;
+    if (associativeDepts.length > 0) {
+      deptHeaderText += ` & ${associativeDepts.join(" & ")}`;
+    }
+    
+    // Create abbreviations for signatures
+    const primaryAbbrev = getDeptAbbreviation(primaryDept);
+    const associativeAbbrevs = associativeDepts.map(d => getDeptAbbreviation(d));
+    
+    console.log("Dynamic departments:", { primaryDept, associativeDepts, deptHeaderText });
+
     const doc = new PDFDocument({ margin: 50 });
 
     // Collect PDF in buffer - Fixed variable name

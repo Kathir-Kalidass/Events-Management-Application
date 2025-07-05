@@ -8,6 +8,9 @@ pnpm-debug.log*
 # Dependencies
 node_modules/
 
+# Database files
+data/
+
 # Environment variables
 .env
 .env.local
