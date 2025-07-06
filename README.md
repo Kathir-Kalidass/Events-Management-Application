@@ -102,6 +102,10 @@ A comprehensive web application for managing educational events, training progra
    cd ..
    ```
 
+5. **Install all dependencies**
+   ```bash
+   npm install-all
+   ```
 ### Configuration
 
 1. **Backend Environment Setup**
@@ -140,13 +144,7 @@ A comprehensive web application for managing educational events, training progra
 
 ### Running the Application
 
-#### Option 1: Run Both Servers Simultaneously
-```bash
-# From root directory
-npm run dev
-```
-
-#### Option 2: Run Servers Separately
+#### Option 1: Run Servers Separately
 
 **Terminal 1 - Backend Server**
 ```bash
