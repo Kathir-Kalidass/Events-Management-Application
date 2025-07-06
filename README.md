@@ -107,7 +107,7 @@ A comprehensive web application for managing educational events, training progra
 1. **Backend Environment Setup**
    Create a `.env` file in the `Backend` directory:
    ```env
-   PORT=5000
+   PORT=5050
    MONGODB_URI=mongodb://localhost:27017/events-management
    JWT_SECRET=your-super-secret-jwt-key
    EMAIL_USER=your-email@gmail.com
@@ -117,7 +117,7 @@ A comprehensive web application for managing educational events, training progra
 2. **Frontend Configuration**
    Update API base URL in `Frontend/src/services/api.js` if needed:
    ```javascript
-   const API_BASE_URL = 'http://localhost:5000/api';
+   const API_BASE_URL = 'http://localhost:5050/api';
    ```
 
 ### Database Setup
@@ -171,7 +171,7 @@ If using VS Code, you can use the predefined task:
 ## 📱 Application Access
 
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
+- **Backend API**: http://localhost:5050
 - **MongoDB**: mongodb://localhost:27017
 
 ## 👥 Default User Accounts
