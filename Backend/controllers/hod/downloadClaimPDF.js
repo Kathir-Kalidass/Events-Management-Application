@@ -1,9 +1,11 @@
 import event from "../../models/eventModel.js";
 import { isValidObjectId } from "mongoose";
+import { generateClaimBillPDF } from "../coordinator/claimPdfController.js";
 
 export const downloadClaimPDF = async (req, res) => {
   try {
     const { eventId } = req.params;
+    const { forceRegenerate } = req.query; // Add query parameter for force regeneration
     
     // Validate eventId
     if (!eventId || !isValidObjectId(eventId)) {
@@ -14,7 +16,7 @@ export const downloadClaimPDF = async (req, res) => {
     }
     
     // Retrieve event with PDF data
-    const result = await event.findById(eventId).select('claimPDF');
+    const result = await event.findById(eventId).select('claimPDF claimBill');
     
     if (!result) {
       return res.status(404).json({
@@ -23,23 +25,29 @@ export const downloadClaimPDF = async (req, res) => {
       });
     }
 
-    if (!result.claimPDF || !result.claimPDF.data) {
+    // Check if claim bill exists
+    if (!result.claimBill) {
       return res.status(404).json({
         success: false,
-        message: "No PDF found for this event"
+        message: "No claim bill found for this event"
       });
+    }
+
+    // Force regeneration if requested, or if PDF doesn't exist/is corrupted
+    const shouldRegenerate = forceRegenerate === 'true' || 
+                            !result.claimPDF || 
+                            !result.claimPDF.data || 
+                            result.claimPDF.data.length === 0;
+
+    if (shouldRegenerate) {
+      console.log(`🔄 ${forceRegenerate === 'true' ? 'Force regenerating' : 'Generating new'} PDF for event ${eventId}...`);
+      // Redirect to generateClaimBillPDF with the same request/response
+      req.params.id = eventId; // Set the id parameter for generateClaimBillPDF
+      return await generateClaimBillPDF(req, res);
     }
 
     // Extract PDF data
     const { data: pdfBuffer, contentType, fileName } = result.claimPDF;
-    
-    // Validate PDF data
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "PDF data is empty or corrupted"
-      });
-    }
     
     // Set response headers for PDF
     res.setHeader("Content-Type", contentType || "application/pdf");

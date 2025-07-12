@@ -24,6 +24,11 @@ hodRoutes.get('/events/:id/participants', getEventParticipants); // Event partic
 hodRoutes.get('/events/:id/proposal-pdf', generateProgrammePDF); // Proposal PDF
 hodRoutes.put('/events/:id/status', updateEventStatus); // Update event status
 hodRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF);
+// Add route for force regenerating claim PDFs (for testing/debugging)
+hodRoutes.get('/event/claimPdf/:eventId/regenerate', (req, res) => {
+  req.query.forceRegenerate = 'true';
+  return downloadClaimPDF(req, res);
+});
 hodRoutes.put('/event/approve', approveEvent);
 hodRoutes.put('/event/reject', rejectEvent);
 hodRoutes.post('/event/comment', addComment);

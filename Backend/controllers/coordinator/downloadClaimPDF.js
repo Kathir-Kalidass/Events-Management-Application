@@ -1,5 +1,6 @@
 import event from "../../models/eventModel.js";
 import { isValidObjectId } from "mongoose";
+import { generateClaimBillPDF } from "./claimPdfController.js";
 
 export const downloadClaimPDF = async (req, res) => {
   console.log("coordinator download claim pdf");
@@ -15,21 +16,30 @@ export const downloadClaimPDF = async (req, res) => {
     }
     
     // Retrieve event with PDF data
-    const result = await event.findById(eventId).select('claimPDF');
+    const result = await event.findById(eventId).select('claimPDF claimBill');
     
     if (!result) {
-      console.log("no pdf found in db!");
+      console.log("Event not found!");
       return res.status(404).json({
         success: false,
         message: "Event not found"
       });
     }
 
-    if (!result.claimPDF || !result.claimPDF.data) {
+    // Check if claim bill exists
+    if (!result.claimBill) {
       return res.status(404).json({
         success: false,
-        message: "No PDF found for this event"
+        message: "No claim bill found for this event"
       });
+    }
+
+    // If PDF doesn't exist, generate it using the generateClaimBillPDF function
+    if (!result.claimPDF || !result.claimPDF.data) {
+      console.log("No PDF found, generating new one...");
+      // Redirect to generateClaimBillPDF with the same request/response
+      req.params.id = eventId; // Set the id parameter for generateClaimBillPDF
+      return await generateClaimBillPDF(req, res);
     }
 
     // Extract PDF data
@@ -37,10 +47,10 @@ export const downloadClaimPDF = async (req, res) => {
     
     // Validate PDF data
     if (!pdfBuffer || pdfBuffer.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "PDF data is empty or corrupted"
-      });
+      console.log("PDF data is empty, regenerating...");
+      // Regenerate PDF if data is corrupted
+      req.params.id = eventId;
+      return await generateClaimBillPDF(req, res);
     }
     
     // Set response headers for PDF

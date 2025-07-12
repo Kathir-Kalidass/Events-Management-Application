@@ -1,4 +1,5 @@
 import event from "../../models/eventModel.js";
+import ConvenorCommittee from "../../models/convenorCommitteeModel.js";
 import PDFDocument from "pdfkit";
 import { isValidObjectId } from "mongoose";
 import path from "path";
@@ -13,7 +14,82 @@ export const generateBrochurePDF = async (req, res) => {
       return res.status(404).json({ message: "Programme not found" });
     }
 
+    // Fetch organizing committee data
+    let organizingCommittee = await ConvenorCommittee.find({ 
+      isActive: true
+    }).sort({ 
+      roleCategory: 1, 
+      role: 1,
+      createdAt: -1 
+    });
+    
+    // If no organizing committee members exist, create default ones
+    if (organizingCommittee.length === 0) {
+      console.log("⚠️ No organizing committee members found for brochure, creating default members...");
+      
+      const defaultMembers = [
+        {
+          name: "Vice-Chancellor",
+          designation: "Vice-Chancellor",
+          department: "Anna University",
+          role: "Vice-Chancellor",
+          roleCategory: "ADMINISTRATION",
+          isDefault: true,
+          isActive: true
+        },
+        {
+          name: "Registrar",
+          designation: "Registrar",
+          department: "Anna University",
+          role: "Registrar",
+          roleCategory: "ADMINISTRATION",
+          isDefault: true,
+          isActive: true
+        },
+        {
+          name: "Dean",
+          designation: "Dean",
+          department: "College of Engineering, Guindy",
+          role: "Dean",
+          roleCategory: "ACADEMIC",
+          isDefault: true,
+          isActive: true
+        },
+        {
+          name: "Chairman",
+          designation: "Chairman",
+          department: "Convenor Committee",
+          role: "Chairman",
+          roleCategory: "ORGANIZING",
+          isDefault: true,
+          isActive: true
+        }
+      ];
+      
+      try {
+        await ConvenorCommittee.insertMany(defaultMembers);
+        console.log("✅ Created default organizing committee members for brochure");
+        
+        // Fetch the newly created members
+        organizingCommittee = await ConvenorCommittee.find({ isActive: true })
+          .sort({ 
+            roleCategory: 1, 
+            role: 1,
+            createdAt: -1 
+          });
+        console.log("✅ Fetched organizing committee after creation for brochure:", organizingCommittee.length);
+      } catch (error) {
+        console.error("❌ Error creating default organizing committee members for brochure:", error);
+      }
+    }
+    
+    // Log the organizing committee members for debugging
+    organizingCommittee.forEach(member => {
+      console.log(`📋 Brochure Committee Member: ${member.role} - ${member.name} (${member.roleCategory})`);
+    });
+    
     console.log("Generating brochure PDF for programme:", programme.title);
+    console.log("✅ Fetched organizing committee for brochure:", organizingCommittee.length);
 
     const doc = new PDFDocument({ margin: 15 });
     const pageWidth = doc.page.width;
@@ -434,12 +510,94 @@ export const generateBrochurePDF = async (req, res) => {
       }
     }
 
+    // Organizing Committee section
+    if (organizingCommittee.length > 0) {
+      addSectionHeader('ORGANIZING COMMITTEE');
+      
+      // Group by role category
+      const groupedCommittee = organizingCommittee.reduce((acc, member) => {
+        const category = member.roleCategory || 'COMMITTEE';
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(member);
+        return acc;
+      }, {});
+
+      console.log("📋 Displaying organizing committee in brochure:", organizingCommittee.length, "members");
+      
+      // Define category display order and names
+      const categoryOrder = {
+        'PATRON': { name: 'PATRONS', order: 1 },
+        'ADMINISTRATION': { name: 'ADMINISTRATION', order: 2 },
+        'ACADEMIC': { name: 'ACADEMIC LEADERSHIP', order: 3 },
+        'ORGANIZING': { name: 'ORGANIZING COMMITTEE', order: 4 },
+        'COORDINATION': { name: 'COORDINATION COMMITTEE', order: 5 },
+        'COMMITTEE': { name: 'COMMITTEE MEMBERS', order: 6 },
+        'EXTERNAL': { name: 'EXTERNAL PARTICIPANTS', order: 7 }
+      };
+
+      // Sort categories by order and display each category
+      const sortedCategories = Object.entries(groupedCommittee).sort(([catA], [catB]) => {
+        const orderA = categoryOrder[catA]?.order || 999;
+        const orderB = categoryOrder[catB]?.order || 999;
+        return orderA - orderB;
+      });
+
+      sortedCategories.forEach(([category, members]) => {
+        // Category header with proper name
+        const categoryDisplayName = categoryOrder[category]?.name || category;
+        doc.fontSize(10)
+           .font('Helvetica-Bold')
+           .text(`${categoryDisplayName}:`, margin, currentY);
+        currentY += lineHeight;
+        
+        // Sort members within category by role importance
+        const roleOrder = [
+          'Vice-Chancellor', 'Pro-Vice-Chancellor', 'Chief Patron', 'Patron', 'Co-Patron', 'Controller of Examinations', 'Finance Officer',
+          'Dean', 'Associate Dean', 'Head of Department', 'Associate Head of Department',
+          'Chairman', 'Vice-Chairman', 'Secretary', 'Joint Secretary', 'Treasurer', 'Convener', 'Co-Convener',
+          'Coordinator', 'Co-Coordinator', 'Technical Coordinator', 'Program Coordinator', 'Registration Coordinator',
+          'Member', 'Student Member', 'External Member'
+        ];
+        
+        const sortedMembers = members.sort((a, b) => {
+          const aIndex = roleOrder.indexOf(a.role);
+          const bIndex = roleOrder.indexOf(b.role);
+          
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          return a.role.localeCompare(b.role);
+        });
+        
+        // Members in this category
+        sortedMembers.forEach((member) => {
+          let memberText = `${member.role}: ${member.name}`;
+          if (member.designation && member.designation !== member.role) {
+            memberText += `, ${member.designation}`;
+          }
+          if (member.department) {
+            memberText += `, ${member.department}`;
+          }
+          
+          console.log(`📋 Adding member: ${memberText}`);
+          addWrappedText(memberText, margin + 10, currentY, contentWidth - 10, 9);
+          currentY += 2; // Small spacing between members
+        });
+        currentY += sectionSpacing;
+      });
+    } else {
+      console.log("⚠️ No organizing committee members found for brochure");
+      addSectionHeader('ORGANIZING COMMITTEE');
+      addWrappedText('Organizing committee information will be updated soon.', margin, currentY, contentWidth, 9);
+      currentY += sectionSpacing;
+    }
+
     // Coordinators section
     if (programme.coordinators && programme.coordinators.length > 0) {
-      addSectionHeader('COORDINATORS');
+      addSectionHeader('PROGRAMME COORDINATORS');
       
       programme.coordinators.forEach(coordinator => {
-        const coordText = `${coordinator.name}\n${coordinator.designation}${coordinator.department ? `\n${coordinator.department}` : ''}`;
+        const coordText = `Dr. ${coordinator.name}\n${coordinator.designation}${coordinator.department ? `\n${coordinator.department}` : ''}`;
         addWrappedText(coordText, margin, currentY, contentWidth, 9);
         currentY += sectionSpacing;
       });

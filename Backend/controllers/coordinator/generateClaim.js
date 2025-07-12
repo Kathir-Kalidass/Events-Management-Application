@@ -124,90 +124,222 @@ export const generateClaimBillPDF2 = async (req, res) => {
     });
 
     // PDF content generation - Page 1
-    doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("BUDGET", { align: "center" })
-      .moveDown(1.5);
-
-    // Co-ordinators
-    if (programme.coordinators && programme.coordinators.length > 0) {
-      programme.coordinators.forEach((coord) => {
-        doc
-          .fontSize(12)
-          .font("Helvetica-Bold")
-          .text("Co-ordinator: ", { continued: true })
-          .font("Helvetica")
-          .text(`Dr. ${coord.name}, ${coord.designation}, ${coord.department}`)
-          .moveDown(0.5);
-      });
-    }
-
-    doc.moveDown(1);
-
-    // Table Header
-    const startY = doc.y;
-    doc.fontSize(12).font("Helvetica-Bold");
-    
-    // Use moveDown and proper positioning
-    doc.text("S.No", 60, startY);
-    doc.text("Head of the Expenditure", 120, startY);
-    doc.text("Amount (in rupees)", 400, startY);
-    
-    doc.moveDown(0.5);
-    const lineY = doc.y;
-    doc.moveTo(50, lineY).lineTo(550, lineY).stroke();
-    doc.moveDown(0.5);
-
-    const expenses = programme.claimBill.expenses || [];
-    console.log("Expenses:", expenses);
-    let total = 0;
-    
-    doc.font("Helvetica");
-    expenses.forEach((exp, idx) => {
-      const amt = Number(exp.amount);
-
-      if (isNaN(amt)) {
-        console.warn(`❌ Skipping invalid amount in expense[${idx}]:`, exp);
-        return;
-      }
-
-      total += amt;
-      
-      const currentY = doc.y;
-      doc.text(`${idx + 1}.`, 60, currentY);
-      doc.text(exp.category || "N/A", 120, currentY);
-      doc.text(`₹ ${amt.toFixed(2)}`, 400, currentY);
-      doc.moveDown(0.5);
-    });
-
-    // Total
-    doc.moveDown(0.5);
-    const totalY = doc.y;
-    doc.font("Helvetica-Bold");
-    doc.text("Total", 120, totalY);
-    doc.text(`₹ ${total.toFixed(2)}`, 400, totalY);
-
-    doc.moveDown(2);
-    doc.text("HoD, DCSE");
-    doc.text("&");
-    doc.text("Director, CCS");
-
-    // Page 2
-    doc.addPage();
+    // Add department header
     doc
       .fontSize(14)
       .font("Helvetica-Bold")
-      .text("CENTRE FOR CYBER SECURITY (CCS)", { align: "center" })
+      .text(deptHeaderText, { align: "center" })
       .moveDown(0.5);
+
+    // Add creation timestamp
+    doc.fontSize(10)
+       .font("Helvetica")
+       .text(`Claim Bill Created: ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}`, { align: "right" })
+       .moveDown(1);
+
+    // Add Budget title with box
+    const budgetText = "BUDGET";
+    const budgetWidth = doc.widthOfString(budgetText) + 40;
+    const budgetX = (doc.page.width - budgetWidth) / 2;
     
-    doc.text("And", { align: "center" })
-      .moveDown(0.5);
+    // Draw box around BUDGET
+    doc.rect(budgetX, doc.y, budgetWidth, 30)
+       .fillColor('#f0f0f0')
+       .fill()
+       .strokeColor('#000000')
+       .stroke();
     
-    doc.text("DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)", {
-      align: "center",
-    })
-    .moveDown(1);
+    // Draw BUDGET text
+    doc.fillColor('#000000')
+       .fontSize(16)
+       .font("Helvetica-Bold")
+       .text(budgetText, budgetX, doc.y - 25, { width: budgetWidth, align: "center" })
+       .moveDown(2);
+
+    // Programme Title if available
+    if (programme.title) {
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text(`Programme Title: ${programme.title}`, { align: "left" })
+        .moveDown(1);
+    }
+
+    // Co-ordinators section with box
+    if (programme.coordinators && programme.coordinators.length > 0) {
+      const coordStartY = doc.y;
+      const coordHeight = (programme.coordinators.length * 25) + 20;
+      
+      // Draw coordinator box
+      doc.rect(50, coordStartY, 500, coordHeight)
+         .fillColor('#f9f9f9')
+         .fill()
+         .strokeColor('#000000')
+         .stroke();
+
+      programme.coordinators.forEach((coord, index) => {
+        doc
+          .fillColor('#000000')
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .text("Co-ordinator:", 60, coordStartY + 10 + (index * 25), { continued: true })
+          .font("Helvetica")
+          .text(` Dr. ${coord.name}, ${coord.designation}, ${coord.department}`);
+      });
+
+      doc.moveDown(2);
+    }
+
+    // Table Header
+    const tableTop = doc.y;
+    const tableWidth = 500;
+    const columns = {
+      sno: { x: 50, width: 50, title: "S.No" },
+      description: { x: 100, width: 300, title: "Head of the Expenditure" },
+      amount: { x: 400, width: 150, title: "Amount (₹)" }
+    };
+    const rowHeight = 30;
+
+    // Draw table header
+    doc.rect(50, tableTop, tableWidth, rowHeight)
+       .fillColor('#e6e6e6')
+       .fill()
+       .strokeColor('#000000')
+       .stroke();
+
+    // Draw header text
+    doc.fillColor('#000000')
+       .fontSize(11)
+       .font("Helvetica-Bold");
+
+    Object.values(columns).forEach(col => {
+      doc.text(
+        col.title,
+        col.x,
+        tableTop + 10,
+        { width: col.width, align: col.title === "Amount (₹)" ? "right" : "left" }
+      );
+      
+      // Draw vertical lines
+      doc.moveTo(col.x, tableTop)
+         .lineTo(col.x, tableTop + rowHeight)
+         .stroke();
+    });
+
+    // Draw final vertical line
+    doc.moveTo(550, tableTop)
+       .lineTo(550, tableTop + rowHeight)
+       .stroke();
+
+    // Process expenses
+    const expenses = programme.claimBill.expenses || [];
+    let currentY = tableTop + rowHeight;
+    let total = 0;
+
+    // Draw table content
+    expenses.forEach((exp, idx) => {
+      const amt = Number(exp.amount);
+      if (isNaN(amt)) return;
+      total += amt;
+
+      // Draw row background and border
+      doc.rect(50, currentY, tableWidth, rowHeight)
+         .fillColor(idx % 2 === 0 ? '#ffffff' : '#f8f8f8')
+         .fill()
+         .strokeColor('#000000')
+         .stroke();
+
+      // Draw cell content
+      doc.fillColor('#000000')
+         .fontSize(10)
+         .font("Helvetica");
+
+      // Draw S.No
+      doc.text(
+        `${idx + 1}.`,
+        columns.sno.x + 5,
+        currentY + 10,
+        { width: columns.sno.width - 10, align: "center" }
+      );
+
+      // Draw Description
+      doc.text(
+        exp.category || "N/A",
+        columns.description.x + 5,
+        currentY + 10,
+        { width: columns.description.width - 10 }
+      );
+
+      // Draw Amount
+      doc.text(
+        new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2
+        }).format(amt).replace('INR', '₹'),
+        columns.amount.x + 5,
+        currentY + 10,
+        { width: columns.amount.width - 10, align: "right" }
+      );
+
+      // Draw vertical lines
+      Object.values(columns).forEach(col => {
+        doc.moveTo(col.x, currentY)
+           .lineTo(col.x, currentY + rowHeight)
+           .stroke();
+      });
+      doc.moveTo(550, currentY)
+         .lineTo(550, currentY + rowHeight)
+         .stroke();
+
+      currentY += rowHeight;
+    });
+
+    // Draw total row
+    doc.rect(50, currentY, tableWidth, rowHeight)
+       .fillColor('#e6e6e6')
+       .fill()
+       .strokeColor('#000000')
+       .stroke();
+
+    doc.fillColor('#000000')
+       .font("Helvetica-Bold")
+       .fontSize(11);
+
+    // Draw "Total" text
+    doc.text(
+      "Total",
+      columns.description.x + 5,
+      currentY + 10,
+      { width: columns.description.width - 10 }
+    );
+
+    // Draw total amount
+    doc.text(
+      new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+      }).format(total).replace('INR', '₹'),
+      columns.amount.x + 5,
+      currentY + 10,
+      { width: columns.amount.width - 10, align: "right" }
+    );
+
+    // Draw vertical lines for total row
+    Object.values(columns).forEach(col => {
+      doc.moveTo(col.x, currentY)
+         .lineTo(col.x, currentY + rowHeight)
+         .stroke();
+    });
+    doc.moveTo(550, currentY)
+       .lineTo(550, currentY + rowHeight)
+       .stroke();
+
+    // Reset position and move down
+    doc.moveDown(2);
+
+
 
     doc
       .fontSize(12)
@@ -592,10 +724,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
     }
   }
 });
-    
-    // Wait for the PDF to be processed
-    await pdfEndPromise;
-    
   } catch (error) {
     console.error("PDF generation error:", error);
     if (!res.headersSent) {

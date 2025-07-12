@@ -80,7 +80,6 @@ const menuItems = [
   { label: 'My Events', icon: <AssignmentTurnedInIcon />, view: 'myevents' },
   { label: 'My Certificates', icon: <EmojiEventsIcon />, view: 'mycerts' },
   { label: 'Feedback', icon: <FeedbackIcon />, view: 'feedback' },
-  { label: 'Home', icon: <HomeIcon />, view: 'home' },
 ];
 
 const ParticipantDashboard = () => {

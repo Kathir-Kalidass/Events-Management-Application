@@ -9,9 +9,26 @@ import {
   updateProgramme,
   deleteProgramme,
   generateProgrammePDF,
-  generateClaimBillPDF,
   getHod
 } from '../controllers/coordinator/dashboard.js';
+import {
+  generateClaimBillPDF,
+  generateFundTransferRequestPDF
+} from '../controllers/coordinator/claimPdfController.js';
+// Import claim management controllers
+import {
+  submitClaim,
+  getCoordinatorClaims,
+  getClaimById,
+  updateClaimStatus,
+  getClaimStatistics,
+  getEventClaims
+} from '../controllers/coordinator/claimController.js';
+// Import fix amount controller
+import {
+  fixEventAmountFields,
+  fixAllEventsAmountFields
+} from '../controllers/coordinator/fixAmountController.js';
 // Import participant management controllers
 import {
   getParticipants,
@@ -25,6 +42,16 @@ import {
   deleteParticipant,
   exportParticipants
 } from '../controllers/coordinator/participantManagement.js';
+// Import organizing committee controllers
+import {
+  initializeOrganizingCommittee,
+  getOrganizingCommittee,
+  addOrganizingCommitteeMember,
+  updateOrganizingCommitteeMember,
+  deleteOrganizingCommitteeMember
+} from '../controllers/coordinator/organizingCommitteeController.js';
+// Import models
+import event from '../models/eventModel.js';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
@@ -34,7 +61,6 @@ const upload = multer({
 });
 
 const coordinatorRoutes = express.Router();
-
 
 coordinatorRoutes.get('/getHOD', getHod);
 coordinatorRoutes.route('/programmes')
@@ -51,6 +77,7 @@ coordinatorRoutes.get('/programmes/:id/pdf', generateProgrammePDF);
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF)
 coordinatorRoutes.post('/claims/:id', handleClaimBillSubmission);
 coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF);
+coordinatorRoutes.get('/claims/:id/fund-transfer-pdf', generateFundTransferRequestPDF);
 
 // Brochure PDF routes
 coordinatorRoutes.get('/brochures/:id/pdf', generateBrochurePDF);
@@ -69,9 +96,29 @@ coordinatorRoutes.get('/participants/template', generateTemplate);
 coordinatorRoutes.put('/participants/:participantId', updateParticipant);
 coordinatorRoutes.delete('/participants/:participantId', deleteParticipant);
 coordinatorRoutes.get('/participants/export/:eventId', exportParticipants);
+
+// Organizing Committee Routes
+coordinatorRoutes.get('/organizing-committee', getOrganizingCommittee);
+coordinatorRoutes.post('/organizing-committee/initialize', initializeOrganizingCommittee);
+coordinatorRoutes.post('/organizing-committee', addOrganizingCommitteeMember);
+coordinatorRoutes.put('/organizing-committee/:id', updateOrganizingCommitteeMember);
+coordinatorRoutes.delete('/organizing-committee/:id', deleteOrganizingCommitteeMember);
+
+// Claim Management Routes
+coordinatorRoutes.get('/claims', getCoordinatorClaims);
+coordinatorRoutes.get('/claims/statistics', getClaimStatistics);
+coordinatorRoutes.post('/events/:eventId/claims', upload.array('receipts'), submitClaim);
+coordinatorRoutes.get('/events/:eventId/claims', getEventClaims);
+coordinatorRoutes.get('/claims/:claimId', getClaimById);
+coordinatorRoutes.put('/claims/:claimId/status', updateClaimStatus);
+
+// Fix Amount Fields Routes
+coordinatorRoutes.post('/events/:eventId/fix-amounts', fixEventAmountFields);
+coordinatorRoutes.post('/fix-all-amounts', fixAllEventsAmountFields);
+
 coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
   try {
-    const programme = await TrainingProgramme.findById(req.params.id);
+    const programme = await event.findById(req.params.id);
     if (!programme || !programme.claimBill?.pdf?.data) {
       return res.status(404).json({ message: 'Claim PDF not found' });
     }
@@ -91,8 +138,4 @@ coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
   }
 });
 
-
-
 export default coordinatorRoutes;
-
-

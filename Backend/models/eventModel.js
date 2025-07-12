@@ -69,10 +69,70 @@ const eventSchema = mongoose.Schema(
       expenses: [
         {
           category: String,
-          amount: Number,
+          budgetAmount: Number,
+          actualAmount: Number,
+          amount: Number, // ✅ CRITICAL: Added missing amount field
+          description: String,
+          // Individual item approval status
+          itemStatus: {
+            type: String,
+            enum: ["pending", "approved", "rejected"],
+            default: "pending",
+          },
+          approvedAmount: {
+            type: Number,
+            default: 0,
+          },
+          rejectionReason: {
+            type: String,
+            default: "",
+          },
+          reviewedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          reviewDate: {
+            type: Date,
+          },
+          receiptGenerated: {
+            type: Boolean,
+            default: false,
+          },
+          receiptNumber: {
+            type: String,
+          },
+          receiptData: {
+            data: Buffer,
+            contentType: String,
+            fileName: String,
+          },
         },
       ],
+      totalBudgetAmount: Number,
       totalExpenditure: Number,
+      totalApprovedAmount: {
+        type: Number,
+        default: 0,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "approved", "rejected", "under_review"],
+        default: "pending"
+      },
+      submissionDate: {
+        type: Date,
+        default: Date.now
+      },
+      approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      approvalDate: Date,
+      approvalComments: String,
+      claimId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Claim",
+      }
     },
 
     claimPDF: {
@@ -115,7 +175,7 @@ const eventSchema = mongoose.Schema(
     organizingDepartments: {
       primary: {
         type: String,
-        default: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+        default: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING",
       },
       associative: {
         type: [String], // Array of additional departments like "CENTRE FOR CYBER SECURITY (CCS)"

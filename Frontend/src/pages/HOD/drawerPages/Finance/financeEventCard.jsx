@@ -17,31 +17,43 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 const FinancialEventCard = ({ event, activePage, setActivePage }) => {
   const theme = useTheme();
 
+  // Calculate actual expenditure from claim bill expenses
+  const calculateActualExpenditure = () => {
+    if (event.claimBill?.expenses) {
+      return event.claimBill.expenses.reduce((sum, expense) => {
+        return sum + (expense.actualAmount || 0);
+      }, 0);
+    }
+    return event.budgetBreakdown?.totalExpenditure || 0;
+  };
+
   // Debug logging to track data updates
   console.log(`💰 Finance Card Debug for "${event.title}":`, {
     totalIncome: event.budgetBreakdown?.totalIncome,
-    totalExpenditure: event.budgetBreakdown?.totalExpenditure,
-    expenses: event.budgetBreakdown?.expenses,
+    budgetExpenditure: event.budgetBreakdown?.totalExpenditure,
+    actualExpenditure: calculateActualExpenditure(),
     claimBill: event.claimBill,
     hasClaimSubmitted: !!event.claimBill
   });
 
-  // Use claimed expenditure if available, otherwise use budget breakdown
-  const actualExpenditure = event.claimBill?.totalExpenditure || event.budgetBreakdown?.totalExpenditure || 0;
+  // Use actual expenditure if claim is submitted, otherwise use budget breakdown
+  const displayExpenditure = event.claimBill ? calculateActualExpenditure() : (event.budgetBreakdown?.totalExpenditure || 0);
   
-  // Data for the pie chart
+  // Data for the pie chart - use approved expenditure for display
   const pieData = [
     { name: "Income", value: event.budgetBreakdown?.totalIncome || 0 },
-    { name: "Expenses", value: actualExpenditure },
+    { name: "Expenses", value: displayExpenditure },
   ];
 
   const COLORS = [theme.palette.success.main, theme.palette.error.main];
 
-  const profit = (event.budgetBreakdown?.totalIncome || 0) - actualExpenditure;
+  // Calculate profit based on approved expenditure
+  const profit = (event.budgetBreakdown?.totalIncome || 0) - displayExpenditure;
   const profitPercentage = event.budget ? (profit / event.budget) * 100 : 0;
 
   function handleViewFinalBudget(id) {
-    fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}`, {
+    // Force regenerate PDF to ensure latest data and fixes are applied
+    fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}?forceRegenerate=true`, {
       method: "GET",
     })
       .then((res) => {
@@ -139,12 +151,12 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
 
           <Box textAlign="center">
             <Typography variant="body2" color="text.secondary">
-              Expenses {event.claimBill ? "(Claimed)" : "(Estimated)"}
+              Expenses {event.claimBill ? "(Actual)" : "(Estimated)"}
             </Typography>
             <Box display="flex" alignItems="center" justifyContent="center">
               <ArrowDownward color="error" fontSize="small" />
               <Typography variant="h6" color="error.main">
-                ₹{actualExpenditure.toLocaleString()}
+                ₹{displayExpenditure.toLocaleString()}
               </Typography>
             </Box>
           </Box>

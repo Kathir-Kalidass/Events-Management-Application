@@ -63,6 +63,7 @@ import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../context/eventProvider";
 import { generateEventBrochure } from "../../services/brochureGenerator";
+import ClaimManagement from "../../components/ClaimManagement";
 
 const CoordinatorEventDashboard = () => {
   const { eventId } = useParams();
@@ -1085,66 +1086,76 @@ const CoordinatorEventDashboard = () => {
           )}
 
           {tabValue === 2 && (
-            <Grid container spacing={3}>
-              {/* Budget Breakdown */}
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Budget Breakdown
-                    </Typography>
-                    {event.budgetBreakdown?.income?.length > 0 && (
-                      <>
-                        <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Income</Typography>
-                        {event.budgetBreakdown.income.map((item, index) => (
-                          <Box key={index} display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
-                            <Typography variant="body2">{item.category}</Typography>
-                            <Typography variant="body2">₹{item.income?.toLocaleString()}</Typography>
-                          </Box>
-                        ))}
-                      </>
-                    )}
-                    
-                    {event.budgetBreakdown?.expenses?.length > 0 && (
-                      <>
-                        <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Expenses</Typography>
-                        {event.budgetBreakdown.expenses.map((item, index) => (
-                          <Box key={index} display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
-                            <Typography variant="body2">{item.category}</Typography>
-                            <Typography variant="body2">₹{item.amount?.toLocaleString()}</Typography>
-                          </Box>
-                        ))}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+            <>
+              <Grid container spacing={3}>
+                {/* Budget Breakdown */}
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Budget Breakdown
+                      </Typography>
+                      {event.budgetBreakdown?.income?.length > 0 && (
+                        <>
+                          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Income</Typography>
+                          {event.budgetBreakdown.income.map((item, index) => (
+                            <Box key={index} display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
+                              <Typography variant="body2">{item.category}</Typography>
+                              <Typography variant="body2">₹{item.income?.toLocaleString()}</Typography>
+                            </Box>
+                          ))}
+                        </>
+                      )}
+                      
+                      {event.budgetBreakdown?.expenses?.length > 0 && (
+                        <>
+                          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Expenses</Typography>
+                          {event.budgetBreakdown.expenses.map((item, index) => (
+                            <Box key={index} display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
+                              <Typography variant="body2">{item.category}</Typography>
+                              <Typography variant="body2">₹{item.amount?.toLocaleString()}</Typography>
+                            </Box>
+                          ))}
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Quick Claim Submission */}
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Quick Claim Submission
+                      </Typography>
+                      {event.claimSubmitted ? (
+                        <Alert severity="success">
+                          Claim has been submitted for approval
+                        </Alert>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          startIcon={<Receipt />}
+                          onClick={() => setClaimDialogOpen(true)}
+                          disabled={event.status !== "approved"}
+                        >
+                          Submit Claim Bill
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
 
-              {/* Claim Management */}
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Claim Management
-                    </Typography>
-                    {event.claimSubmitted ? (
-                      <Alert severity="success">
-                        Claim has been submitted for approval
-                      </Alert>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        startIcon={<Receipt />}
-                        onClick={() => setClaimDialogOpen(true)}
-                        disabled={event.status !== "approved"}
-                      >
-                        Submit Claim Bill
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+              {/* Claim Management Section */}
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+                  Claim Management
+                </Typography>
+                <ClaimManagement eventId={eventId} />
+              </Box>
+            </>
           )}
 
           {tabValue === 3 && (

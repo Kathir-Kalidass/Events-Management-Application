@@ -154,10 +154,20 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
     fetchConvenorCommitteeMembers();
   }, []);
 
-  // Enhanced budget calculation functions - prioritize claim bill data
+  // Enhanced budget calculation functions - prioritize claim bill data with actual amounts
   function getActiveExpenses() {
     // Use claim bill expenses if available, otherwise use budget breakdown
-    return selectedEvent.claimBill?.expenses || selectedEvent.budgetBreakdown?.expenses || [];
+    const expenses = selectedEvent.claimBill?.expenses || selectedEvent.budgetBreakdown?.expenses || [];
+    
+    // If using claim bill expenses, map to use actual amounts for display
+    if (selectedEvent.claimBill?.expenses) {
+      return expenses.map(expense => ({
+        ...expense,
+        amount: expense.actualAmount || expense.amount || 0
+      }));
+    }
+    
+    return expenses;
   }
 
   function getHonarariumCharge() {
@@ -169,7 +179,11 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
       const category = expense[i].category.toLowerCase();
       if (category.includes("honorarium") || category.includes("honararium") || 
           category.includes("resource person") || category.includes("speaker")) {
-        amount += parseFloat(expense[i].amount) || 0;
+        // Use actual amount if available, otherwise original amount
+        const expenseAmount = selectedEvent.claimBill?.expenses 
+          ? (expense[i].actualAmount || expense[i].amount || 0)
+          : (expense[i].amount || 0);
+        amount += parseFloat(expenseAmount);
       }
     }
     console.log(`💰 Total honorarium: ${amount}`);
@@ -185,7 +199,11 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
       const category = expense[i].category.toLowerCase();
       if (category.includes("refreshment") || category.includes("stationery") || 
           category.includes("materials") || category.includes("catering")) {
-        amount += parseFloat(expense[i].amount) || 0;
+        // Use actual amount if available, otherwise original amount
+        const expenseAmount = selectedEvent.claimBill?.expenses 
+          ? (expense[i].actualAmount || expense[i].amount || 0)
+          : (expense[i].amount || 0);
+        amount += parseFloat(expenseAmount);
       }
     }
     console.log(`🍿 Total refreshment/stationery: ${amount}`);
@@ -214,21 +232,23 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
     return Math.round(totalGST);
   }
 
-  // Calculate total expenditure dynamically - prioritize claim bill data
+  // Calculate total expenditure dynamically - prioritize claim bill data with actual amounts
   function calculateTotalExpenditure() {
     console.log('📊 Calculating total expenditure...');
     console.log('Claim bill data:', selectedEvent.claimBill);
     console.log('Budget breakdown data:', selectedEvent.budgetBreakdown);
     
-    // If claim bill exists, calculate total from claim expenses + university overhead
+    // If claim bill exists, calculate total from actual amounts + university overhead
     if (selectedEvent.claimBill?.expenses) {
       let claimExpensesTotal = 0;
       selectedEvent.claimBill.expenses.forEach(expense => {
-        claimExpensesTotal += parseFloat(expense.amount) || 0;
+        // Use actual amount if available, otherwise original amount
+        const expenseAmount = expense.actualAmount || expense.amount || 0;
+        claimExpensesTotal += parseFloat(expenseAmount);
       });
       const universityOverhead = parseFloat(selectedEvent.budgetBreakdown?.universityOverhead) || 0;
       const total = claimExpensesTotal + universityOverhead;
-      console.log(`💰 Using claim expenses (${claimExpensesTotal}) + overhead (${universityOverhead}) = ${total}`);
+      console.log(`💰 Using claim actual amounts (${claimExpensesTotal}) + overhead (${universityOverhead}) = ${total}`);
       return total;
     }
     
@@ -615,7 +635,8 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                 fontSize: "18px",
               }}
             >
-              REGISTRAR
+              Registrar
+              <div>Anna University, Chennai</div>
             </b>
           </Box>
           <Box
@@ -631,7 +652,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                   paddingLeft: "10px",
                 }}
               >
-                {item.name}
+              <span style={{ marginLeft: "20px" }}>{item.name}</span>
               </ul>
             ))}
           </Box>
@@ -682,36 +703,9 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
                   </Box>
                 ))
             ) : (
-              // Fallback to hardcoded members if no dynamic data available
-              <>
-                <Box>
-                  <Typography sx={styles.standard}>Dr. S. Usa </Typography>
-                  <Typography sx={styles.standard}>
-                    Professor and Chairperson
-                  </Typography>
-                  <Typography sx={styles.standard}>
-                    Faculty of Electrical Engg.,
-                  </Typography>
-                  <Typography sx={styles.standard}>
-                    Anna University, Chennai - 25.
-                  </Typography>
-                  <b style={styles.bold}>(Member)</b>
-                </Box>
-                <Box>
-                  <Typography sx={styles.standard}>
-                    Commissioner of Technical Education
-                  </Typography>
-                  <Typography sx={styles.standard}>
-                    {" "}
-                    Directorate of Technical Education,
-                  </Typography>
-                  <Typography sx={styles.standard}>
-                    {" "}
-                    Government of Tamil Nadu.
-                  </Typography>
-                  <b style={styles.bold}>(Member)</b>
-                </Box>
-              </>
+              <Typography sx={styles.standard}>
+                
+              </Typography>
             )}
           </Box>
 
@@ -738,19 +732,17 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
           >
             {(() => {
               // Find Chairman from fetched convenor committee members
-              const chairman = convenorCommitteeMembers.find(member => member.role === 'Chairman');
+              const chairman = convenorCommitteeMembers.find(member => member.role != 'Vice-Chancellor'  && member.role === 'Chairman');
               if (chairman) {
                 return (
                   <>
                     <div>{chairman.name}</div>
-                    <div>{chairman.designation}</div>
-                    {chairman.department && <div>{chairman.department}</div>}
-                    {chairman.address && <div>{chairman.address}</div>}
-                    <div><b>CHAIRMAN</b></div>
+                    <b>CHAIRMAN</b>
+                    <div><b>Convenor Committee, Anna University</b></div>
                   </>
                 );
               } else {
-                return <b>CHAIRMAN</b>;
+                return ;
               }
             })()}
           </Typography>
@@ -762,7 +754,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
               textAlign: "center",
             }}
           >
-            <b>Convenor Committee, Anna University</b>
+            
           </Typography>
 
           <Box
@@ -866,7 +858,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
             of participants attending the program.
           </Typography>
 
-          <Typography sx={styles.bold} textAlign="center" marginTop="60px">
+          <Typography sx={styles.bold} textAlign="right" marginTop="60px">
             {(() => {
               const primary = selectedEvent?.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)";
               const associative = selectedEvent?.organizingDepartments?.associative || [];

@@ -265,8 +265,9 @@ const ConvenorCommitteeManagement = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">Event Organizers Management</Typography>
+        <Typography variant="h5"><b>Event Organizers Management</b></Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          <div><p>(Add honorifics to the name itself)</p></div>
           <Button
             variant="outlined"
             startIcon={<Settings />}

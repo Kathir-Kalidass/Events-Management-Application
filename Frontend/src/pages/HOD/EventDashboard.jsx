@@ -230,7 +230,8 @@ const HODEventDashboard = () => {
 
   const calculateTotalExpenses = () => {
     if (event.claimBill?.expenses) {
-      return event.claimBill.expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
+      // Use actual amounts from claim bill for final calculations
+      return event.claimBill.expenses.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
     }
     if (event.budgetBreakdown?.expenses) {
       return event.budgetBreakdown.expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -328,14 +329,14 @@ const HODEventDashboard = () => {
             startIcon={<Download />}
             onClick={downloadProposalLetter}
           >
-            Download Proposal
+            Download Note Order
           </Button>
           <Button
             variant="outlined"
             startIcon={<Download />}
             onClick={downloadCompleteBrochure}
           >
-            Download Professional Brochure (PDF)
+            Download Brochure (PDF)
           </Button>
         </Box>
       </Box>
@@ -801,9 +802,16 @@ const HODEventDashboard = () => {
                         </Typography>
                         {(event.claimSubmitted ? event.claimBill?.expenses : event.budgetBreakdown?.expenses)?.map((item, index) => (
                           <Box key={index} display="flex" justifyContent="space-between" sx={{ mb: 1, p: 1, bgcolor: "grey.50", borderRadius: 1 }}>
-                            <Typography variant="body2">{item.category}</Typography>
+                            <Box>
+                              <Typography variant="body2" fontWeight="bold">{item.category}</Typography>
+                              {event.claimSubmitted && item.actualAmount !== undefined && (
+                                <Typography variant="caption" color="text.secondary">
+                                  Actual: ₹{item.actualAmount?.toLocaleString()} | Approved: ₹{item.approvedAmount?.toLocaleString()}
+                                </Typography>
+                              )}
+                            </Box>
                             <Typography variant="body1" fontWeight="bold" color="red">
-                              ₹{item.amount?.toLocaleString()}
+                              ₹{(event.claimSubmitted ? item.actualAmount : item.amount)?.toLocaleString()}
                             </Typography>
                           </Box>
                         ))}
@@ -826,6 +834,9 @@ const HODEventDashboard = () => {
                       {event.claimSubmitted && (
                         <Typography variant="body2" color="white" sx={{ mt: 1 }}>
                           Claim has been submitted for approval
+                          {event.claimBill?.createdAt && (
+                            <span> on {new Date(event.claimBill.createdAt).toLocaleDateString("en-IN")} at {new Date(event.claimBill.createdAt).toLocaleTimeString("en-IN")}</span>
+                          )}
                         </Typography>
                       )}
                     </Box>
@@ -903,7 +914,7 @@ const HODEventDashboard = () => {
                         <ListItemIcon>
                           <Print />
                         </ListItemIcon>
-                        <ListItemText primary="Proposal Letter" secondary="Download the complete proposal" />
+                        <ListItemText primary="Note Order Letter" secondary="Download the note order" />
                         <Button variant="outlined" size="small" onClick={downloadProposalLetter}>
                           Download
                         </Button>

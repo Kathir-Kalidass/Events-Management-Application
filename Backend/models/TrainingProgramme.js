@@ -72,9 +72,50 @@ const trainingProgrammeSchema = new mongoose.Schema(
         {
           category: String,
           amount: Number,
+          // Individual item approval status
+          itemStatus: {
+            type: String,
+            enum: ["pending", "approved", "rejected"],
+            default: "pending",
+          },
+          approvedAmount: {
+            type: Number,
+            default: 0,
+          },
+          rejectionReason: {
+            type: String,
+            default: "",
+          },
+          reviewedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          reviewDate: {
+            type: Date,
+          },
+          receiptGenerated: {
+            type: Boolean,
+            default: false,
+          },
+          receiptNumber: {
+            type: String,
+          },
+          receiptData: {
+            data: Buffer,
+            contentType: String,
+            fileName: String,
+          },
         },
       ],
       totalExpenditure: Number,
+      totalApprovedAmount: {
+        type: Number,
+        default: 0,
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
     },
     claimPDF: {
       data: Buffer,
