@@ -23,16 +23,24 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "canvas": "^2.11.2",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-async-handler": "^1.2.0",
+    "fabric": "^6.7.0",
+    "html-pdf-node": "^1.0.8",
+    "jimp": "^0.22.12",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.4",
     "number-to-words": "^1.2.4",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "puppeteer": "^24.12.1",
+    "qrcode": "^1.5.3",
+    "qrcode-generator": "^2.0.2",
+    "sharp": "^0.34.3"
   }
 }

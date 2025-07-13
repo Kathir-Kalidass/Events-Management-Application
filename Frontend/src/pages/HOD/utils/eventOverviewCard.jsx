@@ -86,7 +86,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     fetch("http://localhost:5050/api/hod/event/approve", {
       method: "PUT",
       headers: {
-        authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ eventId: id, reviewedBy: user._id }),
@@ -114,7 +114,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     fetch("http://localhost:5050/api/hod/event/reject", {
       method: "PUT",
       headers: {
-        authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ eventId: id, reviewedBy: user._id }),

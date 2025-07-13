@@ -88,8 +88,8 @@ const CoordinatorDashboard = () => {
 
   const initialFormState = {
     title: "",
-    startDate: null,
-    endDate: null,
+    startDate: "",
+    endDate: "",
     venue: "",
     mode: "Online",
     duration: "",
@@ -97,7 +97,7 @@ const CoordinatorDashboard = () => {
     objectives: "",
     outcomes: "",
     budget: "",
-    brochure: null,
+    brochure: "",
     coordinators: [
       { 
         name: user?.name || "", 
@@ -113,10 +113,10 @@ const CoordinatorDashboard = () => {
       enabled: false,
       instructions: "",
       submissionMethod: "email",
-      deadline: null,
+      deadline: "",
       participantLimit: "",
       selectionCriteria: "first come first served basis",
-      confirmationDate: null,
+      confirmationDate: "",
       confirmationMethod: "email",
       certificateRequirements: {
         enabled: false,
@@ -178,7 +178,7 @@ const CoordinatorDashboard = () => {
         hodName: "",
         hodDesignation: "HoD, DCSE & Director, CCS",
         approved: false,
-        approvedDate: null,
+        approvedDate: "",
         signature: ""
       }
     ],
@@ -217,7 +217,7 @@ const CoordinatorDashboard = () => {
     fetch(`http://localhost:5050/api/coordinator/getHOD?id=${user._id}`, {
       method: "GET",
       headers: {
-        authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     })
@@ -233,11 +233,14 @@ const CoordinatorDashboard = () => {
   function handleViewFinalBudget(id) {
 
     console.log('Fetching PDF for ID:', id);
+    
+    const token = localStorage.getItem("token");
   
   fetch(`http://localhost:5050/api/coordinator/claims/${id}/pdf`, {
     method: "GET",
     headers: {
       'Accept': 'application/pdf', // Explicitly request PDF
+      'Authorization': `Bearer ${token}`, // Add authentication header
     },
   })
     .then((res) => {
@@ -428,7 +431,12 @@ const CoordinatorDashboard = () => {
       // Refetch data from server to ensure consistency
       setTimeout(async () => {
         try {
-          const response = await axios.get("http://localhost:5050/api/coordinator/programmes");
+          const token = localStorage.getItem("token");
+          const response = await axios.get("http://localhost:5050/api/coordinator/programmes", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           setEvents(Array.isArray(response.data) ? response.data : []);
           console.log("Events refreshed after claim submission");
         } catch (error) {
@@ -457,8 +465,14 @@ const CoordinatorDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5050/api/coordinator/programmes"
+          "http://localhost:5050/api/coordinator/programmes",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setEvents(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -1353,8 +1367,8 @@ const CoordinatorDashboard = () => {
         const eventData = {
           ...initialFormState,
           title: editingEvent.title || "",
-          startDate: editingEvent.startDate ? new Date(editingEvent.startDate) : null,
-          endDate: editingEvent.endDate ? new Date(editingEvent.endDate) : null,
+          startDate: editingEvent.startDate ? new Date(editingEvent.startDate) : "",
+          endDate: editingEvent.endDate ? new Date(editingEvent.endDate) : "",
           venue: editingEvent.venue || "",
           mode: editingEvent.mode || "Online",
           duration: editingEvent.duration || "",
@@ -1372,10 +1386,10 @@ const CoordinatorDashboard = () => {
             enabled: editingEvent.registrationProcedure?.enabled || false,
             instructions: editingEvent.registrationProcedure?.instructions || "",
             submissionMethod: editingEvent.registrationProcedure?.submissionMethod || "email",
-            deadline: editingEvent.registrationProcedure?.deadline ? new Date(editingEvent.registrationProcedure.deadline) : null,
+            deadline: editingEvent.registrationProcedure?.deadline ? new Date(editingEvent.registrationProcedure.deadline) : "",
             participantLimit: editingEvent.registrationProcedure?.participantLimit || "",
             selectionCriteria: editingEvent.registrationProcedure?.selectionCriteria || "first come first served basis",
-            confirmationDate: editingEvent.registrationProcedure?.confirmationDate ? new Date(editingEvent.registrationProcedure.confirmationDate) : null,
+            confirmationDate: editingEvent.registrationProcedure?.confirmationDate ? new Date(editingEvent.registrationProcedure.confirmationDate) : "",
             confirmationMethod: editingEvent.registrationProcedure?.confirmationMethod || "email",
             certificateRequirements: editingEvent.registrationProcedure?.certificateRequirements || initialFormState.registrationProcedure.certificateRequirements,
             additionalNotes: editingEvent.registrationProcedure?.additionalNotes || "",
@@ -1601,10 +1615,14 @@ const CoordinatorDashboard = () => {
                       startIcon={<Receipt />}
                       onClick={async () => {
                         try {
+                          const token = localStorage.getItem("token");
                           const response = await axios.get(
                             `http://localhost:5050/api/coordinator/programmes/${event._id}/pdf`,
                             {
                               responseType: "blob",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             }
                           );
                           const blob = new Blob([response.data], {

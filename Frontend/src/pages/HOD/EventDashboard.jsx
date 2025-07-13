@@ -7,7 +7,7 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
+  Grid ,
   Chip,
   IconButton,
   Avatar,
@@ -61,6 +61,9 @@ import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../context/eventProvider";
 import { generateEventBrochure } from "../../services/brochureGenerator";
+import EnhancedParticipantDashboard from "../../components/EnhancedParticipantDashboard";
+import FeedbackStatsCard from "../../components/FeedbackStatsCard";
+import AddParticipantModal from "../../components/AddParticipantModal";
 
 const HODEventDashboard = () => {
   const { eventId } = useParams();
@@ -100,7 +103,12 @@ const HODEventDashboard = () => {
       const response = await axios.get(`http://localhost:5050/api/hod/events/${eventId}/participants`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      setParticipants(response.data || []);
+      
+      if (response.data.success) {
+        setParticipants(response.data.participants || []);
+      } else {
+        setParticipants([]);
+      }
     } catch (error) {
       console.log("Participants not found or error:", error);
       setParticipants([]);
@@ -391,7 +399,7 @@ const HODEventDashboard = () => {
 
       {/* Key Metrics */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -409,7 +417,7 @@ const HODEventDashboard = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -423,7 +431,7 @@ const HODEventDashboard = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -437,7 +445,7 @@ const HODEventDashboard = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -466,38 +474,38 @@ const HODEventDashboard = () => {
           {tabValue === 0 && (
             <Grid container spacing={3}>
               {/* Event Details */}
-              <Grid item xs={12} md={8}>
+              <Grid xs={12} md={8}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
                       Event Details
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">Start Date</Typography>
                         <Typography variant="body1">{new Date(event.startDate).toLocaleDateString()}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">End Date</Typography>
                         <Typography variant="body1">{new Date(event.endDate).toLocaleDateString()}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">Venue</Typography>
                         <Typography variant="body1">{event.venue}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">Mode</Typography>
                         <Typography variant="body1">{event.mode}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">Duration</Typography>
                         <Typography variant="body1">{event.duration}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid xs={6}>
                         <Typography variant="body2" color="text.secondary">Type</Typography>
                         <Typography variant="body1">{event.type}</Typography>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid xs={12}>
                         <Typography variant="body2" color="text.secondary">Target Audience</Typography>
                         <Box sx={{ mt: 1 }}>
                           {event.targetAudience?.map((audience, index) => (
@@ -505,7 +513,7 @@ const HODEventDashboard = () => {
                           ))}
                         </Box>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid xs={12}>
                         <Typography variant="body2" color="text.secondary">Resource Persons</Typography>
                         <Box sx={{ mt: 1 }}>
                           {event.resourcePersons?.length > 0 ? (
@@ -523,7 +531,7 @@ const HODEventDashboard = () => {
               </Grid>
 
               {/* Coordinators */}
-              <Grid item xs={12} md={4}>
+              <Grid xs={12} md={4}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -549,7 +557,7 @@ const HODEventDashboard = () => {
               </Grid>
 
               {/* Objectives and Outcomes */}
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -571,7 +579,7 @@ const HODEventDashboard = () => {
 
               {/* Registration Procedure */}
               {event.registrationProcedure && event.registrationProcedure.enabled && (
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
@@ -591,7 +599,7 @@ const HODEventDashboard = () => {
 
                       <Grid container spacing={2} sx={{ mt: 1 }}>
                         {event.registrationProcedure.registrationDeadline && (
-                          <Grid item xs={12} sm={6}>
+                          <Grid xs={12} sm={6}>
                             <Typography variant="body2" color="text.secondary">Registration Deadline</Typography>
                             <Typography variant="body1">
                               {new Date(event.registrationProcedure.registrationDeadline).toLocaleDateString()}
@@ -600,7 +608,7 @@ const HODEventDashboard = () => {
                         )}
                         
                         {event.registrationProcedure.participantLimit && (
-                          <Grid item xs={12} sm={6}>
+                          <Grid xs={12} sm={6}>
                             <Typography variant="body2" color="text.secondary">Participant Limit</Typography>
                             <Typography variant="body1">{event.registrationProcedure.participantLimit}</Typography>
                           </Grid>
@@ -608,14 +616,14 @@ const HODEventDashboard = () => {
 
                         {event.registrationProcedure.selectionCriteria && 
                          event.registrationProcedure.selectionCriteria !== 'first come first served basis' && (
-                          <Grid item xs={12}>
+                          <Grid xs={12}>
                             <Typography variant="body2" color="text.secondary">Selection Criteria</Typography>
                             <Typography variant="body1">{event.registrationProcedure.selectionCriteria}</Typography>
                           </Grid>
                         )}
 
                         {event.registrationProcedure.confirmation && (
-                          <Grid item xs={12}>
+                          <Grid xs={12}>
                             <Typography variant="body2" color="text.secondary">Confirmation Process</Typography>
                             <Typography variant="body1">{event.registrationProcedure.confirmation}</Typography>
                           </Grid>
@@ -623,7 +631,7 @@ const HODEventDashboard = () => {
 
                         {event.registrationProcedure.certificateRequirements && 
                          event.registrationProcedure.certificateRequirements.enabled && (
-                          <Grid item xs={12}>
+                          <Grid xs={12}>
                             <Typography variant="body2" color="text.secondary">Certificate Requirements</Typography>
                             <Typography variant="body1">Certificate will be provided based on specified criteria</Typography>
                           </Grid>
@@ -639,37 +647,37 @@ const HODEventDashboard = () => {
                           </Typography>
                           <Grid container spacing={2}>
                             {event.registrationProcedure.paymentDetails.accountName && (
-                              <Grid item xs={12} sm={6}>
+                              <Grid xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">Account Name</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.accountName}</Typography>
                               </Grid>
                             )}
                             {event.registrationProcedure.paymentDetails.accountNumber && (
-                              <Grid item xs={12} sm={6}>
+                              <Grid xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">Account Number</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.accountNumber}</Typography>
                               </Grid>
                             )}
                             {event.registrationProcedure.paymentDetails.ifscCode && (
-                              <Grid item xs={12} sm={6}>
+                              <Grid xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">IFSC Code</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.ifscCode}</Typography>
                               </Grid>
                             )}
                             {event.registrationProcedure.paymentDetails.bankName && (
-                              <Grid item xs={12} sm={6}>
+                              <Grid xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">Bank Name</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.bankName}</Typography>
                               </Grid>
                             )}
                             {event.registrationProcedure.paymentDetails.upiId && (
-                              <Grid item xs={12} sm={6}>
+                              <Grid xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">UPI ID</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.upiId}</Typography>
                               </Grid>
                             )}
                             {event.registrationProcedure.paymentDetails.notes && (
-                              <Grid item xs={12}>
+                              <Grid xs={12}>
                                 <Typography variant="body2" color="text.secondary">Payment Notes</Typography>
                                 <Typography variant="body1">{event.registrationProcedure.paymentDetails.notes}</Typography>
                               </Grid>
@@ -733,36 +741,25 @@ const HODEventDashboard = () => {
           )}
 
           {tabValue === 1 && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Registered Participants ({participants.length})
-                </Typography>
-                {participants.length > 0 ? (
-                  <List>
-                    {participants.map((participant, index) => (
-                      <ListItem key={index} divider>
-                        <ListItemIcon>
-                          <Avatar>{participant.name?.charAt(0)}</Avatar>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={participant.name}
-                          secondary={`${participant.email} | ${participant.phone}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Alert severity="info">No participants registered yet</Alert>
-                )}
-              </CardContent>
-            </Card>
+            <Box>
+              {/* Feedback Statistics */}
+              <Box sx={{ mb: 3 }}>
+                <FeedbackStatsCard eventId={eventId} userRole="hod" />
+              </Box>
+              
+              {/* Import and use the enhanced participant dashboard for HOD (approved participants only) */}
+              <EnhancedParticipantDashboard 
+                eventId={eventId} 
+                eventTitle={event.title}
+                userRole="hod"
+              />
+            </Box>
           )}
 
           {tabValue === 2 && (
             <Grid container spacing={3}>
               {/* Budget Overview */}
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -770,7 +767,7 @@ const HODEventDashboard = () => {
                     </Typography>
                     <Grid container spacing={3}>
                       {/* Income */}
-                      <Grid item xs={12} md={6}>
+                      <Grid xs={12} md={6}>
                         <Typography variant="subtitle1" sx={{ mb: 2, color: "green" }}>
                           Income Sources
                         </Typography>
@@ -796,7 +793,7 @@ const HODEventDashboard = () => {
                       </Grid>
 
                       {/* Expenses */}
-                      <Grid item xs={12} md={6}>
+                      <Grid xs={12} md={6}>
                         <Typography variant="subtitle1" sx={{ mb: 2, color: "red" }}>
                           {event.claimSubmitted ? "Actual Expenses (Claimed)" : "Planned Expenses"}
                         </Typography>
@@ -849,7 +846,7 @@ const HODEventDashboard = () => {
           {tabValue === 3 && (
             <Grid container spacing={3}>
               {/* Review Actions */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -903,7 +900,7 @@ const HODEventDashboard = () => {
               </Grid>
 
               {/* Document Actions */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>

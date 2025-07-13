@@ -15,8 +15,8 @@ export const downloadClaimPDF = async (req, res) => {
       });
     }
     
-    // Retrieve event with PDF data
-    const result = await event.findById(eventId).select('claimPDF claimBill');
+    // Retrieve event with PDF data and populate createdBy for authorization
+    const result = await event.findById(eventId).select('claimPDF claimBill createdBy').populate('createdBy', '_id');
     
     if (!result) {
       console.log("Event not found!");
@@ -25,6 +25,16 @@ export const downloadClaimPDF = async (req, res) => {
         message: "Event not found"
       });
     }
+
+    // Authorization check: Allow coordinators who own the event, HODs, and admins
+    if (req.user && req.user.role === 'coordinator' && result.createdBy._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied. You can only download claim PDFs for events you created" 
+      });
+    }
+    
+    // HODs and admins have access to all events (no additional check needed)
 
     // Check if claim bill exists
     if (!result.claimBill) {

@@ -42,7 +42,7 @@ function CommentModal({ event, open, handleClose }) {
     fetch("http://localhost:5050/api/hod/event/comment", {
       method: "POST",
       headers: {
-        authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

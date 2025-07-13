@@ -63,9 +63,15 @@ const ClaimItemManagement = ({ eventId }) => {
   const fetchClaimItems = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
 
       const response = await axios.get(
-        `http://localhost:5050/api/claims/events/${eventId}/claim-items`
+        `http://localhost:5050/api/claims/events/${eventId}/claim-items`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       console.log('Claim items response:', response.data);
@@ -90,6 +96,7 @@ const ClaimItemManagement = ({ eventId }) => {
 
   const handleItemAction = async () => {
     try {
+      const token = localStorage.getItem('token');
       const payload = {
         action,
         approvedAmount: action === 'approved' ? parseFloat(approvedAmount) : 0,
@@ -98,7 +105,12 @@ const ClaimItemManagement = ({ eventId }) => {
 
       await axios.put(
         `http://localhost:5050/api/claims/events/${eventId}/claim-items/${selectedItem.index}/status`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       enqueueSnackbar(`Claim item ${action} successfully`, { variant: 'success' });
@@ -113,11 +125,15 @@ const ClaimItemManagement = ({ eventId }) => {
 
   const generateReceipt = async (itemIndex) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post(
         `http://localhost:5050/api/claims/events/${eventId}/claim-items/${itemIndex}/receipt`,
         {},
         {
-          responseType: 'blob'
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -142,10 +158,14 @@ const ClaimItemManagement = ({ eventId }) => {
 
   const downloadReceipt = async (itemIndex) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(
         `http://localhost:5050/api/claims/events/${eventId}/claim-items/${itemIndex}/receipt`,
         {
-          responseType: 'blob'
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 

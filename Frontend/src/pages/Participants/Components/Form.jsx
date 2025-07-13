@@ -1,16 +1,55 @@
 import React from 'react';
 import { Paper, Button, Typography, Box } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { registerEvent } from './api';
 
 const PForm = ({ user }) => {
   // Get eventId from query string
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const eventId = params.get('eventId');
 
   // Assume user._id is available from context or props
   const participantId = "6857dbb542e87e57a8748a61"; // Replace with actual user ID
+
+  // Helper function to format certificate requirements
+  const formatCertificateRequirements = (certReq) => {
+    if (!certReq || typeof certReq !== 'object') return 'Not specified';
+    
+    const parts = [];
+    
+    if (certReq.enabled) {
+      if (certReq.attendanceRequired) {
+        parts.push('Attendance required');
+      }
+      
+      if (certReq.evaluation) {
+        const evaluationMethods = [];
+        
+        if (certReq.evaluation.quiz?.enabled) {
+          evaluationMethods.push(`Quiz (${certReq.evaluation.quiz.percentage}%)`);
+        }
+        if (certReq.evaluation.assignment?.enabled) {
+          evaluationMethods.push(`Assignment (${certReq.evaluation.assignment.percentage}%)`);
+        }
+        if (certReq.evaluation.labWork?.enabled) {
+          evaluationMethods.push(`Lab Work (${certReq.evaluation.labWork.percentage}%)`);
+        }
+        if (certReq.evaluation.finalTest?.enabled) {
+          evaluationMethods.push(`Final Test (${certReq.evaluation.finalTest.percentage}%)`);
+        }
+        
+        if (evaluationMethods.length > 0) {
+          parts.push(`Evaluation: ${evaluationMethods.join(', ')}`);
+        }
+      }
+      
+      return parts.length > 0 ? parts.join('; ') : 'Certificate available upon completion';
+    }
+    
+    return 'No certificate requirements';
+  };
 
   // Fetch event details for display
   const [eventDetails, setEventDetails] = React.useState(null);
@@ -18,11 +57,18 @@ const PForm = ({ user }) => {
     if (!eventId) return;
     const fetchEvent = async () => {
       try {
-        const res = await fetch(`http://localhost:5050/api/participant/events`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:5050/api/participant/events`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
         const allEvents = await res.json();
         const found = allEvents.find(ev => ev._id === eventId);
         setEventDetails(found);
       } catch (err) {
+        console.error("❌ Error fetching event details:", err);
         setEventDetails(null);
       }
     };
@@ -36,9 +82,14 @@ const PForm = ({ user }) => {
       return;
     }
     try {
+      console.log("🚀 Registering for event:", { participantId, eventId });
       await registerEvent({ participantId, eventId });
-      alert('Registration successful!');
+      alert('Registration successful! You will be redirected to the dashboard.');
+      
+      // Redirect back to participant dashboard
+      navigate('/participant/dashboard');
     } catch (err) {
+      console.error("❌ Registration error:", err);
       alert('Registration failed or already registered.');
     }
   };
@@ -143,7 +194,7 @@ const PForm = ({ user }) => {
 
                 {eventDetails.registrationProcedure.certificateRequirements && (
                   <Typography sx={{ color: '#fff', fontSize: '1rem', mb: 1, fontWeight: 400, fontFamily: 'inherit' }}>
-                    <b>Certificate Requirements:</b> {eventDetails.registrationProcedure.certificateRequirements}
+                    <b>Certificate Requirements:</b> {formatCertificateRequirements(eventDetails.registrationProcedure.certificateRequirements)}
                   </Typography>
                 )}
 

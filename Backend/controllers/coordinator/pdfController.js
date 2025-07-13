@@ -10,6 +10,16 @@ export const generateProgrammePDF = async (req, res) => {
     if (!programme) {
       return res.status(404).json({ message: "Programme not found" });
     }
+
+    // Authorization check: Allow coordinators who own the event, HODs, and admins
+    if (req.user.role === 'coordinator' && programme.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied. You can only generate PDFs for events you created" 
+      });
+    }
+    
+    // HODs and admins have access to all events (no additional check needed)
     
     // Fetch convenor committee members
     const convenorMembers = await ConvenorCommittee.find({ isActive: true })

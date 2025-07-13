@@ -53,8 +53,13 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
 
   function handleViewFinalBudget(id) {
     // Force regenerate PDF to ensure latest data and fixes are applied
+    const token = localStorage.getItem("token");
+    
     fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}?forceRegenerate=true`, {
       method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`, // Add authentication header
+      },
     })
       .then((res) => {
         // Check if response is successful

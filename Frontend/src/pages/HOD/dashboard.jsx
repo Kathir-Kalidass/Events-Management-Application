@@ -27,17 +27,28 @@ const HodDashboard = () => {
     try {
       fetch("http://localhost:5050/api/hod/allEvents/", {
         method: "GET",
-        /*  headers:{
-          "authorization": `Bearer ${token}`,
+        headers:{
+          "Authorization": `Bearer ${token}`,
           "Content-Type" : "application/json",
-        }, */
+        },
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (res.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/';
+            return;
+          }
+          return res.json();
+        })
         .then((data) => {
-          console.log("✅ Events fetched successfully:", data.length, "events");
-          console.log("Sample event budget data:", data[0]?.budgetBreakdown);
-          setEvents(data);
-          setLastRefresh(Date.now());
+          if (data) {
+            console.log("✅ Events fetched successfully:", data.length, "events");
+            console.log("Sample event budget data:", data[0]?.budgetBreakdown);
+            setEvents(data);
+            setLastRefresh(Date.now());
+          }
         })
         .catch((error) => {
           console.error("❌ Error fetching events:", error);

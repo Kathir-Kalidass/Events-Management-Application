@@ -10,7 +10,7 @@ const CertificatePage = () => {
   const fetchEligibleEvents = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("userInfo")); // assumes your user info has ID
-      const token = JSON.parse(localStorage.getItem("token"));
+      const token = localStorage.getItem("token");
 
       const res = await axios.get(`http://localhost:5050/api/participant/my-certificates/${user._id}`, {
         headers: {

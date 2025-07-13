@@ -76,7 +76,7 @@ export default function TemporaryDrawer({
           component="button"
           onClick={handleProposal}
         >
-          <ListItemText primary="Proposal Management" />
+          <ListItemText primary="Event History" />
         </ListItem>
 
         <ListItem

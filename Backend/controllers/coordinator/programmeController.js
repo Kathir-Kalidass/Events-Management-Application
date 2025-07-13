@@ -53,13 +53,27 @@ export const createProgramme = async (req, res) => {
   }
 };
 
-// Get all programmes
+// Get all programmes for the current coordinator
 export const getProgrammes = async (req, res) => {
   try {
+    // For now, show all events to all coordinators
+    // You can modify this logic later if you want to restrict access
+    let query = {};
+    
+    // Optional: If you want to filter by coordinator, uncomment the following:
+    // if (req.user && req.user._id && req.user.role === 'coordinator') {
+    //   query.createdBy = req.user._id;
+    // }
+
     const programmes = await event
-      .find({})
+      .find(query)
       .select("-brochure")
+      .populate('createdBy', 'name email role')
+      .populate('reviewedBy', 'name email role')
       .sort({ createdAt: -1 });
+    
+    console.log(`📊 Found ${programmes.length} programmes for user ${req.user?.name || 'anonymous'} (role: ${req.user?.role || 'none'})`);
+    console.log(`📊 Query used:`, query);
     res.json(programmes);
   } catch (error) {
     console.error("❌ Error fetching programmes:", error);

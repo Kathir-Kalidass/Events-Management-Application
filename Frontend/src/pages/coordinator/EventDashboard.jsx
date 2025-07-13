@@ -64,6 +64,9 @@ import { useSnackbar } from "notistack";
 import { eventState } from "../../context/eventProvider";
 import { generateEventBrochure } from "../../services/brochureGenerator";
 import ClaimManagement from "../../components/ClaimManagement";
+import EnhancedParticipantDashboard from "../../components/EnhancedParticipantDashboard";
+import FeedbackStatsCard from "../../components/FeedbackStatsCard";
+import AddParticipantModal from "../../components/AddParticipantModal";
 
 const CoordinatorEventDashboard = () => {
   const { eventId } = useParams();
@@ -109,21 +112,21 @@ const CoordinatorEventDashboard = () => {
 
   const fetchParticipants = async () => {
     try {
-      // Try multiple possible endpoints for participants
-      let response;
-      try {
-        response = await axios.get(`http://localhost:5050/api/coordinator/programmes/${eventId}/participants`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-      } catch (error) {
-        // Fallback to alternative endpoint
-        response = await axios.get(`http://localhost:5050/api/coordinator/events/${eventId}/participants`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+      // Use the correct endpoint for participants
+      const response = await axios.get(`http://localhost:5050/api/coordinator/events/${eventId}/participants`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      
+      if (response.data.success) {
+        setParticipants(response.data.participants || []);
+      } else {
+        setParticipants([]);
       }
-      setParticipants(response.data || []);
     } catch (error) {
       console.log("Participants not found or error:", error);
+      if (error.response?.status === 404) {
+        console.log("Event not found or no participants registered");
+      }
       setParticipants([]);
     }
   };
@@ -1059,30 +1062,19 @@ const CoordinatorEventDashboard = () => {
           )}
 
           {tabValue === 1 && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Registered Participants ({participants.length})
-                </Typography>
-                {participants.length > 0 ? (
-                  <List>
-                    {participants.map((participant, index) => (
-                      <ListItem key={index} divider>
-                        <ListItemIcon>
-                          <Avatar>{participant.name?.charAt(0)}</Avatar>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={participant.name}
-                          secondary={`${participant.email} | ${participant.phone}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Alert severity="info">No participants registered yet</Alert>
-                )}
-              </CardContent>
-            </Card>
+            <Box>
+              {/* Feedback Statistics */}
+              <Box sx={{ mb: 3 }}>
+                <FeedbackStatsCard eventId={eventId} userRole="coordinator" />
+              </Box>
+              
+              {/* Import and use the enhanced participant dashboard */}
+              <EnhancedParticipantDashboard 
+                eventId={eventId} 
+                eventTitle={event.title}
+                userRole="coordinator"
+              />
+            </Box>
           )}
 
           {tabValue === 2 && (

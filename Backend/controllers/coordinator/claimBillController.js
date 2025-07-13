@@ -25,8 +25,23 @@ export const handleClaimBillSubmission = async (req, res) => {
     // ✅ Update claim bill - preserve original creation date if it exists
     const existingCreatedAt = programme.claimBill?.createdAt;
     programme.claimBill = {
-      expenses,
+      expenses: expenses.map(expense => ({
+        category: expense.category,
+        budgetAmount: Number(expense.amount || 0),
+        actualAmount: Number(expense.amount || 0),
+        amount: Number(expense.amount || 0),
+        approvedAmount: Number(expense.amount || 0), // ✅ AUTO-APPROVE: Set approved amount same as actual amount
+        description: expense.description || `Expense for ${expense.category}`,
+        itemStatus: 'approved', // ✅ AUTO-APPROVE: Coordinators don't need to approve their own items
+        rejectionReason: '',
+        receiptNumber: null,
+        receiptGenerated: false,
+        reviewDate: new Date(), // ✅ AUTO-APPROVE: Set review date to current date
+        reviewedBy: req.user._id // ✅ AUTO-APPROVE: Set coordinator as reviewer (self-approval)
+      })),
       totalExpenditure: totalClaimExpenditure,
+      totalApprovedAmount: totalClaimExpenditure, // ✅ Set total approved amount since all items are auto-approved
+      status: 'pending', // Overall status still pending for HOD review
       claimSubmitted: true,
       createdAt: existingCreatedAt || new Date(), // Only set new date if no existing date
       updatedAt: new Date() // Track when it was last updated

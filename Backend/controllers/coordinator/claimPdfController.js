@@ -319,6 +319,16 @@ export const generateClaimBillPDF = async (req, res) => {
         .json({ message: "Programme or Claim Bill not found" });
     }
 
+    // Authorization check: Allow coordinators who own the event, HODs, and admins
+    if (req.user.role === 'coordinator' && programme.createdBy._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied. You can only generate claim PDFs for events you created" 
+      });
+    }
+    
+    // HODs and admins have access to all events (no additional check needed)
+
     // Get dynamic department information
     const primaryDept = programme.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)";
     const associativeDepts = programme.organizingDepartments?.associative || [];
@@ -905,6 +915,16 @@ export const generateFundTransferRequestPDF = async (req, res) => {
       return res.status(404).json({ message: "Programme not found" });
     }
 
+    // Authorization check: Allow coordinators who own the event, HODs, and admins
+    if (req.user.role === 'coordinator' && programme.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied. You can only generate fund transfer requests for events you created" 
+      });
+    }
+    
+    // HODs and admins have access to all events (no additional check needed)
+
     // Check if event is approved
     if (programme.status !== 'approved') {
       return res.status(400).json({ 
@@ -981,7 +1001,7 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
   // Header with dynamic departments
   doc.fontSize(16).font('Helvetica-Bold')
      .text(headerText, { align: 'center' })
-     .moveDown(3);
+     .moveDown(1);
 
   // Receipt title with border
   const receiptTitleY = doc.y;
@@ -995,12 +1015,12 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .fontSize(18)
      .font('Helvetica-Bold')
      .text('RECEIPT', 200, receiptTitleY + 5, { width: 150, align: 'center' })
-     .moveDown(3);
+     .moveDown(1);
 
   // Date (right aligned) with dynamic formatting
   doc.fontSize(12).font('Helvetica')
      .text(`Date: ${currentDate}`, 400, doc.y)
-     .moveDown(2);
+     .moveDown(1);
 
   // Event details box
   const eventDetailsY = doc.y;
@@ -1017,7 +1037,7 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .font('Helvetica')
      .text(`Programme: ${programme.title}`, 60, eventDetailsY + 25)
      .text(`Duration: ${new Date(programme.startDate).toLocaleDateString('en-IN')} to ${new Date(programme.endDate).toLocaleDateString('en-IN')}`, 60, eventDetailsY + 40)
-     .moveDown(3);
+     .moveDown(2);
 
   // Receipt content with enhanced formatting
   const approvedAmount = expense.approvedAmount || expense.actualAmount || expense.amount || 0;
@@ -1028,18 +1048,17 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .font('Helvetica-Bold')
      .text(`(Rupees ${amountInWords} only)`, 50, doc.y + 20)
      .font('Helvetica')
-     .moveDown(2);
+     .moveDown(1);
 
   // From section with dynamic department
-  const fromDept = associativeDepts.length > 0 ? associativeDepts[0] : 'Centre For Cyber Security';
+  const fromDept = associativeDepts.length > 0 ? associativeDepts[0] : 'CSRC';
   doc.text(`From ${fromDept}, Anna University, Chennai - 600025`, 50, doc.y)
      .font('Helvetica-Bold')
-     .text(`towards ${expense.category}`, 50, doc.y + 20)
+     .text(`towards ${expense.category} `, 50, doc.y + 20)
      .font('Helvetica')
-     .moveDown(2);
 
   doc.text(`in connection with a training programme on "${programme.title}".`, 50, doc.y)
-     .moveDown(4);
+     .moveDown(2);
 
   // Payment details section
   if (expense.description) {
@@ -1069,12 +1088,12 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .text('_________________________', 150, doc.y)
      .moveDown(2);
   
-  doc.text(`Name           : ${coordinatorName}`, 60, doc.y)
-     .moveDown(1);
+  doc.text(`Name          : ${coordinatorName}`, 60, doc.y)
+     .moveDown(0.2);
   
-  doc.text(`Designation   : ${coordinatorDesignation}`, 60, doc.y)
-     .text(`Department    : ${coordinatorDepartment}, CEG, Anna University`, 60, doc.y + 15)
-     .moveDown(3);
+  doc.text(`Designation : ${coordinatorDesignation}`, 60, doc.y)
+     .text(`Department  : ${coordinatorDepartment}, CEG, Anna University`, 60, doc.y + 15)
+     .moveDown(1);
 
   // Receipt footer with enhanced information
   const receiptNo = expense.receiptNumber || `RCP-${new Date().getFullYear()}-${String(receiptNumber).padStart(6, '0')}`;

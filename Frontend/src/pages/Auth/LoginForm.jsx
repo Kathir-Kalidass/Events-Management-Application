@@ -20,7 +20,7 @@ const LoginForm = () => {
 
       if (res.data.role === role) {
         localStorage.setItem("userInfo", JSON.stringify(res.data)); //  Save all user info
-        localStorage.setItem("token", JSON.stringify(res.data.token));
+        localStorage.setItem("token", res.data.token); // Store token directly without JSON.stringify
         alert("Login successful");
         setUser(res.data);
         navigate(`/${role}/dashboard`);

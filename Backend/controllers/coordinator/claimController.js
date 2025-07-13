@@ -38,14 +38,14 @@ export const submitClaim = asyncHandler(async (req, res) => {
         budgetAmount: amount,
         actualAmount: amount,
         amount: amount, // ✅ CRITICAL: All amount fields must be identical
-        approvedAmount: 0, // Initially 0, will be set during approval
+        approvedAmount: amount, // ✅ AUTO-APPROVE: Set approved amount same as actual amount
         description: expense.description || '',
-        itemStatus: 'pending',
+        itemStatus: 'approved', // ✅ AUTO-APPROVE: Coordinators don't need to approve their own items
         rejectionReason: '',
         receiptNumber: null,
         receiptGenerated: false,
-        reviewDate: null,
-        reviewedBy: null
+        reviewDate: new Date(), // ✅ AUTO-APPROVE: Set review date to current date
+        reviewedBy: submittedBy // ✅ AUTO-APPROVE: Set coordinator as reviewer (self-approval)
       };
     });
 
