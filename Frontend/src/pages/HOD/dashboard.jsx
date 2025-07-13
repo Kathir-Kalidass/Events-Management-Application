@@ -22,7 +22,6 @@ const HodDashboard = () => {
 
   function fetchAllEvents() {
     const token = localStorage.getItem("token");
-    console.log("🔄 Fetching all events for HOD dashboard...");
 
     try {
       fetch("http://localhost:5050/api/hod/allEvents/", {
@@ -44,8 +43,7 @@ const HodDashboard = () => {
         })
         .then((data) => {
           if (data) {
-            console.log("✅ Events fetched successfully:", data.length, "events");
-            console.log("Sample event budget data:", data[0]?.budgetBreakdown);
+
             setEvents(data);
             setLastRefresh(Date.now());
           }
@@ -54,7 +52,7 @@ const HodDashboard = () => {
           console.error("❌ Error fetching events:", error);
         });
     } catch (error) {
-      console.log(error.message);
+
     }
   }
 
@@ -72,7 +70,7 @@ const HodDashboard = () => {
     let interval;
     if (activePage === "finance" || activePage === "finalBudget") {
       interval = setInterval(() => {
-        console.log("Auto-refreshing data for finance page...");
+
         fetchAllEvents();
       }, 30000); // 30 seconds
     }

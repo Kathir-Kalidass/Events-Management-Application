@@ -69,5 +69,4 @@ hodRoutes.delete('/convenor-committee/:id', deleteConvenorCommitteeMember);
 hodRoutes.post('/convenor-committee/initialize-default', initializeDefaultCommittee);
 hodRoutes.get('/convenor-committee/available-roles', getAvailableRoles);
 
-
 export default hodRoutes;

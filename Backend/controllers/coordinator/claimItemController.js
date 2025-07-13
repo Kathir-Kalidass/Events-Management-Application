@@ -34,15 +34,6 @@ export const updateClaimItemStatus = asyncHandler(async (req, res) => {
 
     const claimItem = event.claimBill.expenses[itemIndex];
 
-    console.log('BEFORE UPDATE - Claim Item:', {
-      category: claimItem.category,
-      amount: claimItem.amount,
-      budgetAmount: claimItem.budgetAmount,
-      actualAmount: claimItem.actualAmount,
-      itemStatus: claimItem.itemStatus,
-      approvedAmount: claimItem.approvedAmount
-    });
-
     // Update item status
     claimItem.itemStatus = action;
     claimItem.reviewedBy = reviewerId;
@@ -71,15 +62,6 @@ export const updateClaimItemStatus = asyncHandler(async (req, res) => {
       // ✅ AUTOMATIC AMOUNT SYNCHRONIZATION
       syncAmountFields(claimItem);
     }
-
-    console.log('AFTER UPDATE - Claim Item:', {
-      category: claimItem.category,
-      amount: claimItem.amount,
-      budgetAmount: claimItem.budgetAmount,
-      actualAmount: claimItem.actualAmount,
-      itemStatus: claimItem.itemStatus,
-      approvedAmount: claimItem.approvedAmount
-    });
 
     // Calculate total approved amount
     event.claimBill.totalApprovedAmount = event.claimBill.expenses.reduce(
@@ -110,8 +92,7 @@ export const updateClaimItemStatus = asyncHandler(async (req, res) => {
 
     // CRITICAL: Update budget breakdown to reflect only approved amounts
     if (event.budgetBreakdown && event.budgetBreakdown.expenses) {
-      console.log('🔄 Updating budget breakdown to reflect approved amounts only...');
-      
+
       // Filter budget breakdown expenses to only include approved items
       const approvedBudgetExpenses = event.budgetBreakdown.expenses.filter(budgetExp => {
         return approvedItemsOnly.some(approvedExp => 
@@ -135,21 +116,12 @@ export const updateClaimItemStatus = asyncHandler(async (req, res) => {
         (sum, exp) => sum + (exp.amount || 0), 0
       );
 
-      console.log('✅ Budget breakdown updated to reflect only approved amounts');
     }
 
     // Mark the claim bill as modified to ensure database update
     event.markModified('claimBill');
     event.markModified('budgetBreakdown');
     await event.save();
-
-    console.log('Database updated with approved amounts:', {
-      itemCategory: claimItem.category,
-      originalAmount: claimItem.actualAmount,
-      approvedAmount: claimItem.approvedAmount,
-      totalApprovedAmount: event.claimBill.totalApprovedAmount,
-      totalBudgetAmount: event.claimBill.totalBudgetAmount
-    });
 
     res.json({
       message: `Claim item ${action} successfully`,
@@ -746,8 +718,7 @@ export const removeRejectedItems = asyncHandler(async (req, res) => {
 
     // Update budget breakdown to reflect only approved items
     if (event.budgetBreakdown && event.budgetBreakdown.expenses) {
-      console.log('🔄 Updating budget breakdown to remove rejected items...');
-      
+
       // Filter budget breakdown expenses to only include approved items
       const approvedBudgetExpenses = event.budgetBreakdown.expenses.filter(budgetExp => {
         return approvedItems.some(approvedExp => 
@@ -771,7 +742,6 @@ export const removeRejectedItems = asyncHandler(async (req, res) => {
         (sum, exp) => sum + (exp.amount || 0), 0
       );
 
-      console.log('✅ Budget breakdown updated to reflect only approved amounts');
     }
 
     // Update claim status
@@ -785,12 +755,6 @@ export const removeRejectedItems = asyncHandler(async (req, res) => {
     event.markModified('claimBill');
     event.markModified('budgetBreakdown');
     await event.save();
-
-    console.log('✅ Rejected items permanently removed from database:', {
-      removedItems: rejectedItems.length,
-      remainingItems: approvedItems.length,
-      newTotalAmount: totalApprovedAmount
-    });
 
     res.json({
       message: `Successfully removed ${rejectedItems.length} rejected items from database`,

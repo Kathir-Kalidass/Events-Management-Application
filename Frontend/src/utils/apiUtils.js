@@ -18,7 +18,7 @@ const getAuthHeaders = () => {
 // Helper function to handle auth errors
 const handleAuthError = (response) => {
   if (response.status === 401) {
-    console.log('🧹 Authentication failed, clearing token and redirecting to login');
+
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
     alert('Your session has expired or is invalid. Please log in again.');

@@ -97,20 +97,15 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
   const [convenorCommitteeMembers, setConvenorCommitteeMembers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  console.log(selectedEvent);
-  console.log('Current convenorCommitteeMembers:', convenorCommitteeMembers);
-
   // Fetch convenor committee members on component mount
   useEffect(() => {
     const fetchConvenorCommitteeMembers = async () => {
       try {
         const response = await convenorCommitteeAPI.getAll();
-        console.log('API Response:', response);
-        
+
         // Extract the data array from the response - backend returns {success: true, data: [...]}
         const members = response.data || response;
-        console.log('Fetched convenor committee members:', members);
-        
+
         if (Array.isArray(members) && members.length > 0) {
           setConvenorCommitteeMembers(members);
         } else {
@@ -173,7 +168,6 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
   function getHonarariumCharge() {
     let amount = 0;
     const expense = getActiveExpenses();
-    console.log('📊 Calculating honorarium from expenses:', expense);
 
     for (let i = 0; i < expense.length; i++) {
       const category = expense[i].category.toLowerCase();
@@ -186,14 +180,13 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
         amount += parseFloat(expenseAmount);
       }
     }
-    console.log(`💰 Total honorarium: ${amount}`);
+
     return amount;
   }
 
   function getRefreshmentCharge() {
     let amount = 0;
     const expense = getActiveExpenses();
-    console.log('📊 Calculating refreshments from expenses:', expense);
 
     for (let i = 0; i < expense.length; i++) {
       const category = expense[i].category.toLowerCase();
@@ -206,7 +199,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
         amount += parseFloat(expenseAmount);
       }
     }
-    console.log(`🍿 Total refreshment/stationery: ${amount}`);
+
     return amount;
   }
 
@@ -234,10 +227,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
 
   // Calculate total expenditure dynamically - prioritize claim bill data with actual amounts
   function calculateTotalExpenditure() {
-    console.log('📊 Calculating total expenditure...');
-    console.log('Claim bill data:', selectedEvent.claimBill);
-    console.log('Budget breakdown data:', selectedEvent.budgetBreakdown);
-    
+
     // If claim bill exists, calculate total from actual amounts + university overhead
     if (selectedEvent.claimBill?.expenses) {
       let claimExpensesTotal = 0;
@@ -255,7 +245,7 @@ const ProposalLetter = ({ event, activePage, setActivePage }) => {
     // Fallback: use budget breakdown total if available
     if (selectedEvent.budgetBreakdown?.totalExpenditure) {
       const budgetTotal = parseFloat(selectedEvent.budgetBreakdown.totalExpenditure) || 0;
-      console.log(`💰 Using budget breakdown total: ${budgetTotal}`);
+
       return budgetTotal;
     }
     

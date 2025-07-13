@@ -56,11 +56,11 @@ function CommentModal({ event, open, handleClose }) {
           preEvents.map((item) => (item._id === data._id ? data : item))
         );
         showMessage("comment uploaded!", "success");
-        console.log(data);
+
       })
       .catch((error) => {
         showMessage("error in uploading comment", "error");
-        console.log(error.message);
+
       })
       .finally(() => {
         setLoading(false);

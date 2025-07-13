@@ -20,7 +20,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
       
       // Validate token exists after split
       if (!token || token === 'undefined' || token === 'null') {
-        console.log(`⚠️ Invalid token format, proceeding without auth`);
+
         return next();
       }
       
@@ -38,15 +38,15 @@ const optionalAuthMiddleware = async (req, res, next) => {
       if (req.user) {
         console.log(`👤 Optional auth: User authenticated: ${req.user.name} (${req.user.role})`);
       } else {
-        console.log(`⚠️ Optional auth: User not found for token, proceeding without auth`);
+
       }
       
     } catch (err) {
-      console.log(`⚠️ Optional auth: Token verification failed, proceeding without auth: ${err.message}`);
+
       // Don't return error, just proceed without authentication
     }
   } else {
-    console.log(`ℹ️ Optional auth: No token provided, proceeding without auth`);
+
   }
   
   // Always proceed to next middleware/handler

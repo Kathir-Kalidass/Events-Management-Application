@@ -173,7 +173,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       );
 
       if (results.errors.length > 0) {
-        console.log('Errors:', results.errors);
+
       }
 
       setEmailList('');

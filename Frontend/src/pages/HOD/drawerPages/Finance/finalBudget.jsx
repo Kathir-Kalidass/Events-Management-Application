@@ -4,7 +4,6 @@ import { Box, IconButton } from '@mui/material';
 
 const FinalBudget = ({activePage, setActivePage}) => {
 
-
   function handleBackToFinancePage(){
     setActivePage("finance");
   }

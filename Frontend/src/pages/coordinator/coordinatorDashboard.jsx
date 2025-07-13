@@ -226,14 +226,12 @@ const CoordinatorDashboard = () => {
         setHod(data);
       })
       .catch((err) => {
-        console.log(err.message);
+
       });
   };
 
   function handleViewFinalBudget(id) {
 
-    console.log('Fetching PDF for ID:', id);
-    
     const token = localStorage.getItem("token");
   
   fetch(`http://localhost:5050/api/coordinator/claims/${id}/pdf`, {
@@ -244,7 +242,7 @@ const CoordinatorDashboard = () => {
     },
   })
     .then((res) => {
-      console.log('Response status:', res.status);
+
       console.log('Response headers:', res.headers.get('content-type'));
       
       // Check if response is successful
@@ -261,8 +259,7 @@ const CoordinatorDashboard = () => {
       return res.blob();
     })
     .then((blob) => {
-      console.log('PDF blob size:', blob.size);
-      
+
       // Check if blob is empty
       if (blob.size === 0) {
         throw new Error('Received empty PDF file');
@@ -337,12 +334,7 @@ const CoordinatorDashboard = () => {
   } */
 
   const handleApplyClaim = (programme) => {
-    console.log('=== Apply Claim Debug ===');
-    console.log('Programme:', programme);
-    console.log('Programme budgetBreakdown:', programme.budgetBreakdown);
-    console.log('Programme budgetBreakdown.expenses:', programme.budgetBreakdown?.expenses);
-    console.log('Programme claimBill:', programme.claimBill);
-    
+
     setSelectedProgramme(programme);
     
     // Check if there are existing claim bill expenses, otherwise use budget breakdown expenses
@@ -354,21 +346,20 @@ const CoordinatorDashboard = () => {
         category: expense.category || '',
         amount: expense.amount || ''
       }));
-      console.log('Using existing claim bill expenses:', expensesToUse);
+
     } else if (programme.budgetBreakdown && programme.budgetBreakdown.expenses && programme.budgetBreakdown.expenses.length > 0) {
       // Use original budget breakdown expenses as starting point
       expensesToUse = programme.budgetBreakdown.expenses.map(expense => ({
         category: expense.category || '',
         amount: expense.amount || ''
       }));
-      console.log('Using budget breakdown expenses:', expensesToUse);
+
     } else {
       // Default to one empty expense row
       expensesToUse = [{ category: "", amount: "" }];
-      console.log('Using default empty expense');
+
     }
-    
-    console.log('Final expenses to use:', expensesToUse);
+
     setClaimData(expensesToUse);
     setOpenClaimDialog(true);
   };
@@ -390,7 +381,7 @@ const CoordinatorDashboard = () => {
   };
 
   const handleSubmitClaim = async () => {
-    console.log(claimData);
+
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -438,7 +429,7 @@ const CoordinatorDashboard = () => {
             },
           });
           setEvents(Array.isArray(response.data) ? response.data : []);
-          console.log("Events refreshed after claim submission");
+
         } catch (error) {
           console.error("Failed to refresh events after claim submission:", error);
         }
@@ -875,8 +866,7 @@ const CoordinatorDashboard = () => {
   // Generate professional styled brochure
   const handleGenerateBrochure = async (eventData) => {
     try {
-      console.log("Generating styled brochure for event:", eventData.title);
-      
+
       // Fetch event data with organizing committee from HOD API
       let eventWithOrganizingCommittee;
       try {
@@ -884,7 +874,7 @@ const CoordinatorDashboard = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         eventWithOrganizingCommittee = response.data;
-        console.log("Event data fetched from HOD API with organizing committee");
+
       } catch (hodApiError) {
         console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
         eventWithOrganizingCommittee = eventData;
@@ -932,7 +922,7 @@ const CoordinatorDashboard = () => {
           },
           body: formData
         });
-        console.log("Brochure saved to backend successfully");
+
       } catch (saveError) {
         console.warn("Failed to save brochure to backend:", saveError.message);
       }
@@ -992,17 +982,15 @@ const CoordinatorDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation(); // Prevent event bubbling
-    
-    console.log("✅ Submit clicked");
 
     if (submitting) {
-      console.log("⚠️ Already submitting, ignoring duplicate submission");
+
       return;
     }
     setSubmitting(true);
 
     try {
-      console.log("🔍 Validating form...");
+
       const isValid = validateForm();
       if (!isValid) {
         enqueueSnackbar("Please fill all required fields correctly", {
@@ -1021,7 +1009,7 @@ const CoordinatorDashboard = () => {
       }
 
       // Auth token check
-      console.log("🔑 Checking token...");
+
       const token = localStorage.getItem("token");
       if (!token) {
         enqueueSnackbar("Session expired. Please login again.", {
@@ -1033,7 +1021,7 @@ const CoordinatorDashboard = () => {
       }
 
       // Build FormData
-      console.log("📦 Building FormData...");
+
       const formPayload = new FormData();
 
       formPayload.append("title", formData.title.trim());
@@ -1139,8 +1127,6 @@ const CoordinatorDashboard = () => {
         registrationProcedureData.confirmationDate = registrationProcedureData.confirmationDate.toISOString();
       }
 
-      console.log("Sending registrationProcedure:", registrationProcedureData);
-      
       formPayload.append(
         "registrationProcedure",
         JSON.stringify(registrationProcedureData)
@@ -1153,8 +1139,6 @@ const CoordinatorDashboard = () => {
         formPayload.append("brochure", formData.brochure);
       }
 
-      console.log("📤 Sending to backend...");
-      console.log(formData);
       if (editId) {
         await axios.put(
           `http://localhost:5050/api/coordinator/programmes/${editId}`,
@@ -1194,7 +1178,6 @@ const CoordinatorDashboard = () => {
       resetForm(); // Clear form state
       setActiveStep(0); // Reset stepper
 
-      console.log("✅ Dialog closed and form reset");
     } catch (error) {
       console.error("❌ Submission error:", error);
 
@@ -1679,12 +1662,12 @@ const CoordinatorDashboard = () => {
                             handleViewFinalBudget(event._id);
                             /*
                             try {
-                              console.log("download pdf");
+
                               const response = await axios.get(
                                 `http://localhost:5050/api/coordinator/claims/${event._id}/pdf`,
                                 { responseType: "blob" }
                               );
-                              console.log("response came");
+
                               const blob = new Blob([response.data], {
                                 type: "application/pdf",
                               });
@@ -2133,7 +2116,6 @@ const CoordinatorDashboard = () => {
                       Add Associative Department
                     </Button>
                   </Grid>
-
 
                 </Grid>
               )}

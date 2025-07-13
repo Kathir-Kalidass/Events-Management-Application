@@ -74,9 +74,6 @@ const ClaimItemManagement = ({ eventId }) => {
         }
       );
 
-      console.log('Claim items response:', response.data);
-      console.log('Individual claim items:', response.data.claimItems);
-
       setClaimItems(response.data.claimItems);
       setEventTitle(response.data.eventTitle);
       setTotalApprovedAmount(response.data.totalApprovedAmount);

@@ -25,8 +25,7 @@ export const generateBrochurePDF = async (req, res) => {
     
     // If no organizing committee members exist, create default ones
     if (organizingCommittee.length === 0) {
-      console.log("⚠️ No organizing committee members found for brochure, creating default members...");
-      
+
       const defaultMembers = [
         {
           name: "Vice-Chancellor",
@@ -68,8 +67,7 @@ export const generateBrochurePDF = async (req, res) => {
       
       try {
         await ConvenorCommittee.insertMany(defaultMembers);
-        console.log("✅ Created default organizing committee members for brochure");
-        
+
         // Fetch the newly created members
         organizingCommittee = await ConvenorCommittee.find({ isActive: true })
           .sort({ 
@@ -77,7 +75,7 @@ export const generateBrochurePDF = async (req, res) => {
             role: 1,
             createdAt: -1 
           });
-        console.log("✅ Fetched organizing committee after creation for brochure:", organizingCommittee.length);
+
       } catch (error) {
         console.error("❌ Error creating default organizing committee members for brochure:", error);
       }
@@ -87,9 +85,6 @@ export const generateBrochurePDF = async (req, res) => {
     organizingCommittee.forEach(member => {
       console.log(`📋 Brochure Committee Member: ${member.role} - ${member.name} (${member.roleCategory})`);
     });
-    
-    console.log("Generating brochure PDF for programme:", programme.title);
-    console.log("✅ Fetched organizing committee for brochure:", organizingCommittee.length);
 
     const doc = new PDFDocument({ margin: 15 });
     const pageWidth = doc.page.width;
@@ -110,7 +105,6 @@ export const generateBrochurePDF = async (req, res) => {
       doc.on("end", async () => {
         try {
           const pdfData = Buffer.concat(buffers);
-          console.log("Brochure PDF generation complete, buffer size:", pdfData.length);
 
           // Store PDF in MongoDB
           programme.brochurePDF = {
@@ -120,7 +114,6 @@ export const generateBrochurePDF = async (req, res) => {
           };
 
           await programme.save();
-          console.log("✅ Brochure PDF stored successfully in database");
 
           // Send PDF to browser
           res.setHeader("Content-Type", "application/pdf");
@@ -208,7 +201,7 @@ export const generateBrochurePDF = async (req, res) => {
           doc.image(logoPath, 15, 5, { width: 25, height: 25 });
         }
       } catch (error) {
-        console.log("Logo not found, continuing without logo");
+
       }
       
       // Anna University Text (centered)
@@ -522,8 +515,6 @@ export const generateBrochurePDF = async (req, res) => {
         return acc;
       }, {});
 
-      console.log("📋 Displaying organizing committee in brochure:", organizingCommittee.length, "members");
-      
       // Define category display order and names
       const categoryOrder = {
         'PATRON': { name: 'PATRONS', order: 1 },
@@ -578,15 +569,14 @@ export const generateBrochurePDF = async (req, res) => {
           if (member.department) {
             memberText += `, ${member.department}`;
           }
-          
-          console.log(`📋 Adding member: ${memberText}`);
+
           addWrappedText(memberText, margin + 10, currentY, contentWidth - 10, 9);
           currentY += 2; // Small spacing between members
         });
         currentY += sectionSpacing;
       });
     } else {
-      console.log("⚠️ No organizing committee members found for brochure");
+
       addSectionHeader('ORGANIZING COMMITTEE');
       addWrappedText('Organizing committee information will be updated soon.', margin, currentY, contentWidth, 9);
       currentY += sectionSpacing;
@@ -618,7 +608,7 @@ export const generateBrochurePDF = async (req, res) => {
           doc.image(logoPath, 15, footerY - 2, { width: 20, height: 20 });
         }
       } catch (error) {
-        console.log("Logo not found for footer");
+
       }
       
       doc.fillColor('white')
@@ -744,8 +734,6 @@ export const saveBrochurePDF = async (req, res) => {
       });
     }
 
-    console.log("Saving frontend-generated brochure PDF for programme:", programme.title);
-
     // Save the PDF to the database
     programme.brochurePDF = {
       data: req.file.buffer,
@@ -754,7 +742,6 @@ export const saveBrochurePDF = async (req, res) => {
     };
 
     await programme.save();
-    console.log("✅ Frontend brochure PDF saved successfully in database");
 
     res.status(200).json({
       success: true,

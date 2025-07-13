@@ -15,7 +15,7 @@ const loadImageAsBase64 = (src) => {
       resolve(dataURL);
     };
     img.onerror = function() {
-      console.log('Failed to load logo');
+
       resolve(null);
     };
     img.src = src;
@@ -71,7 +71,7 @@ export const generateEventBrochure = async (event) => {
       try {
         doc.addImage(logoBase64, 'JPEG', 15, 5, 25, 25);
       } catch (error) {
-        console.log('Error adding logo to PDF:', error);
+
       }
     }
     
@@ -1036,15 +1036,11 @@ The Department imparts **world-class training and research platforms** to studen
     }
 
     // Organizing Committee section (dynamic from database)
-    console.log('=== ORGANIZING COMMITTEE DEBUG ===');
-    console.log('Event organizingCommittee:', event.organizingCommittee);
-    console.log('Event coordinators:', event.coordinators);
-    console.log('Type of organizingCommittee:', typeof event.organizingCommittee);
+
     console.log('Is array?:', Array.isArray(event.organizingCommittee));
-    console.log('Length:', event.organizingCommittee?.length);
+
     console.log('Keys in event object:', Object.keys(event));
-    console.log('===================================');
-    
+
     if (event.organizingCommittee && event.organizingCommittee.length > 0) {
       addSectionHeader('ORGANIZING COMMITTEE');
       
@@ -1250,7 +1246,7 @@ The Department imparts **world-class training and research platforms** to studen
         try {
           doc.addImage(logoBase64, 'JPEG', 15, footerY - 2, 20, 20);
         } catch (error) {
-          console.log('Error adding footer logo:', error);
+
         }
       }
       

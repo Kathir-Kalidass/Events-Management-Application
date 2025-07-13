@@ -12,16 +12,12 @@ export const syncBudgetWithClaimBill = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    console.log('🔄 Starting budget sync for event:', event.title);
-    
     // Get budget breakdown expenses
     const budgetExpenses = event.budgetBreakdown?.expenses || [];
-    console.log('📊 Budget breakdown expenses:', budgetExpenses);
-    
+
     // Get current claim bill expenses
     const claimExpenses = event.claimBill?.expenses || [];
-    console.log('📊 Current claim bill expenses:', claimExpenses);
-    
+
     if (budgetExpenses.length === 0) {
       return res.status(400).json({ 
         message: "No budget breakdown expenses found to sync" 
@@ -71,8 +67,6 @@ export const syncBudgetWithClaimBill = asyncHandler(async (req, res) => {
       }
     });
 
-    console.log('✅ Synced expenses:', syncedExpenses);
-
     // Calculate totals
     const totalBudgetAmount = syncedExpenses.reduce(
       (sum, exp) => sum + (exp.budgetAmount || 0), 0
@@ -103,14 +97,6 @@ export const syncBudgetWithClaimBill = asyncHandler(async (req, res) => {
     // Save the updated event
     event.markModified('claimBill');
     await event.save();
-
-    console.log('💾 Budget sync completed successfully');
-    console.log('📊 Final totals:', {
-      totalBudgetAmount,
-      totalActualAmount,
-      totalApprovedAmount,
-      expenseCount: syncedExpenses.length
-    });
 
     res.json({
       message: "Budget breakdown synced with claim bill successfully",
@@ -301,8 +287,6 @@ export const fixEventBudgetSync = asyncHandler(async (req, res) => {
     event.markModified('budgetBreakdown');
     await event.save();
 
-    console.log('✅ Event budget sync fixed:', result);
-
     res.json({
       message: "Event budget synchronization fixed successfully",
       ...result,
@@ -322,14 +306,11 @@ export const fixEventBudgetSync = asyncHandler(async (req, res) => {
 // Bulk sync all events that have discrepancies
 export const bulkSyncAllEvents = asyncHandler(async (req, res) => {
   try {
-    console.log('🔄 Starting bulk sync of all events...');
-    
+
     // Find all events that have budget breakdown but incomplete claim bills
     const events = await Event.find({
       'budgetBreakdown.expenses': { $exists: true, $ne: [] }
     });
-
-    console.log(`📊 Found ${events.length} events with budget breakdowns`);
 
     let syncedCount = 0;
     let errorCount = 0;
@@ -347,8 +328,7 @@ export const bulkSyncAllEvents = asyncHandler(async (req, res) => {
                          );
 
         if (needsSync) {
-          console.log(`🔄 Syncing event: ${event.title}`);
-          
+
           // Create synced expenses
           const syncedExpenses = budgetExpenses.map(budgetExp => {
             const existingClaimExp = claimExpenses.find(claimExp => 
@@ -427,8 +407,6 @@ export const bulkSyncAllEvents = asyncHandler(async (req, res) => {
         });
       }
     }
-
-    console.log(`✅ Bulk sync completed: ${syncedCount} synced, ${errorCount} errors`);
 
     res.json({
       message: "Bulk sync completed",

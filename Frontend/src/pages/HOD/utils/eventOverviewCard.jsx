@@ -75,11 +75,11 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   }
 
   function updatePendingEvents() {
-    console.log("set pending");
+
   }
 
   function approveEvent(id) {
-    console.log(`approve ${id}`);
+
     setLoading(true);
 
     const token = localStorage.getItem("token");
@@ -99,7 +99,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         updatePendingEvents();
       })
       .catch((error) => {
-        console.log(error.message);
+
       })
       .finally(() => {
         setLoading(false);
@@ -107,7 +107,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   }
 
   function rejectEvent(id) {
-    console.log(`reject ${id}`);
+
     const token = localStorage.getItem("token");
     setLoading(true);
 
@@ -127,7 +127,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
         updatePendingEvents();
       })
       .catch((error) => {
-        console.log(error.message);
+
       })
       .finally(() => {
         setLoading(false);

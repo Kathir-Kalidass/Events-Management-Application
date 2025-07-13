@@ -82,7 +82,7 @@ const PForm = ({ user }) => {
       return;
     }
     try {
-      console.log("🚀 Registering for event:", { participantId, eventId });
+
       await registerEvent({ participantId, eventId });
       alert('Registration successful! You will be redirected to the dashboard.');
       

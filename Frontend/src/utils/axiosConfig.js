@@ -35,8 +35,7 @@ axiosInstance.interceptors.response.use(
           errorData?.message?.includes('invalid signature') ||
           errorData?.message?.includes('Token expired') ||
           errorData?.message?.includes('Authentication failed')) {
-        
-        console.log('🧹 Clearing invalid/expired token and redirecting to login');
+
         localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
         

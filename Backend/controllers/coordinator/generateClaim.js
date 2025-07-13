@@ -40,12 +40,12 @@ function convertToWords(num) {
 }
 
 export const generateClaimBillPDF2 = async (req, res) => {
-  console.log("creating pdf in generateClaimBillPDF2");
+
   try {
     const programme = await event.findById(req.params.id);
     
     if (!programme || !programme.claimBill) {
-      console.log("404");
+
       return res
         .status(404)
         .json({ message: "Programme or Claim Bill not found" });
@@ -77,8 +77,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
     // Create abbreviations for signatures
     const primaryAbbrev = getDeptAbbreviation(primaryDept);
     const associativeAbbrevs = associativeDepts.map(d => getDeptAbbreviation(d));
-    
-    console.log("Dynamic departments:", { primaryDept, associativeDepts, deptHeaderText });
 
     const doc = new PDFDocument({ margin: 50 });
 
@@ -91,7 +89,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
       doc.on("end", async () => {
         try {
           const pdfData = Buffer.concat(buffers);
-          console.log("PDF generation complete, buffer size:", pdfData.length);
 
           // Store PDF in MongoDB
           programme.claimPDF = {
@@ -101,7 +98,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
           };
 
           await programme.save();
-          console.log("✅ PDF stored successfully in database");
 
           // Send PDF to browser
           res.setHeader("Content-Type", "application/pdf");
@@ -339,8 +335,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
     // Reset position and move down
     doc.moveDown(2);
 
-
-
     doc
       .fontSize(12)
       .font("Helvetica")
@@ -377,10 +371,8 @@ export const generateClaimBillPDF2 = async (req, res) => {
       )
       .moveDown(1);
 
-    console.log(`total : ${total}`);
     const safeTotal = isNaN(total) ? 0 : total;
-    console.log("Safe total:", safeTotal);
-   
+
     const totalAmount = `Rs. ${safeTotal.toFixed(2)}/-`;
     const totalInWords = convertToWords(Math.floor(safeTotal));
    
@@ -420,8 +412,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
     doc.text("Director", { align: "right" });
     doc.text("Centre for Cyber Security", { align: "right" });
 
-    console.log("Ending PDF document...");
-    
     // End the document to trigger the 'end' event
     doc.end();
     
@@ -438,7 +428,6 @@ export const generateClaimBillPDF2 = async (req, res) => {
     }
   }
 };
-
 
 /*
 function convertToWords(num) {
@@ -478,13 +467,12 @@ function convertToWords(num) {
   }
 }
 export const generateClaimBillPDF2 = async (req, res) => {
-  console.log("creating pdf in generateClaimBillPDF2");
+
   try {
     const programme = await event.findById(req.params.id);
     
     if (!programme || !programme.claimBill) {
 
-      console.log("404");
       return res
         .status(404)
         .json({ message: "Programme or Claim Bill not found" });
@@ -558,7 +546,7 @@ export const generateClaimBillPDF2 = async (req, res) => {
     doc.moveDown(0.5);
 
     const expenses = programme.claimBill.expenses || [];
-    console.log("Expenses:", expenses);
+
     let total = 0;
     
     doc.font("Helvetica");
@@ -643,10 +631,8 @@ export const generateClaimBillPDF2 = async (req, res) => {
       )
       .moveDown(1);
 
-    console.log(`total : ${total}`);
     const safeTotal = isNaN(total) ? 0 : total;
-    console.log(safeTotal);
-   
+
     const totalAmount = `Rs. ${safeTotal.toFixed(2)}/-`;
     const totalInWords = convertToWords(Math.floor(safeTotal));
    
@@ -701,8 +687,7 @@ export const generateClaimBillPDF2 = async (req, res) => {
     );
     
     if (storeResult.success) {
-      console.log("✅ PDF stored successfully:", storeResult.data.fileName);
-      
+
       // Send PDF to browser
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(

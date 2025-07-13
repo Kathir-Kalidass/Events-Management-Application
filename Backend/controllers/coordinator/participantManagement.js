@@ -122,7 +122,7 @@ export const getEventParticipants = asyncHandler(async (req, res) => {
       await ParticipantEvent.deleteMany({ 
         _id: { $in: orphanedRecords.map(r => r.participantEventId) } 
       });
-      console.log(`🧹 Cleaned up ${orphanedRecords.length} orphaned records`);
+
     }
     
     console.log(`📊 Found ${participants.length} participants for event ${eventId} (${orphanedRecords.length} orphaned)`);
@@ -432,9 +432,7 @@ export const bulkApproveParticipants = asyncHandler(async (req, res) => {
   try {
     const { participantIds, eventId } = req.body;
     const coordinatorId = req.user._id;
-    
-    console.log('Bulk approve request:', { participantIds, eventId, coordinatorId });
-    
+
     // Verify coordinator owns this event
     const event = await Event.findOne({ _id: eventId, createdBy: coordinatorId });
     if (!event) {
@@ -458,9 +456,7 @@ export const bulkApproveParticipants = asyncHandler(async (req, res) => {
         }
       }
     );
-    
-    console.log('Bulk approve result:', updateResult);
-    
+
     res.status(200).json({
       success: true,
       message: `${updateResult.modifiedCount} participants approved successfully`,

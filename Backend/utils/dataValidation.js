@@ -31,8 +31,6 @@ export const validateParticipantEvents = async (autoFix = false, eventId = null)
     const participantEvents = await ParticipantEvent.find(query);
     report.totalChecked = participantEvents.length;
 
-    console.log(`🔍 Checking ${participantEvents.length} ParticipantEvent records...`);
-
     for (const pe of participantEvents) {
       try {
         // Check if participant exists
@@ -65,13 +63,12 @@ export const validateParticipantEvents = async (autoFix = false, eventId = null)
                 newParticipantId: availableParticipants[0]._id,
                 newParticipantName: availableParticipants[0].name
               });
-              
-              console.log(`✅ Fixed ParticipantEvent ${pe._id} - assigned to ${availableParticipants[0].name}`);
+
             } else {
               // No participants available, delete the orphaned record
               await ParticipantEvent.findByIdAndDelete(pe._id);
               report.deletedRecords.push(orphanedRecord);
-              console.log(`🗑️ Deleted orphaned ParticipantEvent ${pe._id} - no participants available`);
+
             }
           }
         }
@@ -90,7 +87,7 @@ export const validateParticipantEvents = async (autoFix = false, eventId = null)
               reason: 'Event not found',
               eventId: pe.eventId
             });
-            console.log(`🗑️ Deleted ParticipantEvent ${pe._id} - event ${pe.eventId} not found`);
+
           }
         }
 
@@ -152,8 +149,7 @@ export const createValidatedParticipantEvent = async (eventId, participantId, op
     });
 
     await participantEvent.save();
-    
-    console.log(`✅ Created validated ParticipantEvent: ${participantEvent._id}`);
+
     return { success: true, participantEvent };
 
   } catch (error) {
@@ -189,24 +185,23 @@ export const validateDataIntegrity = async (options = {}) => {
   };
 
   try {
-    console.log('🔍 Starting data integrity validation...');
 
     // Validate ParticipantEvents
     if (checkParticipantEvents) {
-      console.log('📋 Validating ParticipantEvents...');
+
       report.participantEvents = await validateParticipantEvents(autoFix);
     }
 
     // Validate Events (check for orphaned events, etc.)
     if (checkEvents) {
-      console.log('📅 Validating Events...');
+
       // Add event validation logic here if needed
       report.events = { message: 'Event validation not implemented yet' };
     }
 
     // Validate Users (check for orphaned users, etc.)
     if (checkUsers) {
-      console.log('👥 Validating Users...');
+
       // Add user validation logic here if needed
       report.users = { message: 'User validation not implemented yet' };
     }
@@ -217,9 +212,6 @@ export const validateDataIntegrity = async (options = {}) => {
       report.summary.fixedIssues += report.participantEvents.fixedRecords.length + report.participantEvents.deletedRecords.length;
     }
     report.summary.remainingIssues = report.summary.totalIssues - report.summary.fixedIssues;
-
-    console.log('✅ Data integrity validation completed');
-    console.log(`📊 Summary: ${report.summary.totalIssues} issues found, ${report.summary.fixedIssues} fixed, ${report.summary.remainingIssues} remaining`);
 
     return report;
 
@@ -235,8 +227,7 @@ export const validateDataIntegrity = async (options = {}) => {
  */
 export const scheduledDataCleanup = async () => {
   try {
-    console.log('🧹 Running scheduled data cleanup...');
-    
+
     const report = await validateDataIntegrity({ 
       autoFix: true,
       checkParticipantEvents: true 

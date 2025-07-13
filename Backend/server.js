@@ -37,8 +37,7 @@ app.use("/api/debug", debugRoutes);
 app.use("/api/certificates", certificateRoutes);
 
 app.listen(process.env.PORT,"0.0.0.0", ()=>{
-  console.log(`server started: http://localhost:${process.env.PORT}`);
-  
+
   // Initialize data validation after server starts
   initializeDataValidation({
     runOnStartup: true,

@@ -13,7 +13,6 @@ const ApprovedEvents = () => {
     setPendingEvents(events.filter(event => event.status==="approved"));
   }, []);
 
-
   return (
     <Box
       sx={{

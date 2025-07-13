@@ -49,8 +49,7 @@ export const handleClaimBillSubmission = async (req, res) => {
 
     // ✅ CRITICAL: Synchronize budget breakdown with claim bill
     if (programme.budgetBreakdown) {
-      console.log("🔄 Synchronizing budget breakdown with claim bill submission");
-      
+
       // Update the main budget breakdown with actual claim expenses
       programme.budgetBreakdown.expenses = expenses;
       programme.budgetBreakdown.totalExpenditure = totalClaimExpenditure;
@@ -68,12 +67,6 @@ export const handleClaimBillSubmission = async (req, res) => {
     }
 
     await programme.save();
-
-    console.log("✅ Claim bill submitted and synchronized successfully");
-    console.log("📊 Claim expenses:", expenses);
-    console.log("📊 Budget breakdown expenses:", programme.budgetBreakdown.expenses);
-    console.log("💰 Claim total expenditure:", programme.claimBill.totalExpenditure);
-    console.log("💰 Budget total expenditure:", programme.budgetBreakdown.totalExpenditure);
 
     res.status(200).json({ 
       message: "Claim bill stored and synchronized successfully", 
@@ -108,9 +101,6 @@ export const getProgrammeForClaim = async (req, res) => {
       availableExpenses = programme.budgetBreakdown.expenses;
       expenseSource = 'budgetBreakdown';
     }
-
-    console.log("📊 Available expenses for claim:", availableExpenses);
-    console.log("🔍 Expense source:", expenseSource);
 
     const responseData = {
       ...programme.toObject(),

@@ -8,19 +8,15 @@ import User from "../../models/userModel.js";
 export const debugParticipantData = asyncHandler(async (req, res) => {
   try {
     const { id: eventId } = req.params;
-    
-    console.log('Debug: Checking data for event:', eventId);
-    
+
     // Check ParticipantEvent collection
     const participantEvents = await ParticipantEvent.find({ eventId }).limit(5);
-    console.log('ParticipantEvent documents:', participantEvents);
-    
+
     // Check if we can populate participantId
     const populatedEvents = await ParticipantEvent.find({ eventId })
       .populate('participantId')
       .limit(5);
-    console.log('Populated ParticipantEvent documents:', populatedEvents);
-    
+
     res.status(200).json({
       success: true,
       debug: {
@@ -42,28 +38,24 @@ export const debugParticipantData = asyncHandler(async (req, res) => {
 export const getApprovedEventParticipants = asyncHandler(async (req, res) => {
   try {
     const { id: eventId } = req.params;
-    
-    console.log('HOD fetching participants for event:', eventId);
-    
+
     // Verify event exists
     const event = await Event.findById(eventId);
     if (!event) {
-      console.log('Event not found:', eventId);
+
       return res.status(404).json({
         success: false,
         message: "Event not found"
       });
     }
-    
-    console.log('Event found:', event.title);
-    
+
     // First, let's check all registrations for this event (for debugging)
     const allRegistrations = await ParticipantEvent.find({ eventId });
     console.log('Total registrations for this event (all statuses):', allRegistrations.length);
     
     // Log each registration's status
     allRegistrations.forEach((registration, index) => {
-      console.log(`Registration ${index + 1}: participantId: ${registration.participantId}, approved: ${registration.approved}`);
+
     });
     
     // Find only approved participant registrations for this specific event
@@ -75,9 +67,7 @@ export const getApprovedEventParticipants = asyncHandler(async (req, res) => {
     .populate('approvedBy', 'name')
     .populate('attendanceMarkedBy', 'name')
     .sort({ createdAt: -1 });
-    
-    console.log('Found approved registrations:', approvedRegistrations.length);
-    
+
     // Format the response to match the expected structure
     const participants = approvedRegistrations.map(registration => {
       const participant = registration.participantId;
@@ -107,9 +97,7 @@ export const getApprovedEventParticipants = asyncHandler(async (req, res) => {
       }
       return null;
     }).filter(Boolean);
-    
-    console.log('Formatted participants:', participants.length);
-    
+
     res.status(200).json({
       success: true,
       event: {

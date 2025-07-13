@@ -787,20 +787,19 @@ class CertificateGenerationService {
     
     try {
       if (formats.includes('pdf')) {
-        console.log('Generating PDF certificate...');
+
         results.pdfBuffer = await this.generatePDFCertificate(certificateData);
         results.pdfSize = results.pdfBuffer.length;
-        console.log(`PDF generated: ${results.pdfSize} bytes`);
+
       }
       
       if (formats.includes('image')) {
-        console.log('Generating image certificate...');
+
         results.imageBuffer = await this.generateImageCertificate(certificateData);
         results.imageSize = results.imageBuffer.length;
-        console.log(`Image generated: ${results.imageSize} bytes`);
+
       }
-      
-      console.log('Certificate generation completed successfully');
+
       return results;
     } catch (error) {
       console.error('Error in certificate generation:', error);

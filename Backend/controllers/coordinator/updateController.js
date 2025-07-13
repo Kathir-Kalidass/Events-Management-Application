@@ -77,9 +77,7 @@ export const updateProgramme = async (req, res) => {
     // ✅ CRITICAL FIX: Handle budget breakdown updates with proper synchronization
     if (budgetBreakdown) {
       const newBudgetBreakdown = safeJSONParse(budgetBreakdown, "budgetBreakdown");
-      
-      console.log("🔄 Updating budget breakdown with new data:", newBudgetBreakdown);
-      
+
       // Update budget breakdown
       programme.budgetBreakdown = newBudgetBreakdown;
       
@@ -94,7 +92,7 @@ export const updateProgramme = async (req, res) => {
         
         // ✅ CRITICAL: Update claim bill to match budget breakdown
         if (programme.claimBill) {
-          console.log("🔄 Synchronizing claim bill with updated budget breakdown");
+
           programme.claimBill.expenses = newBudgetBreakdown.expenses;
           programme.claimBill.totalExpenditure = newTotalExpenditure;
           
@@ -102,7 +100,7 @@ export const updateProgramme = async (req, res) => {
           // programme.claimBill.claimSubmitted remains unchanged
           // programme.claimBill.createdAt remains unchanged
         } else {
-          console.log("🔄 Creating new claim bill from budget breakdown");
+
           programme.claimBill = {
             expenses: newBudgetBreakdown.expenses,
             totalExpenditure: newTotalExpenditure,
@@ -114,12 +112,7 @@ export const updateProgramme = async (req, res) => {
         if (programme.budgetBreakdown.universityOverhead) {
           programme.budgetBreakdown.totalExpenditure += Number(programme.budgetBreakdown.universityOverhead);
         }
-        
-        console.log("✅ Synchronized expenses after update:");
-        console.log("📊 Budget breakdown expenses:", programme.budgetBreakdown.expenses);
-        console.log("📊 Claim bill expenses:", programme.claimBill.expenses);
-        console.log("💰 Budget total expenditure:", programme.budgetBreakdown.totalExpenditure);
-        console.log("💰 Claim total expenditure:", programme.claimBill.totalExpenditure);
+
       }
     }
 
@@ -148,12 +141,7 @@ export const updateProgramme = async (req, res) => {
     const updatedProgramme = await programme.save();
     
     // ✅ Log the updated information for debugging
-    console.log("✅ Programme updated successfully");
-    console.log("📊 Final budget breakdown expenses:", updatedProgramme.budgetBreakdown?.expenses);
-    console.log("📊 Final claim bill expenses:", updatedProgramme.claimBill?.expenses);
-    console.log("🔢 Final budget total expenditure:", updatedProgramme.budgetBreakdown?.totalExpenditure);
-    console.log("🔢 Final claim total expenditure:", updatedProgramme.claimBill?.totalExpenditure);
-    
+
     res.json(updatedProgramme);
   } catch (error) {
     console.error("❌ Error updating programme:", error);

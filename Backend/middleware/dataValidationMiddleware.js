@@ -17,15 +17,13 @@ export const initializeDataValidation = (options = {}) => {
     autoFix = false
   } = options;
 
-  console.log('🔧 Initializing data validation middleware...');
-
   // Run validation on startup
   if (runOnStartup) {
     setTimeout(async () => {
       try {
-        console.log('🚀 Running startup data validation...');
+
         await scheduledDataCleanup();
-        console.log('✅ Startup data validation completed');
+
       } catch (error) {
         console.error('❌ Startup data validation failed:', error.message);
       }
@@ -36,15 +34,14 @@ export const initializeDataValidation = (options = {}) => {
   if (intervalMinutes > 0) {
     validationInterval = setInterval(async () => {
       try {
-        console.log('⏰ Running scheduled data validation...');
+
         await scheduledDataCleanup();
-        console.log('✅ Scheduled data validation completed');
+
       } catch (error) {
         console.error('❌ Scheduled data validation failed:', error.message);
       }
     }, intervalMinutes * 60 * 1000);
 
-    console.log(`📅 Scheduled data validation every ${intervalMinutes} minutes`);
   }
 };
 
@@ -55,7 +52,7 @@ export const stopDataValidation = () => {
   if (validationInterval) {
     clearInterval(validationInterval);
     validationInterval = null;
-    console.log('🛑 Data validation interval stopped');
+
   }
 };
 
@@ -71,7 +68,7 @@ export const validateDataMiddleware = (options = {}) => {
       const shouldValidate = req.path.includes('/participants') || req.query.validate === 'true';
       
       if (shouldValidate) {
-        console.log('🔍 Running data validation middleware...');
+
         const { validateDataIntegrity } = await import('../utils/dataValidation.js');
         
         const report = await validateDataIntegrity({ 

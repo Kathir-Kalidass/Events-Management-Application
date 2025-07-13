@@ -110,7 +110,7 @@ const HODEventDashboard = () => {
         setParticipants([]);
       }
     } catch (error) {
-      console.log("Participants not found or error:", error);
+
       setParticipants([]);
     }
   };

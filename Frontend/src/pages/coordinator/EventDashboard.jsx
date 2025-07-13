@@ -123,9 +123,9 @@ const CoordinatorEventDashboard = () => {
         setParticipants([]);
       }
     } catch (error) {
-      console.log("Participants not found or error:", error);
+
       if (error.response?.status === 404) {
-        console.log("Event not found or no participants registered");
+
       }
       setParticipants([]);
     }
@@ -415,7 +415,7 @@ const CoordinatorEventDashboard = () => {
   // Generate brochure using frontend generator (with designs and logo)
   const generateStyledBrochure = async () => {
     try {
-      console.log("Generating styled brochure with frontend generator...");
+
       const brochureDoc = await generateEventBrochure(event);
       
       if (brochureDoc) {
@@ -441,8 +441,7 @@ const CoordinatorEventDashboard = () => {
 
   const downloadCompleteBrochure = async () => {
     try {
-      console.log("Generating styled brochure with organizing committee data...");
-      
+
       // Fetch event data with organizing committee from HOD API
       let eventWithOrganizingCommittee;
       try {
@@ -450,7 +449,7 @@ const CoordinatorEventDashboard = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         eventWithOrganizingCommittee = response.data;
-        console.log("Event data fetched from HOD API with organizing committee");
+
       } catch (hodApiError) {
         console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
         eventWithOrganizingCommittee = event;
@@ -475,7 +474,7 @@ const CoordinatorEventDashboard = () => {
           },
           body: formData
         });
-        console.log("Brochure saved to backend successfully");
+
       } catch (saveError) {
         console.warn("Failed to save brochure to backend:", saveError.message);
         // Continue with download even if save fails
@@ -506,6 +505,57 @@ const CoordinatorEventDashboard = () => {
     } catch (error) {
       console.error("Error generating styled brochure:", error.message);
       alert(`Failed to generate brochure: ${error.message}`);
+    }
+  };
+
+  const viewProposalPDF = async () => {
+    try {
+      console.log("Opening programme PDF (note order)...");
+      
+      // Call the backend endpoint to generate the programme PDF
+      const response = await fetch(`http://localhost:5050/api/coordinator/programmes/${eventId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to generate programme PDF: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the PDF blob from the response
+      const pdfBlob = await response.blob();
+      
+      // Create a URL for the PDF blob
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      
+      // Try to open in a new window/tab
+      const newWindow = window.open(pdfUrl, '_blank');
+      
+      // Check if popup was blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: trigger download instead
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `NoteOrder_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        enqueueSnackbar('Programme PDF downloaded (popup blocked)', { variant: 'info' });
+      } else {
+        enqueueSnackbar('Programme PDF opened in new tab', { variant: 'success' });
+      }
+
+      // Clean up the URL after a reasonable time
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 10000);
+      
+    } catch (error) {
+      console.error("Error opening programme PDF:", error.message);
+      enqueueSnackbar(`Failed to open programme PDF: ${error.message}`, { variant: "error" });
     }
   };
 
@@ -1180,9 +1230,13 @@ const CoordinatorEventDashboard = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
-                      Proposal Letter
+                      Note Order
                     </Typography>
-                    <Button variant="outlined" startIcon={<Visibility />}>
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<Visibility />}
+                      onClick={viewProposalPDF}
+                    >
                       View Proposal
                     </Button>
                   </CardContent>

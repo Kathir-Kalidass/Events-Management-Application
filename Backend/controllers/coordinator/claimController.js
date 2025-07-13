@@ -316,14 +316,11 @@ export const updateClaimStatus = asyncHandler(async (req, res) => {
 // Get claim statistics
 export const getClaimStatistics = asyncHandler(async (req, res) => {
   try {
-    console.log('📊 Starting claim statistics calculation...');
-    
+
     // Get events with claim bills and calculate real statistics
     const coordinatorEvents = await Event.find({ 
       'claimBill': { $exists: true }
     }).select('claimBill title startDate endDate createdAt');
-
-    console.log('📊 Found events with claim bills:', coordinatorEvents.length);
 
     // Calculate statistics with safe defaults
     const totalClaims = coordinatorEvents.length || 0;

@@ -1,6 +1,156 @@
-# Events Management Application
+# 🎓 Events Management Application
 
-A comprehensive web application for managing educational events, training programs, workshops, and certificate courses at Anna University. The system provides role-based access for HODs, Coordinators, and Participants with features for event creation, registration, brochure generation, and certificate management.
+<div align="center">
+
+![Events Management](https://img.shields.io/badge/Events-Management-blue?style=for-the-badge)
+![MERN Stack](https://img.shields.io/badge/MERN-Stack-green?style=for-the-badge)
+![Anna University](https://img.shields.io/badge/Anna-University-red?style=for-the-badge)
+
+**A comprehensive web application for managing educational events, training programs, workshops, and certificate courses at Anna University**
+
+[![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
+[![Node.js](https://img.shields.io/badge/Node.js-v16+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-v19.1.0-blue.svg)](https://reactjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-v4.4+-green.svg)](https://www.mongodb.com/)
+
+[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-api-documentation) • [🤝 Contributing](#-contributing) • [📞 Support](#-support)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [🌟 Features](#-features)
+- [🏗️ System Architecture](#️-system-architecture)
+- [🛠️ Technology Stack](#️-technology-stack)
+- [🚀 Quick Start](#-quick-start)
+- [📁 Project Structure](#-project-structure)
+- [📖 API Documentation](#-api-documentation)
+- [🎨 Module 4: Events Management](#-module-4-events-management)
+- [🔧 Development Guide](#-development-guide)
+- [🧪 Testing](#-testing)
+- [🚀 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+---
+
+## 🌟 Features
+
+### 🏢 **Multi-Role System with Advanced Permissions**
+- **👨‍💼 HOD (Head of Department)**: 
+  - Create and approve events
+  - Manage organizing committees
+  - View department-wide analytics
+  - Download claim PDFs and reports
+  - Add approval comments
+- **👨‍🏫 Coordinator**: 
+  - Manage assigned events
+  - Generate professional brochures
+  - Handle participant registrations
+  - Process claims and budgets
+  - Generate certificates
+  - Manage feedback statistics
+- **👨‍🎓 Participant**: 
+  - Register for events
+  - View certificates
+  - Provide feedback
+  - Track completed events
+- **🔧 Admin**: 
+  - Manage feedback questions
+  - System-wide configuration
+  - User role management
+
+### 📋 **Comprehensive Event Management**
+- **🎯 Dynamic Event Creation**: 
+  - Customizable event types (workshops, training programs, seminars, courses)
+  - Comprehensive event schema with 50+ fields
+  - Multi-department organizing support
+  - Advanced registration procedures
+- **👥 Organizing Committee Management**: 
+  - Add committee members with roles and designations
+  - Department-wise committee assignment
+  - HOD approval workflow
+- **📝 Registration System**: 
+  - Flexible registration forms
+  - Payment integration support
+  - Evaluation criteria configuration
+  - Participant limit management
+- **📊 Real-time Dashboard**: 
+  - Live statistics and analytics
+  - Participant management
+  - Event status tracking
+
+### 📄 **Advanced Document Generation**
+- **🎨 Professional Brochures**: 
+  - AI-enhanced content generation
+  - Anna University branding
+  - Dynamic layout system
+  - Multi-format export (PDF, PNG)
+- **🏆 Certificate System**: 
+  - Automated certificate generation
+  - Bulk processing capabilities
+  - QR code verification
+  - Template customization
+  - Download tracking
+- **💰 Claim Processing**: 
+  - Template-based claim generation
+  - Expense categorization
+  - Approval workflow
+  - PDF generation with signatures
+- **📋 Form Generation**: 
+  - Dynamic registration forms
+  - Custom field support
+  - Validation rules
+  - Integration with brochures
+
+### 💰 **Financial Management**
+- **📊 Budget Tracking**: 
+  - Income and expense categorization
+  - Real-time budget monitoring
+  - University overhead calculation (30%)
+  - GST handling
+- **🧾 Claim Processing**: 
+  - Item-wise claim management
+  - Approval workflow
+  - Receipt generation
+  - Status tracking
+- **💳 Payment Integration**: 
+  - Bank account management
+  - Payment details in brochures
+  - Fee collection tracking
+
+### 📊 **Analytics & Reporting**
+- **📈 Event Statistics**: 
+  - Participant analytics
+  - Completion rates
+  - Feedback scores
+  - Financial summaries
+- **📋 Dashboard Analytics**: 
+  - Visual charts and graphs
+  - Real-time data updates
+  - Export capabilities
+- **📄 Report Generation**: 
+  - Participant lists
+  - Certificate reports
+  - Financial reports
+  - Feedback analysis
+
+### 🔐 **Security & Authentication**
+- **🔑 JWT-based Authentication**: 
+  - Secure login system
+  - Token refresh mechanism
+  - Session management
+- **🛡️ Role-based Authorization**: 
+  - Granular permissions
+  - Route protection
+  - API endpoint security
+- **🔒 Data Protection**: 
+  - Password encryption (Bcrypt)
+  - Input validation
+  - SQL injection prevention
+  - XSS protection
 
 ## 🌟 Features
 
@@ -45,28 +195,99 @@ A comprehensive web application for managing educational events, training progra
 - **Dashboard Analytics**: Visual charts and graphs using Recharts
 - **Export Capabilities**: Download participant lists, certificates, and reports
 
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        A[React App] --> B[Material-UI Components]
+        A --> C[React Router]
+        A --> D[Axios HTTP Client]
+    end
+    
+    subgraph "Backend Layer"
+        E[Express.js Server] --> F[JWT Authentication]
+        E --> G[Role-based Middleware]
+        E --> H[API Routes]
+    end
+    
+    subgraph "Database Layer"
+        I[MongoDB] --> J[Event Collection]
+        I --> K[User Collection]
+        I --> L[Certificate Collection]
+        I --> M[Claim Collection]
+    end
+    
+    subgraph "Services Layer"
+        N[PDF Generation] --> O[Certificate Service]
+        N --> P[Brochure Service]
+        Q[Email Service] --> R[Notifications]
+        S[File Upload] --> T[Document Management]
+    end
+    
+    A --> E
+    E --> I
+    E --> N
+    E --> Q
+    E --> S
+```
+
+### **Module 4: Events Management (Current Implementation)**
+
+This application currently implements **Module 4** of a comprehensive 10-module system:
+
+```
+📦 Complete System Architecture
+├── 📋 Module 1: Student OD Request & Approval (Planned)
+├── 🎓 Module 2: Student Internship Management (Planned)
+├── 👨‍🏫 Module 3: Faculty OD Request & Approval (Planned)
+├── 🎉 Module 4: Events Conducted by Department (✅ IMPLEMENTED)
+├── 🏢 Module 5: Facility Booking System (Planned)
+├── 📅 Module 6: Timetable & Workload Management (Planned)
+├── 💬 Module 7: Student Course Feedback & Grievances (Planned)
+├── 📊 Module 8: Project Review System (Planned)
+├── 📝 Module 9: PG CS Examination Management (Planned)
+└── 💰 Module 10: Purchase Committee & Claims (Planned)
+```
+
+---
+
 ## 🛠️ Technology Stack
 
-### Frontend
-- **React 19.1.0**: Modern React with hooks and functional components
-- **Material-UI (MUI) 7.1.1**: Professional UI components and theming
-- **Vite**: Fast development server and build tool
-- **React Router DOM 7.6.2**: Client-side routing
-- **Axios 1.10.0**: HTTP client for API calls
-- **jsPDF 3.0.1**: PDF generation for brochures and documents
-- **Recharts 2.15.3**: Data visualization and charts
-- **Notistack 3.0.2**: Toast notifications
+<div align="center">
 
-### Backend
-- **Node.js**: JavaScript runtime environment
-- **Express.js 5.1.0**: Web application framework
-- **MongoDB**: NoSQL database for data storage
-- **Mongoose 8.16.1**: MongoDB object modeling
-- **JWT**: JSON Web Tokens for authentication
-- **Bcrypt 6.0.0**: Password hashing
-- **Multer 2.0.1**: File upload handling
-- **PDFKit 0.17.1**: Server-side PDF generation
-- **Nodemailer 7.0.4**: Email sending capabilities
+### **Frontend Technologies**
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| ![React](https://img.shields.io/badge/React-19.1.0-61DAFB?style=flat&logo=react) | 19.1.0 | UI Framework |
+| ![Material-UI](https://img.shields.io/badge/Material--UI-7.1.1-0081CB?style=flat&logo=mui) | 7.1.1 | Component Library |
+| ![Vite](https://img.shields.io/badge/Vite-Latest-646CFF?style=flat&logo=vite) | Latest | Build Tool |
+| ![React Router](https://img.shields.io/badge/React_Router-7.6.2-CA4245?style=flat&logo=react-router) | 7.6.2 | Routing |
+| ![Axios](https://img.shields.io/badge/Axios-1.10.0-5A29E4?style=flat&logo=axios) | 1.10.0 | HTTP Client |
+
+### **Backend Technologies**
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| ![Node.js](https://img.shields.io/badge/Node.js-16+-339933?style=flat&logo=node.js) | 16+ | Runtime |
+| ![Express](https://img.shields.io/badge/Express.js-5.1.0-000000?style=flat&logo=express) | 5.1.0 | Web Framework |
+| ![MongoDB](https://img.shields.io/badge/MongoDB-4.4+-47A248?style=flat&logo=mongodb) | 4.4+ | Database |
+| ![Mongoose](https://img.shields.io/badge/Mongoose-8.16.1-880000?style=flat&logo=mongoose) | 8.16.1 | ODM |
+| ![JWT](https://img.shields.io/badge/JWT-Latest-000000?style=flat&logo=jsonwebtokens) | Latest | Authentication |
+
+### **Additional Libraries**
+| Library | Purpose |
+|---------|---------|
+| 📄 **PDFKit 0.17.1** | Server-side PDF generation |
+| 📧 **Nodemailer 7.0.4** | Email notifications |
+| 🔒 **Bcrypt 6.0.0** | Password hashing |
+| 📁 **Multer 2.0.1** | File upload handling |
+| 📊 **Recharts 2.15.3** | Data visualization |
+| 🔔 **Notistack 3.0.2** | Toast notifications |
+| 📋 **jsPDF 3.0.1** | Client-side PDF generation |
+
+</div>
 
 ## 🚀 Quick Start
 
@@ -233,32 +454,396 @@ Events-Management-Application/
 └── README.md                       # This file
 ```
 
-## 🔧 API Endpoints
+---
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/forgot-password` - Password reset
+## 📖 API Documentation
 
-### HOD Routes
-- `GET /api/hod/dashboard` - HOD dashboard data
-- `POST /api/hod/events` - Create new event
-- `GET /api/hod/events` - Get all events
-- `PUT /api/hod/events/:id/status` - Update event status
-- `POST /api/hod/committee` - Add organizing committee members
+### **Authentication Endpoints**
+```http
+POST /api/auth/register          # User registration
+POST /api/auth/login             # User login
+POST /api/auth/forgot-password   # Password reset
+GET  /api/auth/verify-token      # Token verification
+```
 
-### Coordinator Routes
-- `GET /api/coordinator/dashboard` - Coordinator dashboard
-- `GET /api/coordinator/events/:id` - Get specific event details
-- `POST /api/coordinator/brochure/:eventId` - Generate and save brochure
-- `GET /api/coordinator/brochure/:eventId` - Download brochure PDF
-- `GET /api/coordinator/participants/:eventId` - Get event participants
+### **Admin Endpoints**
+```http
+GET    /api/admin/feedback-questions           # Get all feedback questions
+POST   /api/admin/feedback-questions           # Create feedback question
+PUT    /api/admin/feedback-questions/:id       # Update feedback question
+DELETE /api/admin/feedback-questions/:id       # Delete feedback question
+PUT    /api/admin/feedback-questions/reorder   # Reorder questions
+POST   /api/admin/feedback-questions/initialize # Initialize default questions
+```
 
-### Participant Routes
-- `GET /api/participant/dashboard` - Participant dashboard
-- `POST /api/participant/register/:eventId` - Register for event
-- `GET /api/participant/events/completed` - Get completed events
-- `POST /api/participant/feedback` - Submit event feedback
+### **HOD (Head of Department) Endpoints**
+```http
+GET  /api/hod/events                    # Get all events
+GET  /api/hod/events/pending            # Get pending approvals
+POST /api/hod/events/:id/approve        # Approve event
+POST /api/hod/events/:id/reject         # Reject event
+POST /api/hod/events/:id/comment        # Add approval comment
+GET  /api/hod/participants/:eventId     # Get event participants
+GET  /api/hod/download-claim/:eventId   # Download claim PDF
+PUT  /api/hod/events/:id/status         # Update event status
+```
+
+### **Coordinator Endpoints**
+```http
+GET  /api/coordinator/dashboard                    # Dashboard data
+GET  /api/coordinator/events                       # Get coordinator events
+GET  /api/coordinator/events/:id                   # Get specific event
+POST /api/coordinator/events                       # Create new event
+PUT  /api/coordinator/events/:id                   # Update event
+GET  /api/coordinator/participants/:eventId        # Get participants
+POST /api/coordinator/participants/:eventId        # Add participant
+POST /api/coordinator/brochure/:eventId           # Generate brochure
+GET  /api/coordinator/brochure/:eventId           # Download brochure
+POST /api/coordinator/claims/:eventId             # Submit claim
+GET  /api/coordinator/claims/:eventId             # Get claim details
+POST /api/coordinator/generate-claim/:eventId     # Generate claim PDF
+GET  /api/coordinator/feedback-stats/:eventId     # Get feedback statistics
+POST /api/coordinator/organizing-committee        # Manage committee
+PUT  /api/coordinator/budget-sync/:eventId        # Sync budget data
+```
+
+### **Participant Endpoints**
+```http
+GET  /api/participant/dashboard              # Participant dashboard
+GET  /api/participant/events                 # Available events
+POST /api/participant/register/:eventId      # Register for event
+GET  /api/participant/events/completed       # Completed events
+POST /api/participant/feedback               # Submit feedback
+GET  /api/participant/certificates           # Get certificates
+```
+
+### **Certificate Endpoints**
+```http
+POST /api/certificates/generate              # Generate single certificate
+POST /api/certificates/bulk-generate         # Bulk generate certificates
+GET  /api/certificates/:id                   # Get certificate details
+GET  /api/certificates/download/:id          # Download certificate
+GET  /api/certificates/verify/:id            # Verify certificate (public)
+GET  /api/certificates/event/:eventId        # Get event certificates
+GET  /api/certificates/participant/:userId   # Get user certificates
+```
+
+### **Claim Management Endpoints**
+```http
+GET    /api/claims/:eventId                  # Get event claims
+POST   /api/claims/:eventId                  # Submit claim
+PUT    /api/claims/:eventId/:itemId          # Update claim item
+DELETE /api/claims/:eventId/:itemId          # Delete claim item
+POST   /api/claims/:eventId/approve          # Approve claim
+POST   /api/claims/:eventId/reject           # Reject claim
+GET    /api/claims/:eventId/pdf              # Download claim PDF
+```
+
+### **Budget Sync Endpoints**
+```http
+GET  /api/budget-sync/:eventId               # Get budget data
+POST /api/budget-sync/:eventId               # Sync budget
+PUT  /api/budget-sync/:eventId               # Update budget
+```
+
+---
+
+## 🎨 Module 4: Events Management
+
+### **Current Implementation Features**
+
+<div align="center">
+
+| Feature Category | Implementation Status | Description |
+|------------------|----------------------|-------------|
+| 🎯 **Event Creation** | ✅ Complete | Full event lifecycle management |
+| 👥 **User Management** | ✅ Complete | Multi-role authentication system |
+| 📄 **Document Generation** | ✅ Complete | Brochures, certificates, claims |
+| 💰 **Financial Tracking** | ✅ Complete | Budget management and claims |
+| 📊 **Analytics** | ✅ Complete | Real-time dashboards and reports |
+| 🔐 **Security** | ✅ Complete | JWT auth with role-based access |
+| 📱 **Responsive UI** | ✅ Complete | Material-UI based interface |
+| 🏆 **Certificate System** | ✅ Complete | Automated generation with QR codes |
+
+</div>
+
+### **Event Schema Overview**
+
+The event model includes comprehensive fields for:
+
+```javascript
+// Key Event Fields (50+ total fields)
+{
+  // Basic Information
+  title, startDate, endDate, venue, mode, duration, type,
+  objectives, outcomes, budget, status,
+  
+  // Registration System
+  registrationProcedure: {
+    enabled, instructions, submissionMethod, deadline,
+    participantLimit, selectionCriteria, confirmationDate,
+    certificateRequirements, paymentDetails, registrationForm
+  },
+  
+  // Financial Management
+  budgetBreakdown: {
+    income: [{ category, expectedParticipants, amount, gst }],
+    expenses: [{ category, amount }],
+    totalIncome, totalExpenditure, universityOverhead
+  },
+  
+  // Claims Processing
+  claimBill: {
+    expenses: [{ category, budgetAmount, actualAmount, status }],
+    totalBudgetAmount, totalExpenditure, status, approvedBy
+  },
+  
+  // Multi-Department Support
+  organizingDepartments: {
+    primary: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING",
+    associative: ["CENTRE FOR CYBER SECURITY (CCS)"]
+  },
+  
+  // Approval Workflow
+  departmentApprovers: [{
+    department, hodName, hodDesignation, approved, approvedDate
+  }],
+  
+  // Document Management
+  brochure: { data, contentType, fileName },
+  claimPDF: { data, contentType, fileName },
+  brochurePDF: { data, contentType, fileName }
+}
+```
+
+### **Integration Points for Future Modules**
+
+```mermaid
+graph LR
+    A[Module 4: Events] --> B[Module 1: Student OD]
+    A --> C[Module 2: Internships]
+    A --> D[Module 3: Faculty OD]
+    A --> E[Module 5: Facilities]
+    A --> F[Module 10: Purchase]
+    
+    B --> G[OD Requests for Event Participation]
+    C --> H[Workshop-based Internships]
+    D --> I[Faculty Event Conducting]
+    E --> J[Venue Booking Integration]
+    F --> K[Financial Claims Processing]
+```
+
+### **Database Collections**
+
+| Collection | Purpose | Key Features |
+|------------|---------|--------------|
+| 📅 **events** | Event management | 50+ fields, multi-department support |
+| 👤 **users** | User authentication | Role-based permissions |
+| 👥 **participants** | Participant tracking | Registration and feedback |
+| 🏆 **certificates** | Certificate management | QR verification, bulk generation |
+| 💰 **claims** | Financial claims | Item-wise tracking, approval workflow |
+| 📝 **feedback** | Event feedback | Question bank, analytics |
+| 👨‍💼 **convenorcommittees** | Committee management | Role assignments |
+| 🎓 **trainingprogrammes** | Program specifics | Detailed course information |
+
+---
+
+## 🔧 Development Guide
+
+### **Setting Up Development Environment**
+
+1. **Install Required Tools**
+   ```bash
+   # Install Node.js (v16+)
+   # Install MongoDB (v4.4+)
+   # Install Git
+   # Install VS Code (recommended)
+   ```
+
+2. **Clone and Setup**
+   ```bash
+   git clone https://github.com/DhanushT7/Events-Management-Application.git
+   cd Events-Management-Application
+   npm run setup  # Installs all dependencies
+   ```
+
+3. **Environment Configuration**
+   ```bash
+   # Backend/.env
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/events_management
+   JWT_SECRET=your-super-secret-key
+   NODE_ENV=development
+   
+   # Frontend/.env
+   VITE_API_BASE_URL=http://localhost:5000/api
+   VITE_APP_NAME=Events Management System
+   ```
+
+### **Development Scripts**
+
+```bash
+# Root level commands
+npm run setup           # Install all dependencies
+npm run dev            # Start both frontend and backend
+npm run backend        # Start backend only
+npm run frontend       # Start frontend only
+npm run build          # Build for production
+npm run test           # Run all tests
+npm run clean          # Clean node_modules
+
+# Backend specific
+cd Backend
+npm run dev            # Development with nodemon
+npm run start          # Production start
+npm run test           # Backend tests
+npm run seed           # Seed database
+
+# Frontend specific
+cd Frontend
+npm run dev            # Development server
+npm run build          # Production build
+npm run preview        # Preview production build
+npm run test           # Frontend tests
+```
+
+### **Code Structure Guidelines**
+
+#### **Backend Structure**
+```
+Backend/
+├── controllers/
+│   ├── admin/              # Admin-specific logic
+│   ├── coordinator/        # Coordinator operations
+│   ├── hod/               # HOD management
+│   ├── participant/       # Participant features
+│   └── auth/              # Authentication
+├── models/                # MongoDB schemas
+├── routes/                # API route definitions
+├── middleware/            # Custom middleware
+├── services/              # Business logic
+├── utils/                 # Helper functions
+└���─ config/                # Configuration files
+```
+
+#### **Frontend Structure**
+```
+Frontend/src/
+├── components/            # Reusable UI components
+├── pages/                # Page-level components
+│   ├── Auth/             # Authentication pages
+│   ├── coordinator/      # Coordinator dashboard
+│   ├── HOD/              # HOD interface
+│   └── Participants/     # Participant views
+├── services/             # API integration
+├── context/              # React context providers
+├── hooks/                # Custom React hooks
+├── utils/                # Helper functions
+└── styles/               # CSS and styling
+```
+
+### **Adding New Features**
+
+1. **Backend Feature Development**
+   ```bash
+   # 1. Create model (if needed)
+   touch Backend/models/newFeatureModel.js
+   
+   # 2. Create controller
+   touch Backend/controllers/newFeatureController.js
+   
+   # 3. Create routes
+   touch Backend/routes/newFeatureRoutes.js
+   
+   # 4. Add to main server
+   # Edit Backend/server.js to include new routes
+   ```
+
+2. **Frontend Feature Development**
+   ```bash
+   # 1. Create component
+   touch Frontend/src/components/NewFeature.jsx
+   
+   # 2. Create page (if needed)
+   touch Frontend/src/pages/NewFeaturePage.jsx
+   
+   # 3. Add service functions
+   # Edit Frontend/src/services/api.js
+   
+   # 4. Add routing
+   # Edit Frontend/src/App.jsx
+   ```
+
+### **Testing Guidelines**
+
+#### **Backend Testing**
+```javascript
+// Example test structure
+describe('Event Management', () => {
+  test('should create new event', async () => {
+    const eventData = {
+      title: 'Test Workshop',
+      startDate: new Date(),
+      endDate: new Date(),
+      venue: 'Test Hall'
+    };
+    
+    const response = await request(app)
+      .post('/api/coordinator/events')
+      .set('Authorization', `Bearer ${token}`)
+      .send(eventData)
+      .expect(201);
+      
+    expect(response.body.event.title).toBe('Test Workshop');
+  });
+});
+```
+
+#### **Frontend Testing**
+```javascript
+// Example component test
+import { render, screen } from '@testing-library/react';
+import EventCard from '../components/EventCard';
+
+test('renders event card with title', () => {
+  const mockEvent = {
+    title: 'Test Event',
+    startDate: new Date(),
+    venue: 'Test Venue'
+  };
+  
+  render(<EventCard event={mockEvent} />);
+  expect(screen.getByText('Test Event')).toBeInTheDocument();
+});
+```
+
+### **Performance Optimization**
+
+1. **Backend Optimization**
+   - Database indexing on frequently queried fields
+   - Pagination for large datasets
+   - Caching with Redis (future enhancement)
+   - Image compression for uploads
+
+2. **Frontend Optimization**
+   - Code splitting with React.lazy()
+   - Image optimization and lazy loading
+   - Bundle size optimization
+   - Service worker for caching
+
+### **Security Best Practices**
+
+1. **Authentication & Authorization**
+   - JWT token expiration and refresh
+   - Role-based route protection
+   - Input validation and sanitization
+   - Rate limiting on API endpoints
+
+2. **Data Protection**
+   - Password hashing with bcrypt
+   - HTTPS in production
+   - CORS configuration
+   - Environment variable protection
 
 ## 🎨 Brochure Generation System
 

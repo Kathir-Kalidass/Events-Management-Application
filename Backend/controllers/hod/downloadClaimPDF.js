@@ -40,7 +40,7 @@ export const downloadClaimPDF = async (req, res) => {
                             result.claimPDF.data.length === 0;
 
     if (shouldRegenerate) {
-      console.log(`🔄 ${forceRegenerate === 'true' ? 'Force regenerating' : 'Generating new'} PDF for event ${eventId}...`);
+
       // Redirect to generateClaimBillPDF with the same request/response
       req.params.id = eventId; // Set the id parameter for generateClaimBillPDF
       return await generateClaimBillPDF(req, res);

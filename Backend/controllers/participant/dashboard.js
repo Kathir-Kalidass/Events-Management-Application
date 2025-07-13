@@ -178,8 +178,6 @@ export const giveFeedback = asyncHandler(async (req, res) => {
       // Legacy fields for backward compatibility
       q7, q8, q9, q10, q11, q12, q13, q14, q15 
     } = req.body;
-    
-    console.log("Received participantId:", participantId, "eventId:", eventId);
 
     // Validate required fields
     if (!participantId || !eventId || !email || !name || !designation || !institute || !contact) {
@@ -294,7 +292,7 @@ const generateCertificate = async (participantId, eventId, participantName) => {
     });
 
     if (existingCertificate) {
-      console.log("Certificate already exists in new model");
+
       return {
         certificateId: existingCertificate.certificateId,
         participantName: existingCertificate.participantName,
@@ -603,8 +601,6 @@ const generateCertificate = async (participantId, eventId, participantName) => {
         certificateId: certificateId
       }
     );
-
-    console.log("Certificate generated successfully:", certificateId);
 
     return {
       certificateId,

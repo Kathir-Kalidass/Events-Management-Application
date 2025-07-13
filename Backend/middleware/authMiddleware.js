@@ -5,8 +5,7 @@ const authMiddleware = async (req, res, next) => {
   let token;
 
   // Log request details for debugging
-  console.log(`🌐 ${req.method} ${req.originalUrl} - Auth check`);
-  
+
   // Check if token is present in Authorization header
   if (
     req.headers.authorization &&
@@ -28,17 +27,14 @@ const authMiddleware = async (req, res, next) => {
       // Remove quotes if present (common issue with frontend token storage)
       if (token.startsWith('"') && token.endsWith('"')) {
         token = token.slice(1, -1);
-        console.log(`🔧 Removed quotes from token`);
+
       }
       
       // Debug: Log token info (first and last 10 characters for security)
       console.log(`🔐 Token received: ${token.substring(0, 10)}...${token.substring(token.length - 10)}`);
-      console.log(`🔑 JWT_SECRET exists: ${!!process.env.JWT_SECRET}`);
-      console.log(`📏 Token length: ${token.length}`);
 
       // Verify token using your secret
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log(`✅ Token decoded successfully for user: ${decoded.id}`);
 
       // Find user and attach to req.user (note: token uses 'id' not 'userId')
       req.user = await User.findById(decoded.id).select("-password");

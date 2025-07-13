@@ -5,7 +5,6 @@ export const getMonthName = (dateString)=>{
 }
 export default getMonthName;
 
-
 export const getYear = (dateString)=>{
   const date = new Date(dateString);
   return date.getFullYear();

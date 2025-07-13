@@ -109,7 +109,6 @@ const DashboardCharts = () => {
         </Paper>
       </Box>
 
-
       {/* Bar Chart */}
       <Box>
         <Paper elevation={3} sx={{ p: 2 }}>

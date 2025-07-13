@@ -6,20 +6,14 @@ const { toWords } = pkg;
 // Helper function to generate fund transfer request page
 const generateFundTransferRequest = (doc, programme, approvalDate) => {
   try {
-    console.log('=== Generating Fund Transfer Request ===');
-    console.log('Programme title:', programme.title);
-    console.log('Approval date:', approvalDate);
-    
+
     // Add new page for fund transfer request
     doc.addPage();
     
     // Get dynamic department information
     const primaryDept = programme.organizingDepartments?.primary || "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING";
     const associativeDepts = programme.organizingDepartments?.associative || [];
-    
-    console.log('Primary department:', primaryDept);
-    console.log('Associative departments:', associativeDepts);
-    
+
     // Create department header text
     let deptHeaderText = primaryDept;
     if (associativeDepts.length > 0) {
@@ -67,22 +61,16 @@ const generateFundTransferRequest = (doc, programme, approvalDate) => {
       .moveDown(1);
     
     // Calculate registration income and amounts
-    console.log('Budget breakdown income array:', programme.budgetBreakdown?.income);
-    
+
     const registrationIncome = programme.budgetBreakdown?.income?.find(inc => {
       const category = inc.category?.toLowerCase() || '';
       const isRegistration = category.includes('registration');
       const isFee = category.includes('fee');
       const isParticipant = category.includes('participant');
-      
-      console.log(`Checking income category: "${inc.category}" - registration: ${isRegistration}, fee: ${isFee}, participant: ${isParticipant}`);
-      console.log(`Income amount for this category: ${inc.income}`);
-      
+
       return isRegistration || isFee || isParticipant;
     });
-    
-    console.log('Registration income found:', registrationIncome);
-    
+
     // If no specific registration income found, try to get the total income or first income entry
     let totalRegistrationFee = 0;
     if (registrationIncome) {
@@ -92,19 +80,12 @@ const generateFundTransferRequest = (doc, programme, approvalDate) => {
       totalRegistrationFee = programme.budgetBreakdown.income.reduce((total, inc) => {
         return total + (Number(inc.income) || 0);
       }, 0);
-      console.log('No registration income found, using total income:', totalRegistrationFee);
+
     }
-    
-    console.log('Final total registration fee:', totalRegistrationFee);
+
     const gstPercentage = registrationIncome ? registrationIncome.gstPercentage || 0 : 0;
     const universityOverhead = programme.budgetBreakdown?.universityOverhead || (totalRegistrationFee * 0.30);
-    
-    console.log('Fund transfer calculations:', {
-      totalRegistrationFee,
-      gstPercentage,
-      universityOverhead
-    });
-    
+
     // Calculate amounts excluding GST and overhead
     const amountExcludingGSTAndOverhead = totalRegistrationFee - (totalRegistrationFee * gstPercentage / 100) - universityOverhead;
     
@@ -264,7 +245,6 @@ const generateFundTransferRequest = (doc, programme, approvalDate) => {
 
   doc.moveDown(1);
 
-    
     doc.moveDown(1);
     
     // HOD signatures
@@ -284,8 +264,7 @@ const generateFundTransferRequest = (doc, programme, approvalDate) => {
         .font("Helvetica-Bold")
         .text(`HoD, ${primaryAbbrev}`, { align: "left" });
     }
-    
-    console.log('Fund transfer request page generated successfully');
+
   } catch (error) {
     console.error('Error generating fund transfer request:', error);
     throw error;
@@ -401,14 +380,7 @@ export const generateClaimBillPDF = async (req, res) => {
         : `Expense Item ${index + 1}`;
       
       const amount = exp.approvedAmount || exp.actualAmount || exp.amount || 0;
-      
-      console.log(`🔍 Processing expense ${index + 1}:`, {
-        originalCategory: exp.category,
-        sanitizedCategory,
-        amount,
-        itemStatus: exp.itemStatus
-      });
-      
+
       return {
         ...exp,
         // Use approved amount as the display amount
@@ -802,7 +774,7 @@ export const generateClaimBillPDF = async (req, res) => {
     });
 
     // REMOVE REJECTED ITEMS FROM DATABASE PERMANENTLY
-    console.log('🗑️ Removing rejected items from database...');
+
     const rejectedItems = expenses.filter(exp => exp.itemStatus === 'rejected');
     
     if (rejectedItems.length > 0) {
@@ -819,13 +791,11 @@ export const generateClaimBillPDF = async (req, res) => {
       );
       programme.claimBill.totalExpenditure = programme.claimBill.totalBudgetAmount;
       programme.claimBill.totalApprovedAmount = programme.claimBill.totalBudgetAmount;
-      
-      console.log('✅ Rejected items removed from database. Remaining approved items:', approvedExpenses.length);
+
     }
 
     // APPEND ALL RECEIPTS FOR APPROVED ITEMS WITH DYNAMIC DATA
-    console.log('📄 Appending individual receipts for approved items with dynamic data...');
-    
+
     expensesToShow.forEach((expense, index) => {
       // Add new page for each receipt
       doc.addPage();
@@ -836,8 +806,7 @@ export const generateClaimBillPDF = async (req, res) => {
 
     // Update the programme's budget breakdown to reflect only approved amounts
     if (programme.budgetBreakdown && programme.budgetBreakdown.expenses) {
-      console.log('🔄 Updating budget breakdown to reflect only approved amounts...');
-      
+
       // Filter budget breakdown expenses to only include approved items
       const approvedBudgetExpenses = programme.budgetBreakdown.expenses.filter(budgetExp => {
         return approvedExpenses.some(approvedExp => 
@@ -861,38 +830,30 @@ export const generateClaimBillPDF = async (req, res) => {
         (sum, exp) => sum + (exp.amount || 0), 0
       );
 
-      console.log('✅ Budget breakdown updated to reflect only approved amounts');
     }
 
     // Save all changes to database
     await programme.save();
-    console.log('💾 All changes saved to database');
 
     // Add fund transfer request page if event is approved and has registration income
-    console.log('=== Fund Transfer Request Debug ===');
-    console.log('Programme status:', programme.status);
-    console.log('Programme budget breakdown income:', programme.budgetBreakdown?.income);
-    
+
     const hasRegistrationIncome = programme.budgetBreakdown?.income?.some(inc => {
       const categoryLower = inc.category?.toLowerCase() || '';
       const hasRegistration = categoryLower.includes('registration');
       const hasFee = categoryLower.includes('fee');
-      console.log(`Income category: "${inc.category}" -> registration: ${hasRegistration}, fee: ${hasFee}`);
+
       return hasRegistration || hasFee;
     });
-    
-    console.log('Has registration income:', hasRegistrationIncome);
-    console.log('Event approved:', programme.status === 'approved');
-    
+
     // Modified condition: Include fund transfer request if event is approved OR if it has registration income
     // This ensures the fund transfer request appears even if the approval status check fails
     if (programme.status === 'approved' || hasRegistrationIncome) {
-      console.log('Adding fund transfer request page');
+
       // Use approval date if available, otherwise use current date
       const approvalDate = programme.departmentApprovers?.find(approver => approver.approved)?.approvedDate || new Date();
       generateFundTransferRequest(doc, programme, approvalDate);
     } else {
-      console.log('Fund transfer request not added - conditions not met');
+
     }
 
     doc.end();

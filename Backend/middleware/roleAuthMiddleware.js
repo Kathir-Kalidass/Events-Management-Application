@@ -57,7 +57,7 @@ export const authorizeResourceOwnership = (resourceModel, resourceIdParam = 'id'
 
       // Admin and HOD have access to all resources
       if (req.user.role === 'admin' || req.user.role === 'hod') {
-        console.log(`✅ Admin/HOD access granted for user: ${req.user.name}`);
+
         return next();
       }
 
@@ -112,7 +112,6 @@ export const authorizeResourceOwnership = (resourceModel, resourceIdParam = 'id'
         });
       }
 
-      console.log(`✅ Resource ownership verified for user: ${req.user.name}`);
       next();
     } catch (error) {
       console.error("❌ Resource ownership authorization error:", error);
@@ -143,13 +142,13 @@ export const authorizeParticipantSelfAccess = (participantIdParam = 'participant
 
       // Admin and HOD have access to all participant data
       if (req.user.role === 'admin' || req.user.role === 'hod') {
-        console.log(`✅ Admin/HOD access granted for participant data: ${req.user.name}`);
+
         return next();
       }
 
       // Coordinators can access participant data for their events
       if (req.user.role === 'coordinator') {
-        console.log(`✅ Coordinator access granted for participant data: ${req.user.name}`);
+
         return next();
       }
 
@@ -171,7 +170,6 @@ export const authorizeParticipantSelfAccess = (participantIdParam = 'participant
         }
       }
 
-      console.log(`✅ Participant self-access verified for user: ${req.user.name}`);
       next();
     } catch (error) {
       console.error("❌ Participant self-access authorization error:", error);
@@ -202,7 +200,7 @@ export const authorizeEventCoordinator = (eventIdParam = 'eventId') => {
 
       // Admin and HOD have access to all events
       if (req.user.role === 'admin' || req.user.role === 'hod') {
-        console.log(`✅ Admin/HOD access granted for event: ${req.user.name}`);
+
         return next();
       }
 
@@ -241,7 +239,6 @@ export const authorizeEventCoordinator = (eventIdParam = 'eventId') => {
         });
       }
 
-      console.log(`✅ Event coordinator access verified for user: ${req.user.name}`);
       next();
     } catch (error) {
       console.error("❌ Event coordinator authorization error:", error);

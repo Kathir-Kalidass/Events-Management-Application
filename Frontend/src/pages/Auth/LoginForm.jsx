@@ -28,7 +28,7 @@ const LoginForm = () => {
         alert("Role mismatch! You are not a " + role);
       }
     } catch (err) {
-      console.log(err.message);
+
       alert("Login failed");
     }
   };

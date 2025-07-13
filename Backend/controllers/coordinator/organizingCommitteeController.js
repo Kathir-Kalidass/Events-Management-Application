@@ -14,8 +14,6 @@ export const initializeOrganizingCommittee = async (req, res) => {
       });
     }
 
-    console.log("🏛️ Initializing default organizing committee...");
-    
     const defaultMembers = [
       {
         name: "Vice-Chancellor",
@@ -70,9 +68,7 @@ export const initializeOrganizingCommittee = async (req, res) => {
     ];
 
     const createdMembers = await ConvenorCommittee.insertMany(defaultMembers);
-    
-    console.log("✅ Created default organizing committee members:", createdMembers.length);
-    
+
     // Log each created member
     createdMembers.forEach(member => {
       console.log(`📋 Created: ${member.role} - ${member.name} (${member.roleCategory})`);
@@ -104,8 +100,6 @@ export const getOrganizingCommittee = async (req, res) => {
         createdAt: -1 
       });
 
-    console.log("📋 Fetched organizing committee members:", members.length);
-    
     // Log each member for debugging
     members.forEach(member => {
       console.log(`📋 Member: ${member.role} - ${member.name} (${member.roleCategory})`);
@@ -207,8 +201,6 @@ export const updateOrganizingCommitteeMember = async (req, res) => {
     if (typeof isActive === 'boolean') member.isActive = isActive;
 
     await member.save();
-    
-    console.log(`✅ Updated organizing committee member: ${member.role} - ${member.name}`);
 
     res.status(200).json({
       success: true,
@@ -241,8 +233,6 @@ export const deleteOrganizingCommitteeMember = async (req, res) => {
 
     member.isActive = false;
     await member.save();
-    
-    console.log(`✅ Deactivated organizing committee member: ${member.role} - ${member.name}`);
 
     res.status(200).json({
       success: true,

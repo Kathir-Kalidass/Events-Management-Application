@@ -18,9 +18,6 @@ export const fixEventAmountFields = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "No claim bill found" });
     }
 
-    console.log(`🔧 Fixing amount fields for event: ${event.title}`);
-    console.log(`📊 Found ${event.claimBill.expenses.length} expense items`);
-
     // Sync all amount fields using the helper
     syncClaimBill(event.claimBill);
 
@@ -39,7 +36,6 @@ export const fixEventAmountFields = asyncHandler(async (req, res) => {
         (sum, exp) => sum + (exp.amount || 0), 0
       );
 
-      console.log(`✅ Budget breakdown updated to show only ${approvedItems.length} approved items`);
     }
 
     // Mark as modified and save
@@ -90,22 +86,18 @@ export const fixEventAmountFields = asyncHandler(async (req, res) => {
 // Fix amount fields for all events
 export const fixAllEventsAmountFields = asyncHandler(async (req, res) => {
   try {
-    console.log('🔧 Starting to fix amount fields for all events...');
 
     // Find all events with claim bills
     const events = await Event.find({
       'claimBill.expenses': { $exists: true, $ne: [] }
     });
 
-    console.log(`📊 Found ${events.length} events with claim bills`);
-
     let fixedEvents = 0;
     let totalItemsFixed = 0;
     const fixResults = [];
 
     for (const event of events) {
-      console.log(`\n🔄 Processing event: ${event.title}`);
-      
+
       let eventFixed = false;
       let itemsFixed = 0;
 
@@ -153,14 +145,10 @@ export const fixAllEventsAmountFields = asyncHandler(async (req, res) => {
           totalApprovedAmount: event.claimBill.totalApprovedAmount
         });
 
-        console.log(`✅ Fixed ${itemsFixed} items in event: ${event.title}`);
       } else {
-        console.log(`✓ Event already correct: ${event.title}`);
+
       }
     }
-
-    console.log(`\n✅ Completed fixing amount fields for all events`);
-    console.log(`📊 Summary: ${fixedEvents} events fixed, ${totalItemsFixed} total items fixed`);
 
     res.json({
       message: "Amount fields fixed for all events",
@@ -194,8 +182,6 @@ export const getAmountFieldStatus = asyncHandler(async (req, res) => {
     if (!event.claimBill || !event.claimBill.expenses) {
       return res.status(404).json({ message: "No claim bill found" });
     }
-
-    console.log(`🔍 Checking amount field status for event: ${event.title}`);
 
     // Check each item's amount field synchronization
     const itemsStatus = event.claimBill.expenses.map((item, index) => {

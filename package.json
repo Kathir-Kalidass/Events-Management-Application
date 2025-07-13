@@ -12,7 +12,7 @@
     "start": "npm run backend",
     "test": "cd Backend && npm test && cd ../Frontend && npm test",
     "clean": "rm -rf node_modules Backend/node_modules Frontend/node_modules",
-    "setup": "npm run install-all && node create-sample-data.js"
+    "setup": "npm run install-all"
   },
   "keywords": [
     "events-management",

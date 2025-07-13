@@ -73,7 +73,7 @@ export const getProgrammes = async (req, res) => {
       .sort({ createdAt: -1 });
     
     console.log(`📊 Found ${programmes.length} programmes for user ${req.user?.name || 'anonymous'} (role: ${req.user?.role || 'none'})`);
-    console.log(`📊 Query used:`, query);
+
     res.json(programmes);
   } catch (error) {
     console.error("❌ Error fetching programmes:", error);
@@ -108,11 +108,11 @@ export const getProgrammeById = async (req, res) => {
     if (programme.claimBill?.expenses && Array.isArray(programme.claimBill.expenses) && programme.claimBill.expenses.length > 0) {
       expensesToUse = programme.claimBill.expenses;
       sourceOfExpenses = 'claimBill';
-      console.log("🔄 Using claim bill expenses for editing:", expensesToUse);
+
     } else if (programme.budgetBreakdown?.expenses && Array.isArray(programme.budgetBreakdown.expenses) && programme.budgetBreakdown.expenses.length > 0) {
       expensesToUse = programme.budgetBreakdown.expenses;
       sourceOfExpenses = 'budgetBreakdown';
-      console.log("🔄 Using budget breakdown expenses for editing:", expensesToUse);
+
     }
     
     // ✅ IMPORTANT: Ensure both budgetBreakdown and claimBill have the same expenses for editing
@@ -137,11 +137,7 @@ export const getProgrammeById = async (req, res) => {
       
       // Add metadata for debugging
       programmeData.budgetBreakdown.expenseSource = sourceOfExpenses;
-      
-      console.log("✅ Synchronized expenses for editing:");
-      console.log("📊 Budget breakdown expenses:", programmeData.budgetBreakdown.expenses);
-      console.log("📊 Claim bill expenses:", programmeData.claimBill?.expenses);
-      console.log("💰 Total expenditure:", totalExpenditure);
+
     }
 
     // Add organizing committee to the response

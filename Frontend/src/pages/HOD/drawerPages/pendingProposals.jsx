@@ -8,12 +8,10 @@ const PendingProposals = () => {
 
   const { user, events, setEvents } = eventState();
   const [pendingEvents, setPendingEvents] = useState([]);
-  
-  
+
   useEffect(()=>{
     setPendingEvents(events.filter(event => event.status==="pending"));
   }, [events]);
-
 
   return (
     <>
