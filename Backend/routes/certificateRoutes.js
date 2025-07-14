@@ -1,44 +1,54 @@
-import express from "express";
+import express from 'express';
 import {
-  generateCertificate,
-  bulkGenerateCertificates,
-  downloadCertificate,
-  getCertificate,
+  generateCertificateFromDB,
+  createCertificate,
+  generateAndCreateCertificate,
+  downloadCertificatePDF,
+  downloadCertificateImage,
   verifyCertificate,
   getCertificatesByParticipant,
   getCertificatesByEvent,
-  updateTemplateConfig,
-} from "../controllers/certificateController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
-import { authorizeRoles, authorizeParticipantSelfAccess, authorizeEventCoordinator } from "../middleware/roleAuthMiddleware.js";
+  updateCertificateStatus,
+  getCertificateStats,
+  previewCertificate,
+  getCertificateImagePreview,
+  bulkCertificateOperations,
+  getBufferStorageStats
+} from '../controllers/certificateController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { authorizeRoles, authorizeEventCoordinator, authorizeCertificateAccess } from '../middleware/roleAuthMiddleware.js';
 
 const router = express.Router();
 
 // Public routes
-router.get("/verify/:certificateId", verifyCertificate);
+router.get('/verify/:certificateId', verifyCertificate);
+router.get('/download/pdf/:certificateId', downloadCertificatePDF);
+router.get('/download/image/:certificateId', downloadCertificateImage);
 
 // Protected routes - require authentication
 router.use(authMiddleware);
 
-// Generate single certificate
-router.post("/generate", authorizeRoles("admin", "coordinator"), generateCertificate);
+// Certificate generation routes - coordinators can only generate for their events
+router.post('/generate/:certificateId', authorizeCertificateAccess(), generateCertificateFromDB);
+router.post('/create', createCertificate);
+router.post('/generate-and-create', generateAndCreateCertificate);
 
-// Bulk generate certificates for an event
-router.post("/bulk-generate", authorizeRoles("admin", "coordinator"), bulkGenerateCertificates);
+// Certificate retrieval routes
+router.get('/participant/:participantId', getCertificatesByParticipant);
+router.get('/event/:eventId', authorizeEventCoordinator(), getCertificatesByEvent);
 
-// Download certificate
-router.get("/download/:certificateId", downloadCertificate);
+// Student portal viewing routes - coordinators can only view certificates for their events
+router.get('/preview/:certificateId', authorizeCertificateAccess(), previewCertificate);
+router.get('/image-preview/:certificateId', authorizeCertificateAccess(), getCertificateImagePreview);
 
-// Get certificate details
-router.get("/:certificateId", getCertificate);
+// Certificate management routes - coordinators can only manage certificates for their events
+router.patch('/status/:certificateId', authorizeCertificateAccess(), updateCertificateStatus);
 
-// Get certificates by participant
-router.get("/participant/:participantId", authorizeParticipantSelfAccess("participantId"), getCertificatesByParticipant);
+// Bulk operations for buffer management - require admin/coordinator role
+router.post('/bulk-operations', authorizeRoles('admin', 'coordinator'), bulkCertificateOperations);
 
-// Get certificates by event
-router.get("/event/:eventId", authorizeEventCoordinator("eventId"), getCertificatesByEvent);
-
-// Update template configuration (admin only)
-router.put("/template-config", authorizeRoles("admin"), updateTemplateConfig);
+// Statistics routes - require admin role
+router.get('/stats', authorizeRoles('admin'), getCertificateStats);
+router.get('/buffer-stats', authorizeRoles('admin'), getBufferStorageStats);
 
 export default router;

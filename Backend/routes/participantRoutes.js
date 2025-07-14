@@ -22,6 +22,10 @@ router.get('/my-certificates/:participantId', authorizeParticipantSelfAccess('pa
 router.get('/download-certificate/:certificateId', participantController.downloadCertificate);
 router.get('/verify-certificate/:certificateId', participantController.verifyCertificate); // Public route for verification
 
+// Enhanced certificate viewing routes
+router.get('/certificate-preview/:certificateId', participantController.getCertificatePreview);
+router.get('/certificate-image/:certificateId', participantController.getCertificateImagePreview);
+
 // Feedback routes
 router.get('/feedback-questions', participantController.getFeedbackQuestions);
 router.post('/feedback', authorizeRoles('participant'), participantController.giveFeedback);

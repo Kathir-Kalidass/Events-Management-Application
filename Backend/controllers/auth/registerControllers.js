@@ -1,5 +1,4 @@
 import User from "../../models/userModel.js";
-import encrypt from "../../passwordManager/encryption.js";
 
 const registerUser = async (req, res) => {
   const { name, email, password, department, role } = req.body;
@@ -12,12 +11,11 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "Already registered" });
     }
 
-    const hashedPass = await encrypt(password);
-
+    // Don't hash password here - let the mongoose pre-save hook handle it
     const newUser = new User({
       name,
       email,
-      password: hashedPass,
+      password, // Use plain password - pre-save hook will hash it
       department,
       role
     });

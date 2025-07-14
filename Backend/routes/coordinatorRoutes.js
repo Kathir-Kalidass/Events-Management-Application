@@ -14,6 +14,12 @@ import {
   getHod
 } from '../controllers/coordinator/dashboard.js';
 import {
+  updateOrganizingCommittee,
+  getAvailableCommitteeMembers,
+  addCommitteeMember,
+  updateRegistrationProcedure
+} from '../controllers/coordinator/programmeController.js';
+import {
   generateClaimBillPDF,
   generateFundTransferRequestPDF
 } from '../controllers/coordinator/claimPdfController.js';
@@ -142,6 +148,12 @@ coordinatorRoutes.post('/organizing-committee/initialize', authorizeRoles('coord
 coordinatorRoutes.post('/organizing-committee', authorizeRoles('coordinator', 'admin'), addOrganizingCommitteeMember);
 coordinatorRoutes.put('/organizing-committee/:id', authorizeRoles('coordinator', 'admin'), updateOrganizingCommitteeMember);
 coordinatorRoutes.delete('/organizing-committee/:id', authorizeRoles('coordinator', 'admin'), deleteOrganizingCommitteeMember);
+
+// Enhanced Event Management Routes
+coordinatorRoutes.get('/committee-members', getAvailableCommitteeMembers);
+coordinatorRoutes.post('/committee-members', authorizeRoles('coordinator', 'admin'), addCommitteeMember);
+coordinatorRoutes.put('/events/:eventId/organizing-committee', authorizeEventCoordinator('eventId'), updateOrganizingCommittee);
+coordinatorRoutes.put('/events/:eventId/registration-procedure', authorizeEventCoordinator('eventId'), updateRegistrationProcedure);
 
 // Claim Management Routes with proper authorization
 coordinatorRoutes.get('/claims', getCoordinatorClaims);

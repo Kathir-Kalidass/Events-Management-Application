@@ -307,6 +307,10 @@ const eventSchema = mongoose.Schema(
           type: Boolean,
           default: false
         },
+        includeInBrochure: {
+          type: Boolean,
+          default: true
+        },
         fields: {
           name: { type: Boolean, default: true },
           ageAndDob: { type: Boolean, default: true },
@@ -342,6 +346,41 @@ const eventSchema = mongoose.Schema(
           required: { type: Boolean, default: false },
           options: [String] // For select type
         }]
+      }
+    },
+
+    // Organizing Committee (linked to ConvenorCommittee model)
+    organizingCommittee: [{
+      member: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ConvenorCommittee"
+      },
+      customName: String, // Override name if needed
+      customDesignation: String, // Override designation if needed
+      customDepartment: String, // Override department if needed
+      order: {
+        type: Number,
+        default: 0
+      }
+    }],
+
+    // Committee display preferences
+    committeeDisplaySettings: {
+      showInBrochure: {
+        type: Boolean,
+        default: true
+      },
+      groupByCategory: {
+        type: Boolean,
+        default: true
+      },
+      showDepartments: {
+        type: Boolean,
+        default: true
+      },
+      customTitle: {
+        type: String,
+        default: "ORGANIZING COMMITTEE"
       }
     },
 

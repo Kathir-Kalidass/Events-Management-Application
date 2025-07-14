@@ -250,9 +250,86 @@ export const authorizeEventCoordinator = (eventIdParam = 'eventId') => {
   };
 };
 
+/**
+ * Certificate authorization middleware
+ * Checks if the user has permission to access a certificate
+ * - Admins and HODs can access all certificates
+ * - Coordinators can only access certificates for events they created
+ * - Participants can only access their own certificates
+ * @param {String} certificateIdParam - The parameter name containing the certificate ID
+ * @returns {Function} Middleware function
+ */
+export const authorizeCertificateAccess = (certificateIdParam = 'certificateId') => {
+  return async (req, res, next) => {
+    try {
+      // Check if user is authenticated
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required"
+        });
+      }
+
+      // Admin and HOD have access to all certificates
+      if (req.user.role === 'admin' || req.user.role === 'hod') {
+        return next();
+      }
+
+      const certificateId = req.params[certificateIdParam];
+      if (!certificateId) {
+        return res.status(400).json({
+          success: false,
+          message: `Certificate ID parameter '${certificateIdParam}' is required`
+        });
+      }
+
+      // Import Certificate model
+      const { default: Certificate } = await import('../models/certificateModel.js');
+      const certificate = await Certificate.findOne({ certificateId })
+        .populate('eventId', 'createdBy')
+        .populate('participantId', '_id');
+      
+      if (!certificate) {
+        return res.status(404).json({
+          success: false,
+          message: "Certificate not found"
+        });
+      }
+
+      // Check permissions based on role
+      if (req.user.role === 'coordinator') {
+        // Coordinators can only access certificates for events they created
+        if (certificate.eventId.createdBy.toString() !== req.user._id.toString()) {
+          return res.status(403).json({
+            success: false,
+            message: "Access denied. You can only access certificates for events you created"
+          });
+        }
+      } else if (req.user.role === 'participant') {
+        // Participants can only access their own certificates
+        if (certificate.participantId._id.toString() !== req.user._id.toString()) {
+          return res.status(403).json({
+            success: false,
+            message: "Access denied. You can only access your own certificates"
+          });
+        }
+      }
+
+      next();
+    } catch (error) {
+      console.error("❌ Certificate authorization error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Authorization error"
+      });
+    }
+  };
+};
+
 export default {
   authorizeRoles,
   authorizeResourceOwnership,
   authorizeParticipantSelfAccess,
-  authorizeEventCoordinator
+  authorizeEventCoordinator,
+  authorizeCertificateAccess
 };

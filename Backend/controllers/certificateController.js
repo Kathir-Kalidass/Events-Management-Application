@@ -1,578 +1,759 @@
-import asyncHandler from "express-async-handler";
-import Certificate from "../models/certificateModel.js";
-import Event from "../models/eventModel.js";
-import User from "../models/userModel.js";
-import ParticipantEvent from "../models/ParticipantEventModel.js";
-import CertificateGenerationService from "../services/certificateGenerationService.js";
+import CertificateGenerationService from '../services/certificateGenerationService.js';
+import Certificate from '../models/certificateModel.js';
+import Event from '../models/eventModel.js';
+import User from '../models/userModel.js';
 
-// Initialize certificate generation service
 const certificateService = new CertificateGenerationService();
 
-// Generate certificate
-export const generateCertificate = asyncHandler(async (req, res) => {
+// Generate certificate from MongoDB data
+export const generateCertificateFromDB = async (req, res) => {
   try {
-    const { participantId, eventId } = req.body;
-    const issuedBy = req.user._id;
+    const { certificateId } = req.params;
+    const { formats = ['pdf'] } = req.body;
 
-    // Validate participant and event
-    const participant = await User.findById(participantId);
-    const event = await Event.findById(eventId);
-    
-    if (!participant) {
-      return res.status(404).json({ message: "Participant not found" });
-    }
-    
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    console.log(`Generating certificate for ID: ${certificateId}`);
 
-    // Check if participant is registered for the event
-    const participantEvent = await ParticipantEvent.findOne({
-      participantId,
-      eventId,
+    // Generate certificate using MongoDB data
+    const result = await certificateService.generateCertificateFromDB(certificateId, formats);
+
+    res.status(200).json({
+      success: true,
+      message: 'Certificate generated successfully',
+      data: {
+        certificateId: result.certificate.certificateId,
+        participantName: result.certificate.participantName,
+        eventTitle: result.certificate.eventTitle,
+        pdfSize: result.pdfSize,
+        imageSize: result.imageSize,
+        status: result.certificate.status,
+        generatedAt: new Date().toISOString()
+      }
     });
 
-    if (!participantEvent) {
-      return res.status(400).json({ 
-        message: "Participant is not registered for this event" 
-      });
-    }
-
-    // Check if certificate already exists
-    const existingCertificate = await Certificate.findOne({
-      participantId,
-      eventId,
+  } catch (error) {
+    console.error('Error generating certificate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate certificate',
+      error: error.message
     });
+  }
+};
 
-    if (existingCertificate) {
-      return res.status(400).json({ 
-        message: "Certificate already exists for this participant and event" 
-      });
-    }
+// Create new certificate record
+export const createCertificate = async (req, res) => {
+  try {
+    const { participantId, eventId, skills = [] } = req.body;
+    const issuedBy = req.user?.id || req.body.issuedBy;
 
-    // Generate unique certificate ID
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9).toUpperCase();
-    const certificateId = `CERT-${timestamp}-${random}`;
-
-    // Get HOD and coordinator information
-    const hodUser = await User.findOne({ role: "hod" });
-    const coordinatorUser = await User.findById(event.createdBy);
-
-    // Prepare certificate data
-    const certificateData = {
-      participantName: participant.name,
-      eventTitle: event.title,
-      eventDuration: event.duration || "1 Day",
-      eventDates: {
-        startDate: event.startDate,
-        endDate: event.endDate,
-      },
-      venue: event.venue,
-      mode: event.mode,
-      issuedDate: new Date(),
-      certificateId,
-      skills: event.skills || [],
-      hodName: hodUser?.name || process.env.DEPARTMENT_HEAD || "Dr. Department Head",
-      coordinatorName: coordinatorUser?.name || "Program Coordinator"
-    };
-
-    // Generate certificate using the new service
-    const certificateResults = await certificateService.generateCertificate(certificateData, ['pdf', 'image']);
+    console.log(`Creating certificate for participant: ${participantId}, event: ${eventId}`);
 
     // Create certificate record
-    const certificate = new Certificate({
-      certificateId,
+    const certificate = await certificateService.createCertificateRecord(
       participantId,
       eventId,
-      participantName: participant.name,
-      eventTitle: event.title,
-      eventDuration: event.duration || "1 Day",
-      eventDates: {
-        startDate: event.startDate,
-        endDate: event.endDate,
-      },
-      venue: event.venue,
-      mode: event.mode,
       issuedBy,
-      issuedDate: new Date(),
-      template: {
-        name: "enhanced-university-certificate",
-        path: "services/certificateGenerationService.js",
-        dimensions: {
-          width: 1200,
-          height: 900,
-        },
-      },
-      verification: {
-        verificationUrl: `${process.env.FRONTEND_URL || 'http://localhost:5174'}/verify-certificate/${certificateId}`,
-        digitalSignature: Buffer.from(certificateId).toString("base64"),
-        verified: true,
-      },
-      certificateData: {
-        pdfBuffer: certificateResults.pdfBuffer,
-        imageBuffer: certificateResults.imageBuffer,
-        contentType: "application/pdf",
-        fileName: `certificate-${certificateId}.pdf`,
-        fileSize: certificateResults.pdfSize || certificateResults.imageSize,
-      },
-      status: "generated",
-      skills: event.skills || [],
-      metadata: {
-        generationTime: Date.now() - timestamp,
-        generatedOn: process.env.NODE_ENV || "development",
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent"),
-      },
-    });
-
-    // Add audit log entry
-    certificate.auditLog.push({
-      action: "created",
-      performedBy: issuedBy,
-      details: "Certificate generated",
-      ipAddress: req.ip,
-      timestamp: new Date(),
-    });
-
-    await certificate.save();
-
-    // Update ParticipantEvent record
-    await ParticipantEvent.findOneAndUpdate(
-      { participantId, eventId },
-      {
-        certificateGenerated: true,
-        certificateGeneratedDate: new Date(),
-        certificateId: certificateId,
-      }
+      { skills }
     );
 
     res.status(201).json({
-      message: "Certificate generated successfully",
-      certificate: {
-        id: certificate._id,
+      success: true,
+      message: 'Certificate record created successfully',
+      data: {
         certificateId: certificate.certificateId,
         participantName: certificate.participantName,
         eventTitle: certificate.eventTitle,
-        issuedDate: certificate.issuedDate,
-        verificationUrl: certificate.verification.verificationUrl,
         status: certificate.status,
-      },
+        createdAt: certificate.createdAt
+      }
     });
+
   } catch (error) {
-    console.error("Error generating certificate:", error);
-    res.status(500).json({ 
-      message: "Error generating certificate", 
-      error: error.message 
+    console.error('Error creating certificate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create certificate',
+      error: error.message
     });
   }
-});
+};
 
-// Bulk generate certificates for an event
-export const bulkGenerateCertificates = asyncHandler(async (req, res) => {
+// Generate and create certificate in one step
+export const generateAndCreateCertificate = async (req, res) => {
   try {
-    const { eventId } = req.body;
-    const issuedBy = req.user._id;
+    const { participantId, eventId, skills = [], formats = ['pdf'] } = req.body;
+    const issuedBy = req.user?.id || req.body.issuedBy;
 
-    // Validate event
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    console.log(`Creating and generating certificate for participant: ${participantId}, event: ${eventId}`);
 
-    // Get all participants for the event who have given feedback
-    const participantEvents = await ParticipantEvent.find({
+    // Create certificate record
+    const certificate = await certificateService.createCertificateRecord(
+      participantId,
       eventId,
-      feedbackGiven: true,
-      certificateGenerated: false,
-    }).populate("participantId");
+      issuedBy,
+      { skills }
+    );
 
-    if (participantEvents.length === 0) {
-      return res.status(400).json({ 
-        message: "No eligible participants found for certificate generation" 
+    // Generate certificate
+    const result = await certificateService.generateCertificateFromDB(certificate.certificateId, formats);
+
+    res.status(201).json({
+      success: true,
+      message: 'Certificate created and generated successfully',
+      data: {
+        certificateId: result.certificate.certificateId,
+        participantName: result.certificate.participantName,
+        eventTitle: result.certificate.eventTitle,
+        pdfSize: result.pdfSize,
+        imageSize: result.imageSize,
+        status: result.certificate.status,
+        createdAt: result.certificate.createdAt,
+        generatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating and generating certificate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create and generate certificate',
+      error: error.message
+    });
+  }
+};
+
+// Download certificate PDF
+export const downloadCertificatePDF = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user?.id;
+
+    console.log(`Downloading PDF for certificate: ${certificateId}`);
+
+    const certificate = await Certificate.findOne({ certificateId });
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
       });
     }
 
-    const results = {
-      successful: [],
-      failed: [],
-    };
-
-    // Generate certificates for each participant
-    for (const participantEvent of participantEvents) {
+    // Check if PDF buffer exists, if not generate it
+    if (!certificate.certificateData.pdfBuffer) {
+      console.log('PDF buffer not found, generating PDF...');
+      
       try {
-        const participant = participantEvent.participantId;
+        // Generate PDF from existing image buffer or regenerate certificate
+        const result = await certificateService.generateCertificateFromDB(certificateId, ['pdf']);
         
-        // Generate unique certificate ID
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substr(2, 9).toUpperCase();
-        const certificateId = `CERT-${timestamp}-${random}`;
-
-        // Prepare certificate data
-        const certificateData = {
-          participantName: participant.name,
-          eventTitle: event.title,
-          eventDuration: event.duration || "1 Day",
-          eventDates: {
-            startDate: event.startDate,
-            endDate: event.endDate,
-          },
-          venue: event.venue,
-          issuedDate: new Date(),
-          certificateId,
-        };
-
-        // Generate certificate image
-        const certificateBuffer = await generateCertificateImage(certificateData);
-
-        // Create certificate record
-        const certificate = new Certificate({
-          certificateId,
-          participantId: participant._id,
-          eventId,
-          participantName: participant.name,
-          eventTitle: event.title,
-          eventDuration: event.duration || "1 Day",
-          eventDates: {
-            startDate: event.startDate,
-            endDate: event.endDate,
-          },
-          venue: event.venue,
-          mode: event.mode,
-          issuedBy,
-          issuedDate: new Date(),
-          template: {
-            name: "cream-bordered-appreciation",
-            path: "template/Cream Bordered Appreciation Certificate.png",
-            dimensions: {
-              width: CERTIFICATE_CONFIG.template.width,
-              height: CERTIFICATE_CONFIG.template.height,
-            },
-          },
-          verification: {
-            verificationUrl: `${process.env.FRONTEND_URL}/verify-certificate/${certificateId}`,
-            digitalSignature: Buffer.from(certificateId).toString("base64"),
-            verified: true,
-          },
-          certificateData: {
-            imageBuffer: certificateBuffer,
-            contentType: "image/png",
-            fileName: `certificate-${certificateId}.png`,
-            fileSize: certificateBuffer.length,
-          },
-          status: "generated",
-          skills: event.skills || [],
-          metadata: {
-            generationTime: Date.now() - timestamp,
-            generatedOn: process.env.NODE_ENV || "development",
-            ipAddress: req.ip,
-            userAgent: req.get("User-Agent"),
-          },
-        });
-
-        // Add audit log entry
-        certificate.auditLog.push({
-          action: "created",
-          performedBy: issuedBy,
-          details: "Certificate generated via bulk operation",
-          ipAddress: req.ip,
-          timestamp: new Date(),
-        });
-
-        await certificate.save();
-
-        // Update ParticipantEvent record
-        await ParticipantEvent.findByIdAndUpdate(participantEvent._id, {
-          certificateGenerated: true,
-          certificateGeneratedDate: new Date(),
-          certificateId: certificateId,
-        });
-
-        results.successful.push({
-          participantId: participant._id,
-          participantName: participant.name,
-          certificateId: certificateId,
-        });
-
-      } catch (error) {
-        console.error(`Error generating certificate for participant ${participantEvent.participantId._id}:`, error);
-        results.failed.push({
-          participantId: participantEvent.participantId._id,
-          participantName: participantEvent.participantId.name,
-          error: error.message,
+        if (!result.certificate.certificateData.pdfBuffer) {
+          return res.status(404).json({
+            success: false,
+            message: 'Unable to generate PDF certificate'
+          });
+        }
+      } catch (generateError) {
+        console.error('Error generating PDF:', generateError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to generate PDF certificate',
+          error: generateError.message
         });
       }
-    }
-
-    res.status(200).json({
-      message: "Bulk certificate generation completed",
-      results,
-      summary: {
-        total: participantEvents.length,
-        successful: results.successful.length,
-        failed: results.failed.length,
-      },
-    });
-  } catch (error) {
-    console.error("Error in bulk certificate generation:", error);
-    res.status(500).json({ 
-      message: "Error in bulk certificate generation", 
-      error: error.message 
-    });
-  }
-});
-
-// Download certificate
-export const downloadCertificate = asyncHandler(async (req, res) => {
-  try {
-    const { certificateId } = req.params;
-    const { format = 'pdf' } = req.query; // Allow format selection via query parameter
-
-    const certificate = await Certificate.findOne({ certificateId })
-      .populate("participantId", "name email")
-      .populate("eventId", "title");
-
-    if (!certificate) {
-      return res.status(404).json({ message: "Certificate not found" });
-    }
-
-    // Check if user has permission to download
-    const userId = req.user._id.toString();
-    const participantId = certificate.participantId._id.toString();
-    
-    if (userId !== participantId && req.user.role !== "admin" && req.user.role !== "coordinator") {
-      return res.status(403).json({ message: "Access denied" });
     }
 
     // Record download
-    await certificate.recordDownload(req.user._id, req.ip);
-
-    // Determine which buffer to send based on format
-    let buffer, contentType, fileName;
-    
-    if (format === 'pdf' && certificate.certificateData.pdfBuffer) {
-      buffer = certificate.certificateData.pdfBuffer;
-      contentType = "application/pdf";
-      fileName = `certificate-${certificateId}.pdf`;
-    } else if (format === 'image' && certificate.certificateData.imageBuffer) {
-      buffer = certificate.certificateData.imageBuffer;
-      contentType = "image/png";
-      fileName = `certificate-${certificateId}.png`;
-    } else {
-      // Fallback to available format
-      if (certificate.certificateData.pdfBuffer) {
-        buffer = certificate.certificateData.pdfBuffer;
-        contentType = "application/pdf";
-        fileName = `certificate-${certificateId}.pdf`;
-      } else if (certificate.certificateData.imageBuffer) {
-        buffer = certificate.certificateData.imageBuffer;
-        contentType = "image/png";
-        fileName = `certificate-${certificateId}.png`;
-      } else {
-        return res.status(404).json({ message: "Certificate file not found" });
-      }
+    if (userId) {
+      await certificate.recordDownload(userId, req.ip);
     }
 
-    // Set response headers
-    res.set({
-      "Content-Type": contentType,
-      "Content-Disposition": `attachment; filename="${fileName}"`,
-      "Content-Length": buffer.length,
-    });
+    // Set appropriate headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="certificate-${certificateId}.pdf"`);
+    res.setHeader('Content-Length', certificate.certificateData.pdfBuffer.length);
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.setHeader('Expires', '-1');
+    res.setHeader('Pragma', 'no-cache');
+    
+    res.send(certificate.certificateData.pdfBuffer);
 
-    res.send(buffer);
   } catch (error) {
-    console.error("Error downloading certificate:", error);
-    res.status(500).json({ 
-      message: "Error downloading certificate", 
-      error: error.message 
+    console.error('Error downloading certificate PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to download certificate',
+      error: error.message
     });
   }
-});
+};
 
-// Get certificate details
-export const getCertificate = asyncHandler(async (req, res) => {
+// Download certificate image
+export const downloadCertificateImage = async (req, res) => {
   try {
     const { certificateId } = req.params;
+    const userId = req.user?.id;
 
-    const certificate = await Certificate.findOne({ certificateId })
-      .populate("participantId", "name email")
-      .populate("eventId", "title startDate endDate venue mode")
-      .populate("issuedBy", "name email");
+    console.log(`Downloading image for certificate: ${certificateId}`);
 
-    if (!certificate) {
-      return res.status(404).json({ message: "Certificate not found" });
-    }
-
-    // Check if user has permission to view
-    const userId = req.user._id.toString();
-    const participantId = certificate.participantId._id.toString();
+    const certificate = await Certificate.findOne({ certificateId });
     
-    if (userId !== participantId && req.user.role !== "admin" && req.user.role !== "coordinator") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    res.status(200).json({
-      certificate: {
-        id: certificate._id,
-        certificateId: certificate.certificateId,
-        participantName: certificate.participantName,
-        eventTitle: certificate.eventTitle,
-        eventDuration: certificate.eventDuration,
-        eventDates: certificate.eventDates,
-        venue: certificate.venue,
-        mode: certificate.mode,
-        issuedDate: certificate.issuedDate,
-        issuedBy: certificate.issuedBy,
-        status: certificate.status,
-        verificationUrl: certificate.verification.verificationUrl,
-        downloadCount: certificate.downloadCount,
-        lastDownloaded: certificate.lastDownloaded,
-        skills: certificate.skills,
-        template: certificate.template,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching certificate:", error);
-    res.status(500).json({ 
-      message: "Error fetching certificate", 
-      error: error.message 
-    });
-  }
-});
-
-// Verify certificate
-export const verifyCertificate = asyncHandler(async (req, res) => {
-  try {
-    const { certificateId } = req.params;
-
-    const certificate = await Certificate.verifyCertificate(certificateId);
-
     if (!certificate) {
       return res.status(404).json({
-        valid: false,
-        message: "Certificate not found or has been revoked",
+        success: false,
+        message: 'Certificate not found'
+      });
+    }
+
+    if (!certificate.certificateData.imageBuffer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not generated yet'
+      });
+    }
+
+    // Record download
+    if (userId) {
+      await certificate.recordDownload(userId, req.ip);
+    }
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="certificate-${certificateId}.png"`);
+    res.setHeader('Content-Length', certificate.certificateData.imageBuffer.length);
+    
+    res.send(certificate.certificateData.imageBuffer);
+
+  } catch (error) {
+    console.error('Error downloading certificate image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to download certificate image',
+      error: error.message
+    });
+  }
+};
+
+// Verify certificate
+export const verifyCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+
+    console.log(`Verifying certificate: ${certificateId}`);
+
+    const certificate = await Certificate.verifyCertificate(certificateId);
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found or has been revoked'
       });
     }
 
     res.status(200).json({
-      valid: true,
-      certificate: {
+      success: true,
+      message: 'Certificate verified successfully',
+      data: {
         certificateId: certificate.certificateId,
         participantName: certificate.participantName,
+        participantEmail: certificate.participantId.email,
         eventTitle: certificate.eventTitle,
-        eventDuration: certificate.eventDuration,
         eventDates: certificate.eventDates,
         venue: certificate.venue,
         mode: certificate.mode,
         issuedDate: certificate.issuedDate,
-        issuedBy: certificate.issuedBy,
+        issuedBy: certificate.issuedBy.name,
         status: certificate.status,
         skills: certificate.skills,
-      },
+        verified: certificate.verification.verified
+      }
     });
+
   } catch (error) {
-    console.error("Error verifying certificate:", error);
-    res.status(500).json({ 
-      message: "Error verifying certificate", 
-      error: error.message 
+    console.error('Error verifying certificate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify certificate',
+      error: error.message
     });
   }
-});
+};
 
 // Get certificates by participant
-export const getCertificatesByParticipant = asyncHandler(async (req, res) => {
+export const getCertificatesByParticipant = async (req, res) => {
   try {
     const { participantId } = req.params;
-    const userId = req.user._id.toString();
 
-    // Check if user has permission to view
-    if (userId !== participantId && req.user.role !== "admin" && req.user.role !== "coordinator") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    console.log(`Getting certificates for participant: ${participantId}`);
 
     const certificates = await Certificate.findByParticipant(participantId);
 
     res.status(200).json({
-      certificates: certificates.map(cert => ({
-        id: cert._id,
+      success: true,
+      message: 'Certificates retrieved successfully',
+      data: certificates.map(cert => ({
         certificateId: cert.certificateId,
         eventTitle: cert.eventTitle,
         eventDates: cert.eventDates,
         issuedDate: cert.issuedDate,
         status: cert.status,
         downloadCount: cert.downloadCount,
-        verificationUrl: cert.verification.verificationUrl,
-      })),
+        lastDownloaded: cert.lastDownloaded
+      }))
     });
+
   } catch (error) {
-    console.error("Error fetching certificates by participant:", error);
-    res.status(500).json({ 
-      message: "Error fetching certificates", 
-      error: error.message 
+    console.error('Error getting certificates by participant:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve certificates',
+      error: error.message
     });
   }
-});
+};
 
 // Get certificates by event
-export const getCertificatesByEvent = asyncHandler(async (req, res) => {
+export const getCertificatesByEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
+
+    console.log(`Getting certificates for event: ${eventId}`);
 
     const certificates = await Certificate.findByEvent(eventId);
 
     res.status(200).json({
-      certificates: certificates.map(cert => ({
-        id: cert._id,
+      success: true,
+      message: 'Certificates retrieved successfully',
+      data: certificates.map(cert => ({
         certificateId: cert.certificateId,
         participantName: cert.participantName,
+        participantEmail: cert.participantId.email,
         issuedDate: cert.issuedDate,
         status: cert.status,
         downloadCount: cert.downloadCount,
-        participant: cert.participantId,
-      })),
+        lastDownloaded: cert.lastDownloaded
+      }))
     });
+
   } catch (error) {
-    console.error("Error fetching certificates by event:", error);
-    res.status(500).json({ 
-      message: "Error fetching certificates", 
-      error: error.message 
+    console.error('Error getting certificates by event:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve certificates',
+      error: error.message
     });
   }
-});
+};
 
-// Update certificate template configuration
-export const updateTemplateConfig = asyncHandler(async (req, res) => {
+// Update certificate status
+export const updateCertificateStatus = async (req, res) => {
   try {
-    const { templateConfig } = req.body;
+    const { certificateId } = req.params;
+    const { status, reason } = req.body;
+    const userId = req.user?.id;
 
-    // Validate admin role
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin role required." });
+    console.log(`Updating certificate status: ${certificateId} to ${status}`);
+
+    const certificate = await Certificate.findOne({ certificateId });
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
+      });
     }
 
-    // Update the configuration (in a real application, you might store this in a database)
-    // For now, we'll just return the current configuration
+    certificate.status = status;
+    
+    // Add audit log
+    await certificate.addAuditLog(
+      status === 'revoked' ? 'revoked' : 'updated',
+      userId,
+      reason || `Status updated to ${status}`,
+      req.ip
+    );
+
+    await certificate.save();
+
     res.status(200).json({
-      message: "Template configuration updated successfully",
-      config: CERTIFICATE_CONFIG,
+      success: true,
+      message: 'Certificate status updated successfully',
+      data: {
+        certificateId: certificate.certificateId,
+        status: certificate.status,
+        updatedAt: new Date().toISOString()
+      }
     });
+
   } catch (error) {
-    console.error("Error updating template configuration:", error);
-    res.status(500).json({ 
-      message: "Error updating template configuration", 
-      error: error.message 
+    console.error('Error updating certificate status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update certificate status',
+      error: error.message
     });
   }
-});
+};
 
-export default {
-  generateCertificate,
-  bulkGenerateCertificates,
-  downloadCertificate,
-  getCertificate,
-  verifyCertificate,
-  getCertificatesByParticipant,
-  getCertificatesByEvent,
-  updateTemplateConfig,
+// Get certificate statistics
+export const getCertificateStats = async (req, res) => {
+  try {
+    const stats = await Certificate.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const totalDownloads = await Certificate.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDownloads: { $sum: '$downloadCount' }
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Certificate statistics retrieved successfully',
+      data: {
+        statusBreakdown: stats,
+        totalDownloads: totalDownloads[0]?.totalDownloads || 0,
+        generatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting certificate statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve certificate statistics',
+      error: error.message
+    });
+  }
+};
+
+// Preview certificate (for student portal viewing)
+export const previewCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user?.id;
+
+    console.log(`Previewing certificate: ${certificateId}`);
+
+    const certificate = await Certificate.findOne({ certificateId })
+      .populate('participantId', 'name email')
+      .populate('eventId', 'title startDate endDate venue mode')
+      .populate('issuedBy', 'name email');
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
+      });
+    }
+
+    // Check if user has permission to view this certificate
+    if (userId && certificate.participantId._id.toString() !== userId) {
+      // Allow admins and coordinators to view any certificate
+      const user = await User.findById(userId);
+      if (!user || !['admin', 'coordinator', 'hod'].includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this certificate'
+        });
+      }
+    }
+
+    // Return certificate data for preview (without buffer data)
+    res.status(200).json({
+      success: true,
+      message: 'Certificate preview retrieved successfully',
+      data: {
+        certificateId: certificate.certificateId,
+        participantName: certificate.participantName,
+        participantEmail: certificate.participantId.email,
+        eventTitle: certificate.eventTitle,
+        eventDates: certificate.eventDates,
+        venue: certificate.venue,
+        mode: certificate.mode,
+        issuedDate: certificate.issuedDate,
+        issuedBy: certificate.issuedBy.name,
+        status: certificate.status,
+        skills: certificate.skills,
+        template: certificate.template,
+        verification: {
+          verificationUrl: certificate.verification.verificationUrl,
+          verified: certificate.verification.verified
+        },
+        downloadCount: certificate.downloadCount,
+        lastDownloaded: certificate.lastDownloaded,
+        hasImageBuffer: !!certificate.certificateData?.imageBuffer,
+        hasPdfBuffer: !!certificate.certificateData?.pdfBuffer
+      }
+    });
+
+  } catch (error) {
+    console.error('Error previewing certificate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to preview certificate',
+      error: error.message
+    });
+  }
+};
+
+// Get certificate image for preview (base64 encoded for student portal)
+export const getCertificateImagePreview = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user?.id;
+
+    console.log(`Getting image preview for certificate: ${certificateId}`);
+
+    const certificate = await Certificate.findOne({ certificateId })
+      .populate('participantId', '_id');
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
+      });
+    }
+
+    // Check if user has permission to view this certificate
+    if (userId && certificate.participantId._id.toString() !== userId) {
+      const user = await User.findById(userId);
+      if (!user || !['admin', 'coordinator', 'hod'].includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this certificate'
+        });
+      }
+    }
+
+    // Check if image buffer exists, if not generate it
+    if (!certificate.certificateData?.imageBuffer) {
+      console.log('Image buffer not found, generating image...');
+      
+      try {
+        const result = await certificateService.generateCertificateFromDB(certificateId, ['image']);
+        
+        if (!result.certificate.certificateData.imageBuffer) {
+          return res.status(404).json({
+            success: false,
+            message: 'Unable to generate certificate image'
+          });
+        }
+      } catch (generateError) {
+        console.error('Error generating image:', generateError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to generate certificate image',
+          error: generateError.message
+        });
+      }
+    }
+
+    // Convert buffer to base64 for preview
+    const base64Image = certificate.certificateData.imageBuffer.toString('base64');
+    const imageDataUrl = `data:image/png;base64,${base64Image}`;
+
+    res.status(200).json({
+      success: true,
+      message: 'Certificate image preview retrieved successfully',
+      data: {
+        certificateId: certificate.certificateId,
+        imageDataUrl: imageDataUrl,
+        contentType: 'image/png',
+        size: certificate.certificateData.imageBuffer.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting certificate image preview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get certificate image preview',
+      error: error.message
+    });
+  }
+};
+
+// Bulk certificate operations for buffer management
+export const bulkCertificateOperations = async (req, res) => {
+  try {
+    const { operation, certificateIds, formats = ['pdf', 'image'] } = req.body;
+    const userId = req.user?.id;
+
+    console.log(`Performing bulk operation: ${operation} on ${certificateIds.length} certificates`);
+
+    if (!['regenerate', 'cleanup', 'verify'].includes(operation)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid operation. Supported operations: regenerate, cleanup, verify'
+      });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const certificateId of certificateIds) {
+      try {
+        const certificate = await Certificate.findOne({ certificateId });
+        
+        if (!certificate) {
+          errors.push({ certificateId, error: 'Certificate not found' });
+          continue;
+        }
+
+        switch (operation) {
+          case 'regenerate':
+            const result = await certificateService.generateCertificateFromDB(certificateId, formats);
+            results.push({
+              certificateId,
+              status: 'regenerated',
+              pdfSize: result.pdfSize,
+              imageSize: result.imageSize
+            });
+            break;
+
+          case 'cleanup':
+            // Clear buffer data to free up storage
+            certificate.certificateData.pdfBuffer = undefined;
+            certificate.certificateData.imageBuffer = undefined;
+            await certificate.save();
+            
+            await certificate.addAuditLog('updated', userId, 'Buffer data cleaned up', req.ip);
+            
+            results.push({
+              certificateId,
+              status: 'cleaned'
+            });
+            break;
+
+          case 'verify':
+            const isValid = await Certificate.verifyCertificate(certificateId);
+            results.push({
+              certificateId,
+              status: 'verified',
+              valid: !!isValid
+            });
+            break;
+        }
+      } catch (error) {
+        errors.push({ certificateId, error: error.message });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Bulk ${operation} operation completed`,
+      data: {
+        processed: results.length,
+        errors: errors.length,
+        results,
+        errors
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in bulk certificate operations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to perform bulk operation',
+      error: error.message
+    });
+  }
+};
+
+// Get buffer storage statistics
+export const getBufferStorageStats = async (req, res) => {
+  try {
+    console.log('Getting buffer storage statistics...');
+
+    const stats = await Certificate.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalCertificates: { $sum: 1 },
+          certificatesWithPdf: {
+            $sum: {
+              $cond: [{ $ne: ['$certificateData.pdfBuffer', null] }, 1, 0]
+            }
+          },
+          certificatesWithImage: {
+            $sum: {
+              $cond: [{ $ne: ['$certificateData.imageBuffer', null] }, 1, 0]
+            }
+          },
+          totalPdfSize: {
+            $sum: {
+              $cond: [
+                { $ne: ['$certificateData.pdfBuffer', null] },
+                { $bsonSize: '$certificateData.pdfBuffer' },
+                0
+              ]
+            }
+          },
+          totalImageSize: {
+            $sum: {
+              $cond: [
+                { $ne: ['$certificateData.imageBuffer', null] },
+                { $bsonSize: '$certificateData.imageBuffer' },
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const storageStats = stats[0] || {
+      totalCertificates: 0,
+      certificatesWithPdf: 0,
+      certificatesWithImage: 0,
+      totalPdfSize: 0,
+      totalImageSize: 0
+    };
+
+    // Calculate storage efficiency
+    const totalStorageUsed = storageStats.totalPdfSize + storageStats.totalImageSize;
+    const averagePdfSize = storageStats.certificatesWithPdf > 0 
+      ? storageStats.totalPdfSize / storageStats.certificatesWithPdf 
+      : 0;
+    const averageImageSize = storageStats.certificatesWithImage > 0 
+      ? storageStats.totalImageSize / storageStats.certificatesWithImage 
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      message: 'Buffer storage statistics retrieved successfully',
+      data: {
+        ...storageStats,
+        totalStorageUsed,
+        averagePdfSize: Math.round(averagePdfSize),
+        averageImageSize: Math.round(averageImageSize),
+        storageEfficiency: {
+          pdfCoverage: storageStats.totalCertificates > 0 
+            ? (storageStats.certificatesWithPdf / storageStats.totalCertificates * 100).toFixed(2) + '%'
+            : '0%',
+          imageCoverage: storageStats.totalCertificates > 0 
+            ? (storageStats.certificatesWithImage / storageStats.totalCertificates * 100).toFixed(2) + '%'
+            : '0%'
+        },
+        generatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting buffer storage statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve buffer storage statistics',
+      error: error.message
+    });
+  }
 };

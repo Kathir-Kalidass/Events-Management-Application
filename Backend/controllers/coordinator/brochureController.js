@@ -86,15 +86,30 @@ export const generateBrochurePDF = async (req, res) => {
       console.log(`📋 Brochure Committee Member: ${member.role} - ${member.name} (${member.roleCategory})`);
     });
 
-    const doc = new PDFDocument({ margin: 15 });
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
-    const margin = 15;
-    const contentWidth = pageWidth - (2 * margin);
+    // Create landscape PDF with optimized layout for maximum content per page
+    const doc = new PDFDocument({ 
+      layout: 'landscape',
+      size: 'A4',
+      margin: 10
+    });
     
+    const pageWidth = doc.page.width;   // 842 points in landscape
+    const pageHeight = doc.page.height; // 595 points in landscape
+    const margin = 10;
+    const contentWidth = pageWidth - (2 * margin);
+    const contentHeight = pageHeight - (2 * margin);
+    
+    // Three-column layout configuration
+    const numColumns = 3;
+    const columnGap = 15;
+    const columnWidth = (contentWidth - (columnGap * (numColumns - 1))) / numColumns;
+    
+    let currentColumn = 0;
     let currentY = margin;
-    const lineHeight = 6;
-    const sectionSpacing = 8;
+    let columnStartY = margin;
+    const lineHeight = 5;
+    const sectionSpacing = 6;
+    const maxColumnHeight = contentHeight - 40; // Reserve space for footer
 
     // Collect PDF in buffer
     const buffers = [];
@@ -135,18 +150,42 @@ export const generateBrochurePDF = async (req, res) => {
       });
     });
 
-    // Helper function to add a new page if needed
-    const checkPageBreak = (requiredHeight) => {
-      if (currentY + requiredHeight > pageHeight - margin) {
+    // Helper function to get current column X position
+    const getColumnX = (columnIndex = currentColumn) => {
+      return margin + (columnIndex * (columnWidth + columnGap));
+    };
+
+    // Helper function to move to next column or page
+    const moveToNextColumn = () => {
+      currentColumn++;
+      if (currentColumn >= numColumns) {
+        // Move to next page
         doc.addPage();
+        currentColumn = 0;
         currentY = margin;
+        columnStartY = margin;
+      } else {
+        // Move to next column on same page
+        currentY = columnStartY;
       }
     };
 
-    // Helper function to add text with proper wrapping
-    const addWrappedText = (text, x, y, maxWidth, fontSize = 10, style = 'normal') => {
+    // Helper function to check if content fits in current column
+    const checkColumnSpace = (requiredHeight) => {
+      if (currentY + requiredHeight > maxColumnHeight) {
+        moveToNextColumn();
+      }
+    };
+
+    // Enhanced text wrapping function for column layout
+    const addWrappedText = (text, fontSize = 8, style = 'normal', isHeader = false) => {
+      if (!text) return 0;
+      
       doc.fontSize(fontSize);
       doc.font('Helvetica', style);
+      
+      const x = getColumnX();
+      const maxWidth = columnWidth - 5; // Small padding
       
       const lines = doc.widthOfString(text) > maxWidth 
         ? text.split('\n').flatMap(line => {
@@ -178,14 +217,45 @@ export const generateBrochurePDF = async (req, res) => {
       
       const textHeight = lines.length * lineHeight;
       
-      checkPageBreak(textHeight + 5);
+      // Check if content fits in current column
+      checkColumnSpace(textHeight + (isHeader ? sectionSpacing : 2));
       
+      // Add background for headers
+      if (isHeader) {
+        doc.rect(getColumnX(), currentY - 1, columnWidth, lineHeight + 2)
+           .fillColor('#f0f0f0')
+           .fill();
+        doc.fillColor('black');
+      }
+      
+      // Draw text
       lines.forEach((line, index) => {
-        doc.text(line, x, y + (index * lineHeight));
+        doc.text(line, getColumnX() + 2, currentY + (index * lineHeight));
       });
       
-      currentY = y + textHeight;
+      currentY += textHeight + (isHeader ? sectionSpacing : 2);
       return textHeight;
+    };
+
+    // Helper function to add section with automatic column management
+    const addSection = (title, content) => {
+      // Add section header
+      addWrappedText(title, 9, 'bold', true);
+      
+      // Add content
+      if (Array.isArray(content)) {
+        content.forEach(item => {
+          if (typeof item === 'object' && item.header && item.text) {
+            addWrappedText(`${item.header}: ${item.text}`, 8, 'normal');
+          } else if (typeof item === 'string') {
+            addWrappedText(item, 8, 'normal');
+          }
+        });
+      } else if (typeof content === 'string') {
+        addWrappedText(content, 8, 'normal');
+      }
+      
+      currentY += sectionSpacing;
     };
 
     // Header with Anna University Logo and Title
@@ -313,118 +383,79 @@ export const generateBrochurePDF = async (req, res) => {
       currentY = Math.max(leftEndY, currentY) + sectionSpacing;
     };
 
-    // Start generating the brochure
+    // Start generating the brochure with landscape three-column layout
     addHeader();
+    
+    // Reset to column layout after header
+    currentColumn = 0;
+    currentY = 120; // Start below header
+    columnStartY = currentY;
 
-    // Event Details Section
-    addSectionHeader('EVENT OVERVIEW');
-    
-    // Objectives and Outcomes in two columns
-    const leftCol = [
-      { type: 'header', text: 'OBJECTIVES:' },
-      { type: 'content', text: programme.objectives || 'To be announced' }
-    ];
-    
-    const rightCol = [
-      { type: 'header', text: 'EXPECTED OUTCOMES:' },
-      { type: 'content', text: programme.outcomes || 'To be announced' }
-    ];
-    
-    addTwoColumnSection(leftCol, rightCol);
+    // Event Overview Section
+    addSection('EVENT OVERVIEW', [
+      { header: 'OBJECTIVES', text: programme.objectives || 'To be announced' },
+      { header: 'EXPECTED OUTCOMES', text: programme.outcomes || 'To be announced' }
+    ]);
 
-    // Event Information
-    addSectionHeader('EVENT INFORMATION');
-    
-    const eventInfoLeft = [
-      { type: 'header', text: 'VENUE:' },
-      { type: 'content', text: programme.venue },
-      { type: 'header', text: 'MODE:' },
-      { type: 'content', text: programme.mode }
-    ];
-    
-    const eventInfoRight = [
-      { type: 'header', text: 'TARGET AUDIENCE:' },
-      { type: 'content', text: programme.targetAudience?.join(', ') || 'General Public' },
-      { type: 'header', text: 'RESOURCE PERSONS:' },
-      { type: 'content', text: programme.resourcePersons?.join(', ') || 'To be announced' }
-    ];
-    
-    addTwoColumnSection(eventInfoLeft, eventInfoRight);
+    // Event Information Section
+    addSection('EVENT INFORMATION', [
+      { header: 'VENUE', text: programme.venue },
+      { header: 'MODE', text: programme.mode },
+      { header: 'TARGET AUDIENCE', text: programme.targetAudience?.join(', ') || 'General Public' },
+      { header: 'RESOURCE PERSONS', text: programme.resourcePersons?.join(', ') || 'To be announced' }
+    ]);
 
-    // Registration Procedure (if enabled)
+    // Registration Information (if enabled)
     if (programme.registrationProcedure && programme.registrationProcedure.enabled) {
-      addSectionHeader('REGISTRATION INFORMATION');
+      const regContent = [];
       
       if (programme.registrationProcedure.instructions) {
-        addWrappedText(programme.registrationProcedure.instructions, margin, currentY, contentWidth, 9);
-        currentY += sectionSpacing;
+        regContent.push(programme.registrationProcedure.instructions);
       }
       
-      const regInfoLeft = [];
-      const regInfoRight = [];
-      
       if (programme.registrationProcedure.deadline) {
-        regInfoLeft.push(
-          { type: 'header', text: 'REGISTRATION DEADLINE:' },
-          { type: 'content', text: new Date(programme.registrationProcedure.deadline).toLocaleDateString() }
-        );
+        regContent.push({ 
+          header: 'REGISTRATION DEADLINE', 
+          text: new Date(programme.registrationProcedure.deadline).toLocaleDateString() 
+        });
       }
       
       if (programme.registrationProcedure.participantLimit) {
-        regInfoLeft.push(
-          { type: 'header', text: 'PARTICIPANT LIMIT:' },
-          { type: 'content', text: programme.registrationProcedure.participantLimit }
-        );
+        regContent.push({ 
+          header: 'PARTICIPANT LIMIT', 
+          text: programme.registrationProcedure.participantLimit 
+        });
       }
       
       if (programme.registrationProcedure.selectionCriteria && 
           programme.registrationProcedure.selectionCriteria !== 'first come first served basis') {
-        regInfoRight.push(
-          { type: 'header', text: 'SELECTION CRITERIA:' },
-          { type: 'content', text: programme.registrationProcedure.selectionCriteria }
-        );
+        regContent.push({ 
+          header: 'SELECTION CRITERIA', 
+          text: programme.registrationProcedure.selectionCriteria 
+        });
       }
       
       if (programme.registrationProcedure.confirmationDate) {
-        regInfoRight.push(
-          { type: 'header', text: 'CONFIRMATION DATE:' },
-          { type: 'content', text: new Date(programme.registrationProcedure.confirmationDate).toLocaleDateString() }
-        );
+        regContent.push({ 
+          header: 'CONFIRMATION DATE', 
+          text: new Date(programme.registrationProcedure.confirmationDate).toLocaleDateString() 
+        });
       }
       
-      if (regInfoLeft.length > 0 || regInfoRight.length > 0) {
-        addTwoColumnSection(regInfoLeft, regInfoRight);
-      }
+      addSection('REGISTRATION INFORMATION', regContent);
 
       // Payment Details (if enabled)
       if (programme.registrationProcedure.paymentDetails && programme.registrationProcedure.paymentDetails.enabled) {
-        addSectionHeader('PAYMENT DETAILS');
-        
-        const paymentLeft = [
-          { type: 'header', text: 'ACCOUNT NAME:' },
-          { type: 'content', text: programme.registrationProcedure.paymentDetails.accountName },
-          { type: 'header', text: 'ACCOUNT NUMBER:' },
-          { type: 'content', text: programme.registrationProcedure.paymentDetails.accountNumber }
-        ];
-        
-        const paymentRight = [
-          { type: 'header', text: 'IFSC CODE:' },
-          { type: 'content', text: programme.registrationProcedure.paymentDetails.ifscCode },
-          { type: 'header', text: 'BANK:' },
-          { type: 'content', text: programme.registrationProcedure.paymentDetails.bankBranch }
-        ];
-        
-        addTwoColumnSection(paymentLeft, paymentRight);
+        addSection('PAYMENT DETAILS', [
+          { header: 'ACCOUNT NAME', text: programme.registrationProcedure.paymentDetails.accountName },
+          { header: 'ACCOUNT NUMBER', text: programme.registrationProcedure.paymentDetails.accountNumber },
+          { header: 'IFSC CODE', text: programme.registrationProcedure.paymentDetails.ifscCode },
+          { header: 'BANK', text: programme.registrationProcedure.paymentDetails.bankBranch }
+        ]);
       }
 
-      // Registration Form (if enabled)
+      // Registration Form Fields (if enabled)
       if (programme.registrationProcedure.registrationForm && programme.registrationProcedure.registrationForm.enabled) {
-        // Check if we need a new page for the registration form
-        checkPageBreak(150);
-        
-        addSectionHeader('REGISTRATION FORM');
-        
-        // Form fields
         const formFields = [];
         if (programme.registrationProcedure.registrationForm.fields) {
           Object.entries(programme.registrationProcedure.registrationForm.fields).forEach(([fieldKey, fieldValue]) => {
@@ -438,75 +469,17 @@ export const generateBrochurePDF = async (req, res) => {
         }
         
         if (formFields.length > 0) {
-          // Create form layout
-          const formStartY = currentY;
-          const fieldHeight = 12;
-          const fieldsPerColumn = 6;
-          const colWidth = contentWidth / 2 - 5;
-          
-          formFields.forEach((field, index) => {
-            const col = Math.floor(index / fieldsPerColumn);
-            const row = index % fieldsPerColumn;
-            const x = margin + (col * (colWidth + 10));
-            const y = formStartY + (row * fieldHeight);
-            
-            // Field label
-            doc.fontSize(9)
-               .font('Helvetica')
-               .text(`${field}:`, x, y);
-            
-            // Field line
-            doc.moveTo(x + 30, y + 1)
-               .lineTo(x + colWidth, y + 1)
-               .stroke();
-          });
-          
-          currentY = formStartY + Math.ceil(formFields.length / 2) * fieldHeight + sectionSpacing;
+          addSection('REGISTRATION FORM FIELDS', formFields);
         }
         
         // Declaration
-        checkPageBreak(60);
-        
-        doc.fontSize(10)
-           .font('Helvetica-Bold')
-           .text('DECLARATION', margin, currentY);
-        currentY += lineHeight + 2;
-        
         const declarationText = `The information provided by me is true to the best of my knowledge. I agree to abide by the rules and regulations governing the ${programme.type}. If selected, I shall attend the course for the entire duration. I also undertake the responsibility to inform the coordinators in advance if in case I am unable to attend the course.`;
-        
-        addWrappedText(declarationText, margin, currentY, contentWidth, 9);
-        currentY += sectionSpacing;
-        
-        // Signature section
-        const sigY = currentY + 10;
-        doc.fontSize(9)
-           .font('Helvetica');
-        
-        // Date and Place
-        doc.text('Date:', margin, sigY);
-        doc.moveTo(margin + 20, sigY + 1)
-           .lineTo(margin + 80, sigY + 1)
-           .stroke();
-        
-        doc.text('Place:', margin + 100, sigY);
-        doc.moveTo(margin + 125, sigY + 1)
-           .lineTo(margin + 180, sigY + 1)
-           .stroke();
-        
-        // Signature
-        doc.text('Signature of the Applicant:', margin, sigY + 20);
-        doc.moveTo(margin + 60, sigY + 21)
-           .lineTo(margin + 150, sigY + 21)
-           .stroke();
-        
-        currentY = sigY + 30;
+        addSection('DECLARATION', declarationText);
       }
     }
 
-    // Organizing Committee section
+    // Organizing Committee section using column layout
     if (organizingCommittee.length > 0) {
-      addSectionHeader('ORGANIZING COMMITTEE');
-      
       // Group by role category
       const groupedCommittee = organizingCommittee.reduce((acc, member) => {
         const category = member.roleCategory || 'COMMITTEE';
@@ -536,10 +509,6 @@ export const generateBrochurePDF = async (req, res) => {
       sortedCategories.forEach(([category, members]) => {
         // Category header with proper name
         const categoryDisplayName = categoryOrder[category]?.name || category;
-        doc.fontSize(10)
-           .font('Helvetica-Bold')
-           .text(`${categoryDisplayName}:`, margin, currentY);
-        currentY += lineHeight;
         
         // Sort members within category by role importance
         const roleOrder = [
@@ -560,8 +529,8 @@ export const generateBrochurePDF = async (req, res) => {
           return a.role.localeCompare(b.role);
         });
         
-        // Members in this category
-        sortedMembers.forEach((member) => {
+        // Create member list for this category
+        const memberList = sortedMembers.map(member => {
           let memberText = `${member.role}: ${member.name}`;
           if (member.designation && member.designation !== member.role) {
             memberText += `, ${member.designation}`;
@@ -569,28 +538,21 @@ export const generateBrochurePDF = async (req, res) => {
           if (member.department) {
             memberText += `, ${member.department}`;
           }
-
-          addWrappedText(memberText, margin + 10, currentY, contentWidth - 10, 9);
-          currentY += 2; // Small spacing between members
+          return memberText;
         });
-        currentY += sectionSpacing;
+        
+        addSection(categoryDisplayName, memberList);
       });
     } else {
-
-      addSectionHeader('ORGANIZING COMMITTEE');
-      addWrappedText('Organizing committee information will be updated soon.', margin, currentY, contentWidth, 9);
-      currentY += sectionSpacing;
+      addSection('ORGANIZING COMMITTEE', 'Organizing committee information will be updated soon.');
     }
 
     // Coordinators section
     if (programme.coordinators && programme.coordinators.length > 0) {
-      addSectionHeader('PROGRAMME COORDINATORS');
-      
-      programme.coordinators.forEach(coordinator => {
-        const coordText = `Dr. ${coordinator.name}\n${coordinator.designation}${coordinator.department ? `\n${coordinator.department}` : ''}`;
-        addWrappedText(coordText, margin, currentY, contentWidth, 9);
-        currentY += sectionSpacing;
+      const coordinatorList = programme.coordinators.map(coordinator => {
+        return `Dr. ${coordinator.name}, ${coordinator.designation}${coordinator.department ? `, ${coordinator.department}` : ''}`;
       });
+      addSection('PROGRAMME COORDINATORS', coordinatorList);
     }
 
     // Footer with contact information

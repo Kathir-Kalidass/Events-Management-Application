@@ -6,10 +6,48 @@ import User from "../../models/userModel.js";
 import Certificate from "../../models/certificateModel.js";
 import mongoose from "mongoose";
 
-// Get all events
+// Get all events (only approved events for participants)
 export const getEvents = asyncHandler(async (req, res) => {
-  const events = await Event.find();
-  res.json(events);
+  try {
+    // Only show approved events to participants
+    const events = await Event.find({ 
+      status: "approved" 
+    })
+    .populate('createdBy', 'name email')
+    .populate('coordinators')
+    .sort({ startDate: 1 }); // Sort by start date
+    
+    // Add additional computed fields for the frontend
+    const eventsWithMetadata = events.map(event => {
+      const eventObj = event.toObject();
+      
+      // Add computed fields
+      eventObj.description = eventObj.objectives || 'No description available';
+      eventObj.category = eventObj.type || 'General';
+      eventObj.location = eventObj.venue;
+      eventObj.maxParticipants = eventObj.registrationProcedure?.participantLimit || null;
+      eventObj.registrationDeadline = eventObj.registrationProcedure?.deadline || null;
+      eventObj.registeredCount = 0; // This would need to be computed from ParticipantEvent model
+      
+      // Add organizer information
+      if (eventObj.createdBy) {
+        eventObj.organizer = {
+          name: eventObj.createdBy.name,
+          email: eventObj.createdBy.email
+        };
+      }
+      
+      return eventObj;
+    });
+    
+    res.json(eventsWithMetadata);
+  } catch (error) {
+    console.error('Error fetching events for participants:', error);
+    res.status(500).json({ 
+      message: 'Error fetching events',
+      error: error.message 
+    });
+  }
 });
 
 // Register for an event
@@ -641,40 +679,85 @@ const generateCertificate = async (participantId, eventId, participantName) => {
   }
 };
 
-// Get participant's certificates
+// Get participant's certificates with enhanced viewing capabilities
 export const getCertificates = asyncHandler(async (req, res) => {
   try {
     const { participantId } = req.params;
+    const { includePreview = false, format = 'summary' } = req.query;
 
     // Get certificates from the new Certificate model only
     const certificates = await Certificate.findByParticipant(participantId);
 
-    // Convert certificates to the expected format
-    const formattedCertificates = certificates.map(cert => ({
-      _id: cert._id,
-      participantId: cert.participantId,
-      eventId: cert.eventId._id,
-      title: `Certificate of Completion - ${cert.eventTitle}`,
-      eventTitle: cert.eventTitle,
-      issuedDate: cert.issuedDate,
-      certificateId: cert.certificateId,
-      verified: cert.verification?.verified || true,
-      skills: cert.skills || [],
-      description: `Certificate of completion for ${cert.eventTitle}`,
-      status: cert.status,
-      downloadCount: cert.downloadCount || 0,
-      eventDates: cert.eventDates,
-      venue: cert.venue,
-      mode: cert.mode
-    }));
+    // Convert certificates to the expected format with enhanced data
+    const formattedCertificates = certificates.map(cert => {
+      const baseData = {
+        _id: cert._id,
+        participantId: cert.participantId,
+        eventId: cert.eventId._id,
+        title: `Certificate of Completion - ${cert.eventTitle}`,
+        eventTitle: cert.eventTitle,
+        issuedDate: cert.issuedDate,
+        certificateId: cert.certificateId,
+        verified: cert.verification?.verified || true,
+        skills: cert.skills || [],
+        description: `Certificate of completion for ${cert.eventTitle}`,
+        status: cert.status,
+        downloadCount: cert.downloadCount || 0,
+        eventDates: cert.eventDates,
+        venue: cert.venue,
+        mode: cert.mode,
+        lastDownloaded: cert.lastDownloaded,
+        template: cert.template,
+        verification: {
+          verificationUrl: cert.verification?.verificationUrl,
+          verified: cert.verification?.verified
+        }
+      };
+
+      // Add buffer availability information for student portal
+      if (format === 'detailed') {
+        baseData.bufferInfo = {
+          hasImageBuffer: !!cert.certificateData?.imageBuffer,
+          hasPdfBuffer: !!cert.certificateData?.pdfBuffer,
+          imageSize: cert.certificateData?.imageBuffer?.length || 0,
+          pdfSize: cert.certificateData?.pdfBuffer?.length || 0
+        };
+      }
+
+      // Add preview data if requested (base64 encoded image for quick viewing)
+      if (includePreview === 'true' && cert.certificateData?.imageBuffer) {
+        try {
+          const base64Image = cert.certificateData.imageBuffer.toString('base64');
+          baseData.previewImage = `data:image/png;base64,${base64Image}`;
+        } catch (error) {
+          console.error('Error converting image to base64:', error);
+          baseData.previewImage = null;
+        }
+      }
+
+      return baseData;
+    });
 
     // Sort by issued date (newest first)
     formattedCertificates.sort((a, b) => new Date(b.issuedDate) - new Date(a.issuedDate));
 
-    res.status(200).json(formattedCertificates);
+    res.status(200).json({
+      success: true,
+      message: 'Certificates retrieved successfully',
+      data: formattedCertificates,
+      meta: {
+        total: formattedCertificates.length,
+        format: format,
+        includePreview: includePreview === 'true'
+      }
+    });
   } catch (err) {
     console.error("Error fetching certificates:", err);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ 
+      success: false,
+      message: "Server Error",
+      error: err.message 
+    });
   }
 });
 
@@ -952,5 +1035,137 @@ export const updatePreferences = asyncHandler(async (req, res) => {
   } catch (err) {
     console.error("Error updating preferences:", err);
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// Get certificate preview for student portal
+export const getCertificatePreview = asyncHandler(async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user?.id;
+
+    console.log(`Getting certificate preview: ${certificateId} for user: ${userId}`);
+
+    const certificate = await Certificate.findOne({ certificateId })
+      .populate('participantId', 'name email')
+      .populate('eventId', 'title startDate endDate venue mode')
+      .populate('issuedBy', 'name email');
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
+      });
+    }
+
+    // Check if user has permission to view this certificate
+    if (userId && certificate.participantId._id.toString() !== userId) {
+      // Allow admins and coordinators to view any certificate
+      const user = await User.findById(userId);
+      if (!user || !['admin', 'coordinator', 'hod'].includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this certificate'
+        });
+      }
+    }
+
+    // Return certificate data for preview (without buffer data)
+    res.status(200).json({
+      success: true,
+      message: 'Certificate preview retrieved successfully',
+      data: {
+        certificateId: certificate.certificateId,
+        participantName: certificate.participantName,
+        participantEmail: certificate.participantId.email,
+        eventTitle: certificate.eventTitle,
+        eventDates: certificate.eventDates,
+        venue: certificate.venue,
+        mode: certificate.mode,
+        issuedDate: certificate.issuedDate,
+        issuedBy: certificate.issuedBy.name,
+        status: certificate.status,
+        skills: certificate.skills,
+        template: certificate.template,
+        verification: {
+          verificationUrl: certificate.verification.verificationUrl,
+          verified: certificate.verification.verified
+        },
+        downloadCount: certificate.downloadCount,
+        lastDownloaded: certificate.lastDownloaded,
+        hasImageBuffer: !!certificate.certificateData?.imageBuffer,
+        hasPdfBuffer: !!certificate.certificateData?.pdfBuffer
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting certificate preview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get certificate preview',
+      error: error.message
+    });
+  }
+});
+
+// Get certificate image preview for student portal
+export const getCertificateImagePreview = asyncHandler(async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user?.id;
+
+    console.log(`Getting certificate image preview: ${certificateId} for user: ${userId}`);
+
+    const certificate = await Certificate.findOne({ certificateId })
+      .populate('participantId', '_id');
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found'
+      });
+    }
+
+    // Check if user has permission to view this certificate
+    if (userId && certificate.participantId._id.toString() !== userId) {
+      const user = await User.findById(userId);
+      if (!user || !['admin', 'coordinator', 'hod'].includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this certificate'
+        });
+      }
+    }
+
+    // Check if image buffer exists
+    if (!certificate.certificateData?.imageBuffer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate image not available'
+      });
+    }
+
+    // Convert buffer to base64 for preview
+    const base64Image = certificate.certificateData.imageBuffer.toString('base64');
+    const imageDataUrl = `data:image/png;base64,${base64Image}`;
+
+    res.status(200).json({
+      success: true,
+      message: 'Certificate image preview retrieved successfully',
+      data: {
+        certificateId: certificate.certificateId,
+        imageDataUrl: imageDataUrl,
+        contentType: 'image/png',
+        size: certificate.certificateData.imageBuffer.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting certificate image preview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get certificate image preview',
+      error: error.message
+    });
   }
 });

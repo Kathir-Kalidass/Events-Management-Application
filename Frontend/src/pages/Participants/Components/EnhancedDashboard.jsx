@@ -188,7 +188,7 @@ const EnhancedParticipantDashboard = () => {
   const fetchUserStats = async () => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // Fetch my events
       const eventsResponse = await fetch(`http://localhost:5050/api/participant/my-events/${participantId}`, {
         headers: {
@@ -196,12 +196,12 @@ const EnhancedParticipantDashboard = () => {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (eventsResponse.ok) {
         const eventsData = await eventsResponse.json();
         const attendedEvents = eventsData.filter(event => event.attended).length;
         const pendingFeedback = eventsData.filter(event => event.attended && !event.feedbackGiven).length;
-        
+
         // Fetch certificates
         const certsResponse = await fetch(`http://localhost:5050/api/participant/certificates/${participantId}`, {
           headers: {
@@ -209,9 +209,19 @@ const EnhancedParticipantDashboard = () => {
             "Content-Type": "application/json",
           },
         });
-        
-        const certificates = certsResponse.ok ? (await certsResponse.json()).length : 0;
-        
+
+        let certificates = 0;
+        if (certsResponse.ok) {
+          const certsData = await certsResponse.json();
+          // Handle the new response format with success and data properties
+          if (certsData.success && certsData.data) {
+            certificates = certsData.data.length;
+          } else if (Array.isArray(certsData)) {
+            // Fallback for old response format
+            certificates = certsData.length;
+          }
+        }
+
         setUserStats({
           totalEvents: eventsData.length,
           attendedEvents,
@@ -376,7 +386,7 @@ const EnhancedParticipantDashboard = () => {
               
               {/* Quick Stats */}
               <Grid container spacing={1} sx={{ mt: 2 }}>
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Paper sx={{ p: 1, textAlign: 'center' }}>
                     <Typography variant="h6" color="primary">
                       {userStats.totalEvents}
@@ -384,7 +394,7 @@ const EnhancedParticipantDashboard = () => {
                     <Typography variant="caption">Events</Typography>
                   </Paper>
                 </Grid>
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Paper sx={{ p: 1, textAlign: 'center' }}>
                     <Typography variant="h6" color="success.main">
                       {userStats.certificates}

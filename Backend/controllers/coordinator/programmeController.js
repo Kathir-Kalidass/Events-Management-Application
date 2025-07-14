@@ -8,6 +8,36 @@ export const createProgramme = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // Debug: Log the problematic field
+    console.log("🔍 Debugging registrationProcedure field:");
+    console.log("Type:", typeof req.body.registrationProcedure);
+    console.log("Value:", req.body.registrationProcedure);
+
+    // Helper function to safely parse JSON or handle objects
+    const safeJSONParse = (data, fallback = {}) => {
+      try {
+        // If it's already an object, return it directly
+        if (typeof data === 'object' && data !== null) {
+          return data;
+        }
+        
+        // If it's a string, try to parse it
+        if (typeof data === 'string') {
+          if (!data || data === 'undefined' || data === 'null') {
+            return fallback;
+          }
+          return JSON.parse(data);
+        }
+        
+        // For any other type, return fallback
+        return fallback;
+      } catch (error) {
+        console.error("❌ JSON Parse Error for:", typeof data === 'string' ? data.substring(0, 100) + "..." : data);
+        console.error("❌ Error:", error.message);
+        return fallback;
+      }
+    };
+
     const programme = new event({
       title: req.body.title,
       startDate: new Date(req.body.startDate),
@@ -19,17 +49,27 @@ export const createProgramme = async (req, res) => {
       objectives: req.body.objectives,
       outcomes: req.body.outcomes,
       budget: Number(req.body.budget) || 0,
-      coordinators: JSON.parse(req.body.coordinators || "[]"),
-      targetAudience: JSON.parse(req.body.targetAudience || "[]"),
-      resourcePersons: JSON.parse(req.body.resourcePersons || "[]"),
-      approvers: JSON.parse(req.body.approvers || "[]"),
-      budgetBreakdown: JSON.parse(req.body.budgetBreakdown || "{}"),
+      coordinators: safeJSONParse(req.body.coordinators, []),
+      targetAudience: safeJSONParse(req.body.targetAudience, []),
+      resourcePersons: safeJSONParse(req.body.resourcePersons, []),
+      approvers: safeJSONParse(req.body.approvers, []),
+      budgetBreakdown: safeJSONParse(req.body.budgetBreakdown, {}),
       // Handle organizing departments
-      organizingDepartments: JSON.parse(req.body.organizingDepartments || '{"primary":"DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING","associative":[]}'),
+      organizingDepartments: safeJSONParse(req.body.organizingDepartments, {
+        primary: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)",
+        associative: []
+      }),
       // Handle department approvers
-      departmentApprovers: JSON.parse(req.body.departmentApprovers || '[{"department":"DCSE","hodName":"","hodDesignation":"HOD of DCSE","approved":false,"approvedDate":null,"signature":""}]'),
-      // Handle registration procedure
-      registrationProcedure: JSON.parse(req.body.registrationProcedure || '{"enabled":false}'),
+      departmentApprovers: safeJSONParse(req.body.departmentApprovers, [{
+        department: "DCSE",
+        hodName: "",
+        hodDesignation: "HoD, DCSE & Director, CCS",
+        approved: false,
+        approvedDate: null,
+        signature: ""
+      }]),
+      // Handle registration procedure with safe parsing
+      registrationProcedure: safeJSONParse(req.body.registrationProcedure, { enabled: false }),
       createdBy: req.body.createdBy,
       reviewedBy: req.body.reviewedBy,
     });
@@ -84,13 +124,18 @@ export const getProgrammes = async (req, res) => {
 // ✅ FIXED: Get single programme by ID with proper expense synchronization for editing
 export const getProgrammeById = async (req, res) => {
   try {
-    const programme = await event.findById(req.params.id);
+    const programme = await event.findById(req.params.id)
+      .populate({
+        path: 'organizingCommittee.member',
+        model: 'ConvenorCommittee'
+      });
+    
     if (!programme) {
       return res.status(404).json({ message: "Programme not found" });
     }
 
-    // Fetch organizing committee data
-    const organizingCommittee = await ConvenorCommittee.find({ 
+    // Fetch all available organizing committee members for selection
+    const availableCommitteeMembers = await ConvenorCommittee.find({ 
       isActive: true
     }).sort({ 
       roleCategory: 1, 
@@ -140,15 +185,149 @@ export const getProgrammeById = async (req, res) => {
 
     }
 
-    // Add organizing committee to the response
+    // Add available organizing committee members to the response
     const programmeWithCommittee = {
       ...programmeData,
-      organizingCommittee
+      availableCommitteeMembers
     };
 
     res.json(programmeWithCommittee);
   } catch (error) {
     console.error("❌ Error fetching programme:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Update organizing committee for an event
+export const updateOrganizingCommittee = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { organizingCommittee, committeeDisplaySettings } = req.body;
+
+    const programme = await event.findById(eventId);
+    if (!programme) {
+      return res.status(404).json({ message: "Programme not found" });
+    }
+
+    // Update organizing committee
+    if (organizingCommittee) {
+      programme.organizingCommittee = organizingCommittee;
+    }
+
+    // Update display settings
+    if (committeeDisplaySettings) {
+      programme.committeeDisplaySettings = {
+        ...programme.committeeDisplaySettings,
+        ...committeeDisplaySettings
+      };
+    }
+
+    await programme.save();
+
+    // Populate the committee members for response
+    const updatedProgramme = await event.findById(eventId)
+      .populate({
+        path: 'organizingCommittee.member',
+        model: 'ConvenorCommittee'
+      });
+
+    res.json({
+      message: "Organizing committee updated successfully",
+      organizingCommittee: updatedProgramme.organizingCommittee,
+      committeeDisplaySettings: updatedProgramme.committeeDisplaySettings
+    });
+  } catch (error) {
+    console.error("❌ Error updating organizing committee:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Get all available committee members
+export const getAvailableCommitteeMembers = async (req, res) => {
+  try {
+    const members = await ConvenorCommittee.find({ isActive: true })
+      .sort({ 
+        roleCategory: 1, 
+        role: 1,
+        name: 1 
+      });
+
+    // Group by role category for easier frontend handling
+    const groupedMembers = members.reduce((acc, member) => {
+      const category = member.roleCategory || 'COMMITTEE';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(member);
+      return acc;
+    }, {});
+
+    res.json({
+      members,
+      groupedMembers
+    });
+  } catch (error) {
+    console.error("❌ Error fetching committee members:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Add new committee member
+export const addCommitteeMember = async (req, res) => {
+  try {
+    const { name, designation, department, role, roleCategory, description } = req.body;
+
+    if (!name || !role) {
+      return res.status(400).json({ message: "Name and role are required" });
+    }
+
+    const newMember = new ConvenorCommittee({
+      name,
+      designation,
+      department,
+      role,
+      roleCategory: roleCategory || 'COMMITTEE',
+      description,
+      isActive: true,
+      createdBy: req.user?._id
+    });
+
+    await newMember.save();
+
+    res.status(201).json({
+      message: "Committee member added successfully",
+      member: newMember
+    });
+  } catch (error) {
+    console.error("❌ Error adding committee member:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Update registration procedure
+export const updateRegistrationProcedure = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { registrationProcedure } = req.body;
+
+    const programme = await event.findById(eventId);
+    if (!programme) {
+      return res.status(404).json({ message: "Programme not found" });
+    }
+
+    programme.registrationProcedure = {
+      ...programme.registrationProcedure,
+      ...registrationProcedure
+    };
+
+    await programme.save();
+
+    res.json({
+      message: "Registration procedure updated successfully",
+      registrationProcedure: programme.registrationProcedure
+    });
+  } catch (error) {
+    console.error("❌ Error updating registration procedure:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };

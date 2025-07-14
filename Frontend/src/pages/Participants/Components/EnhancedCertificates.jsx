@@ -1,11 +1,11 @@
 import React from 'react';
-import ParticipantCertificates from '../../../components/ParticipantCertificates';
+import EnhancedCertificateViewer from '../../../components/EnhancedCertificateViewer';
 
 const EnhancedCertificates = ({ onDataChange }) => {
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || '{}');
   const participantId = userInfo._id;
 
-  return <ParticipantCertificates userId={participantId} />;
+  return <EnhancedCertificateViewer userId={participantId} showPreview={true} />;
 };
 
 export default EnhancedCertificates;
