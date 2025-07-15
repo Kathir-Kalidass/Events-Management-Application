@@ -500,7 +500,7 @@ const CoordinatorEventDashboard = () => {
       // Clean up the URL after a reasonable time
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5000);
+      }, 5050);
       
     } catch (error) {
       console.error("Error generating styled brochure:", error.message);

@@ -285,7 +285,7 @@ const CoordinatorDashboard = () => {
       // Clean up the URL after a reasonable time
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5000); // Increased timeout to 5 seconds
+      }, 5050); // Increased timeout to 5 seconds
     })
     .catch((err) => {
       console.error("Error fetching PDF:", err.message);
@@ -907,7 +907,7 @@ const CoordinatorDashboard = () => {
       // Clean up
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5000);
+      }, 5050);
       
       // Also try to save to backend
       try {

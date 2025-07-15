@@ -189,18 +189,34 @@ const EnhancedParticipantDashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Fetch my events
-      const eventsResponse = await fetch(`http://localhost:5050/api/participant/my-events/${participantId}`, {
+      // Fetch all approved events
+      const allEventsResponse = await fetch(`http://localhost:5050/api/participant/events`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      if (eventsResponse.ok) {
-        const eventsData = await eventsResponse.json();
-        const attendedEvents = eventsData.filter(event => event.attended).length;
-        const pendingFeedback = eventsData.filter(event => event.attended && !event.feedbackGiven).length;
+      let totalEvents = 0;
+      if (allEventsResponse.ok) {
+        const allEventsData = await allEventsResponse.json();
+        totalEvents = allEventsData.length;
+      }
+
+      // Fetch my registered events
+      const myEventsResponse = await fetch(`http://localhost:5050/api/participant/my-events/${participantId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      let attendedEvents = 0;
+      let pendingFeedback = 0;
+      if (myEventsResponse.ok) {
+        const myEventsData = await myEventsResponse.json();
+        attendedEvents = myEventsData.filter(event => event.attended).length;
+        pendingFeedback = myEventsData.filter(event => event.attended && !event.feedbackGiven).length;
 
         // Fetch certificates
         const certsResponse = await fetch(`http://localhost:5050/api/participant/certificates/${participantId}`, {
@@ -223,7 +239,7 @@ const EnhancedParticipantDashboard = () => {
         }
 
         setUserStats({
-          totalEvents: eventsData.length,
+          totalEvents,
           attendedEvents,
           certificates,
           pendingFeedback

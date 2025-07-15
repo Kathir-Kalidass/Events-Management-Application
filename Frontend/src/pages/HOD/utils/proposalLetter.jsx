@@ -31,7 +31,7 @@ const getDeptAbbreviation = (deptName) => {
   if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "ECE";
   if (deptName.includes("MECHANICAL")) return "MECH";
   if (deptName.includes("CIVIL")) return "CIVIL";
-  if (deptName.includes("COMPUTER SCIENCE")) return "DCSE";
+  if (deptName.includes("COMPUTER SCIENCE")) return "CSE";
   return deptName.replace(/[^A-Z]/g, '') || "DEPT";
 };
 

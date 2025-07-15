@@ -280,7 +280,7 @@ const getDeptAbbreviation = (deptName) => {
   if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "ECE";
   if (deptName.includes("MECHANICAL")) return "MECH";
   if (deptName.includes("CIVIL")) return "CIVIL";
-  if (deptName.includes("COMPUTER SCIENCE")) return "DCSE";
+  if (deptName.includes("COMPUTER SCIENCE")) return "CSE";
   return deptName.replace(/[^A-Z]/g, '') || "DEPT";
 };
 
@@ -314,14 +314,14 @@ export const generateClaimBillPDF = async (req, res) => {
     
     // Helper function for department abbreviations
     const getDeptAbbreviation = (deptName) => {
-      if (!deptName) return "UNKNOWN";
+      if (!deptName) return "DCSE";
       if (deptName.includes("ELECTRICAL") && deptName.includes("ELECTRONICS")) return "EEE";
       if (deptName.includes("CYBER SECURITY")) return "CCS";
       if (deptName.includes("INFORMATION TECHNOLOGY")) return "IT";
       if (deptName.includes("ELECTRONICS") && deptName.includes("COMMUNICATION")) return "ECE";
       if (deptName.includes("MECHANICAL")) return "MECH";
       if (deptName.includes("CIVIL")) return "CIVIL";
-      if (deptName.includes("COMPUTER SCIENCE")) return "DCSE";
+      if (deptName.includes("COMPUTER SCIENCE")) return "CSE";
       return deptName.replace(/[^A-Z]/g, '') || "DEPT";
     };
     
@@ -371,7 +371,10 @@ export const generateClaimBillPDF = async (req, res) => {
       actualAmount: exp.actualAmount
     })));
     
-    const approvedExpenses = expenses.filter(exp => exp.itemStatus === 'approved');
+    // Filter expenses to include both approved and pending items, but maintain their status
+    const approvedExpenses = expenses.filter(exp => 
+      exp.itemStatus === 'approved' || exp.itemStatus === 'pending'
+    );
     
     // Use approved amounts instead of original amounts for budget display
     const expensesToShow = approvedExpenses.map((exp, index) => {
@@ -505,7 +508,7 @@ export const generateClaimBillPDF = async (req, res) => {
       sno: { x: 50, width: 50, title: "S.No" },
       description: { x: 100, width: 250, title: "Head of the Expenditure" },
       status: { x: 350, width: 80, title: "Status" },
-      amount: { x: 430, width: 120, title: "Approved Amount (Rs)" }
+      amount: { x: 430, width: 120, title: "Amount (Rs)" }
     };
     const rowHeight = 30;
 
@@ -548,12 +551,20 @@ export const generateClaimBillPDF = async (req, res) => {
     // Draw table content with boxes - only approved items
     expensesToShow.forEach((exp, idx) => {
       const amt = parseFloat(exp.amount) || 0;
-      
+
       if (amt <= 0) {
         console.warn(`❌ Invalid amount in approved expense[${idx}]:`, exp);
         return;
       }
       total += amt;
+
+      // Determine status label and color
+      let statusLabel = "APPROVED";
+      let statusColor = "#008000";
+      if (exp.itemStatus && exp.itemStatus.toLowerCase() === "pending") {
+        statusLabel = "PENDING";
+        statusColor = "#ff9900";
+      }
 
       // Draw row box with alternating background
       doc.rect(50, currentY, tableWidth, rowHeight)
@@ -577,10 +588,14 @@ export const generateClaimBillPDF = async (req, res) => {
          .fontSize(10)
          .font("Helvetica")
          .text(`${idx + 1}.`, columns.sno.x + 5, currentY + 10, { width: columns.sno.width - 10, align: "center" })
-         .text(exp.category, columns.description.x + 5, currentY + 10, { width: columns.description.width - 10 })
-         .fillColor('#008000')
-         .text("APPROVED", columns.status.x + 5, currentY + 10, { width: columns.status.width - 10, align: "center" })
-         .fillColor('#000000')
+         .text(exp.category, columns.description.x + 5, currentY + 10, { width: columns.description.width - 10 });
+
+      // Handle status display
+      doc.fillColor('#008000')
+         .text('APPROVED', columns.status.x + 5, currentY + 10, { width: columns.status.width - 10, align: "center" });
+
+      // Display amount
+      doc.fillColor('#000000')
          .text(new Intl.NumberFormat('en-IN', {
            minimumFractionDigits: 2,
            maximumFractionDigits: 2

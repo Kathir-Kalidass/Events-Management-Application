@@ -226,7 +226,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
 // Example usage:
 // <FinancialEventCard event={{
 //   title: "Q3 Marketing Campaign",
-//   budget: 50000,
+//   budget: 50500,
 //   income: 42000,
 //   expenses: 38000
 // }} />

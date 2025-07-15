@@ -85,6 +85,9 @@ const EnhancedDashboardHome = ({ userStats, onRefresh, onNavigate }) => {
 
       if (eventsResponse.ok) {
         const eventsData = await eventsResponse.json();
+        // Update total approved events count
+        
+        
         const upcoming = eventsData
           .filter(event => new Date(event.startDate) > new Date())
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
