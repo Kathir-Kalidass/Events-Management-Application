@@ -219,11 +219,13 @@ export const giveFeedback = asyncHandler(async (req, res) => {
 
     // Validate required fields
     if (!participantId || !eventId || !email || !name || !designation || !institute || !contact) {
+      console.log("one");
       return res.status(400).json({ message: "All personal information fields are required" });
     }
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(participantId) || !mongoose.Types.ObjectId.isValid(eventId)) {
+      console.log("two");
       return res.status(400).json({ message: "Invalid participantId or eventId" });
     }
 
@@ -234,10 +236,12 @@ export const giveFeedback = asyncHandler(async (req, res) => {
     }
 
     if (!participantEvent.attended) {
+      console.log("three");
       return res.status(400).json({ message: "Cannot submit feedback for events you haven't attended" });
     }
 
     if (participantEvent.feedbackGiven) {
+      console.log("four");
       return res.status(400).json({ message: "Feedback already submitted for this event" });
     }
 
@@ -304,6 +308,7 @@ export const giveFeedback = asyncHandler(async (req, res) => {
     });
   } catch (err) {
     console.error("Feedback error:", err);
+    console.log("Ten");
     res.status(400).json({ message: err.message || "Failed to submit feedback" });
   }
 });
@@ -651,32 +656,31 @@ const generateCertificate = async (participantId, eventId, participantName) => {
     };
   } catch (error) {
     console.error("Error generating certificate:", error);
-    
-    // Fallback to old method if new method fails
+
+    // Use safe fallbacks to avoid ReferenceError
     const fallbackCertificate = {
-      participantId,
-      eventId,
-      participantName,
-      eventTitle: event?.title || "Unknown Event",
-      issuedDate: new Date(),
-      certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      verified: true,
-      skills: event?.skills || [],
-      description: `Certificate of completion for ${event?.title || "Unknown Event"}`
+        participantId,
+        eventId,
+        participantName,
+        eventTitle: (typeof event !== "undefined" && event.title) || "Unknown Event",
+        issuedDate: new Date(),
+        certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        verified: true,
+        skills: (typeof event !== "undefined" && event.skills) || [],
+        description: `Certificate of completion for ${(typeof event !== "undefined" && event.title) || "Unknown Event"}`
     };
 
-    // Update ParticipantEvent with certificate info
     await ParticipantEvent.findOneAndUpdate(
-      { participantId, eventId },
-      { 
-        certificateGenerated: true,
-        certificateGeneratedDate: new Date(),
-        certificateId: fallbackCertificate.certificateId
-      }
+        { participantId, eventId },
+        { 
+            certificateGenerated: true,
+            certificateGeneratedDate: new Date(),
+            certificateId: fallbackCertificate.certificateId
+        }
     );
 
     return fallbackCertificate;
-  }
+}
 };
 
 // Get participant's certificates with enhanced viewing capabilities

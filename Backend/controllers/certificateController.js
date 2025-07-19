@@ -140,28 +140,34 @@ export const downloadCertificatePDF = async (req, res) => {
     }
 
     // Check if PDF buffer exists, if not generate it
-    if (!certificate.certificateData.pdfBuffer) {
-      console.log('PDF buffer not found, generating PDF...');
-      
-      try {
-        // Generate PDF from existing image buffer or regenerate certificate
-        const result = await certificateService.generateCertificateFromDB(certificateId, ['pdf']);
-        
-        if (!result.certificate.certificateData.pdfBuffer) {
-          return res.status(404).json({
-            success: false,
-            message: 'Unable to generate PDF certificate'
-          });
+   if (!certificate.certificateData?.pdfBuffer) {
+    console.log('PDF buffer not found, generating PDF...');
+
+    try {
+        await certificateService.generateCertificateFromDB(certificateId, ['pdf']);
+
+        // Reload the updated certificate document from the DB
+        const updatedCertificate = await Certificate.findOne({ certificateId });
+
+        if (!updatedCertificate?.certificateData?.pdfBuffer) {
+            return res.status(404).json({
+                success: false,
+                message: 'Unable to generate PDF certificate after regeneration'
+            });
         }
-      } catch (generateError) {
+
+        certificate.certificateData = updatedCertificate.certificateData; // update in scope
+
+    } catch (generateError) {
         console.error('Error generating PDF:', generateError);
         return res.status(500).json({
-          success: false,
-          message: 'Failed to generate PDF certificate',
-          error: generateError.message
+            success: false,
+            message: 'Failed to generate PDF certificate',
+            error: generateError.message
         });
-      }
     }
+}
+
 
     // Record download
     if (userId) {
