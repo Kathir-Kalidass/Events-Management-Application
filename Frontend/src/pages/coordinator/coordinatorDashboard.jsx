@@ -383,6 +383,7 @@ const CoordinatorDashboard = () => {
   const handleSubmitClaim = async () => {
 
     try {
+      // console.log("Submit Claim Bill - cliam data");
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `http://localhost:5050/api/coordinator/claims/${selectedProgramme._id}`,

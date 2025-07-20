@@ -111,6 +111,7 @@ coordinatorRoutes.route('/programmes/:id')
 coordinatorRoutes.get('/programmes/:id/pdf', generateProgrammePDF);
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF);
 coordinatorRoutes.post('/claims/:id', authorizeResourceOwnership('event', 'id'), handleClaimBillSubmission);
+coordinatorRoutes.post('/programmes/:id/claim', authorizeResourceOwnership('event', 'id'), handleClaimBillSubmission);
 coordinatorRoutes.get('/claims/:id/pdf', generateClaimBillPDF);
 coordinatorRoutes.get('/claims/:id/fund-transfer-pdf', generateFundTransferRequestPDF);
 
