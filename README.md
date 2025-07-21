@@ -31,6 +31,7 @@
 - [🔧 Development Guide](#-development-guide)
 - [🧪 Testing](#-testing)
 - [🚀 Deployment](#-deployment)
+- [👥 Development Team](#-development-team)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 
@@ -152,48 +153,21 @@
   - SQL injection prevention
   - XSS protection
 
-## 🌟 Features
-
-### 🏢 Multi-Role System
-- **HOD (Head of Department)**: Create events, manage organizing committees, approve/reject events
-- **Coordinator**: Manage assigned events, generate documents, handle participant registrations
-- **Participant**: Register for events, view certificates, provide feedback
-
-### 📋 Event Management
-- **Dynamic Event Creation**: Customizable event types (workshops, training programs, seminars, courses)
-- **Organizing Committee Management**: Add committee members with roles and designations
-- **Registration Procedure Configuration**: Flexible registration forms, payment details, evaluation criteria
-- **Event Dashboard**: Real-time statistics and participant management
-
-### 📄 Document Generation
-- **Professional Brochures**: AI-enhanced brochures with Anna University branding
-- **Dynamic Content**: Auto-generated course descriptions based on event data
-- **Registration Forms**: Customizable forms integrated into brochures
-- **Certificate Generation**: Automated certificate generation for participants
-- **PDF Management**: Save, download, and manage all generated documents
-
-### 🎨 Brochure Features
-- **Professional Layout**: Two-column design with Anna University logo and branding
-- **AI-Enhanced Descriptions**: Intelligent course descriptions based on event type and content
-- **Dynamic Sections**: 
-  - About the University/Department
-  - Event Information
-  - Organizing Committee (from database)
-  - Registration Information
-  - Payment Details
-  - Contact Information
-- **Responsive Design**: Optimized for printing and digital viewing
-
-### 🔐 Authentication & Security
-- **JWT-based Authentication**: Secure login system
-- **Role-based Authorization**: Different access levels for different user types
-- **Password Encryption**: Bcrypt-secured password storage
-- **Session Management**: Automatic token refresh and logout
-
-### 📊 Analytics & Reporting
-- **Event Statistics**: Participant counts, completion rates, feedback scores
-- **Dashboard Analytics**: Visual charts and graphs using Recharts
-- **Export Capabilities**: Download participant lists, certificates, and reports
+### 🎨 **Enhanced User Interface**
+- **🏠 Professional Home Page**: 
+  - Anna University and CEG logos
+  - Campus background images
+  - Smooth animations and transitions
+  - Responsive design for all devices
+- **📱 Mobile-First Design**: 
+  - Touch-friendly navigation
+  - Optimized layouts for mobile
+  - Progressive Web App features
+- **🎯 Interactive Elements**: 
+  - Hover effects and animations
+  - Smooth scrolling navigation
+  - Professional color schemes
+  - Material-UI components
 
 ---
 
@@ -300,7 +274,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/DhanushT7/Events-Management-Application.git
+   git clone https://github.com/your-username/Events-Management-Application.git
    cd Events-Management-Application
    ```
 
@@ -323,10 +297,6 @@ This application currently implements **Module 4** of a comprehensive 10-module 
    cd ..
    ```
 
-5. **Install all dependencies**
-   ```bash
-   npm install-all
-   ```
 ### Configuration
 
 1. **Backend Environment Setup**
@@ -358,11 +328,6 @@ This application currently implements **Module 4** of a comprehensive 10-module 
    mongod
    ```
 
-2. **Create Sample Data (Optional)**
-   ```bash
-   node create-sample-data.js
-   ```
-
 ### Running the Application
 
 #### Option 1: Run Servers Separately
@@ -371,7 +336,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 ```bash
 npm run backend
 # OR
-cd Backend && npm start
+cd Backend && npm run dev
 ```
 
 **Terminal 2 - Frontend Development Server**
@@ -379,12 +344,6 @@ cd Backend && npm start
 npm run frontend
 # OR
 cd Frontend && npm run dev
-```
-
-### Using VS Code Tasks
-If using VS Code, you can use the predefined task:
-```bash
-# Use Ctrl+Shift+P -> "Tasks: Run Task" -> "Start Backend Server"
 ```
 
 ## 📱 Application Access
@@ -395,7 +354,7 @@ If using VS Code, you can use the predefined task:
 
 ## 👥 Default User Accounts
 
-After running sample data creation:
+After setting up the application, you can create accounts or use sample data:
 
 ### HOD Account
 - **Email**: hod@annauniv.edu
@@ -412,46 +371,65 @@ After running sample data creation:
 - **Password**: part123
 - **Role**: Participant
 
+---
+
 ## 📁 Project Structure
+
+The project follows a **feature-based architecture** for better organization and maintainability:
 
 ```
 Events-Management-Application/
 ├── Backend/                          # Backend server
-│   ├── config/
-│   │   └── db.js                    # Database configuration
-│   ├── controllers/                 # Route controllers
-│   │   ├── auth/                   # Authentication controllers
-│   │   ├── coordinator/            # Coordinator-specific controllers
-│   │   ├── hod/                    # HOD-specific controllers
-│   │   └── participant/            # Participant-specific controllers
-│   ├── middleware/                 # Custom middleware
-│   ├── models/                     # MongoDB schemas
-│   ├── routes/                     # API routes
-│   ├── passwordManager/            # Encryption/Decryption utilities
-│   ├── server.js                   # Main server file
-│   └── package.json
+│   ├── src/                         # Source code
+│   │   ├── features/                # Feature-based modules
+│   │   │   ├── auth/                # Authentication & Authorization
+│   │   │   ├── events/              # Event Management
+│   │   │   ├── claims/              # Claims & Budget Management
+│   │   │   ├── certificates/        # Certificate Management
+│   │   │   ├── participants/        # Participant Management
+│   │   │   ├── documents/           # Document Generation
+│   │   │   ├── feedback/            # Feedback Management
+│   │   │   └── admin/               # Admin & System Management
+│   │   ├── shared/                  # Shared resources
+│   │   │   ├── config/              # Configuration files
+│   │   │   ├── middleware/          # Shared middleware
+│   │   │   ├── models/              # Database models
+│   │   │   ├── utils/               # Shared utilities
+│   │   │   └── services/            # Shared services
+│   │   └── server.js                # Main server file
+│   ├── generated-certificates/      # Generated certificate files
+│   ├── .env                         # Environment variables
+│   └── package.json                 # Dependencies and scripts
 ├── Frontend/                        # React frontend
-│   ├── public/                     # Static assets
-│   ├── src/
-│   │   ├── components/             # Reusable components
-│   │   ├── context/                # React context providers
-│   │   ├── pages/                  # Page components
-│   │   │   ├── Auth/              # Authentication pages
-│   │   │   ├── coordinator/       # Coordinator dashboard
-│   │   │   ├── HOD/               # HOD dashboard
-│   │   │   └── Participants/      # Participant pages
-│   │   ├── services/              # API services and utilities
-│   │   │   ├── api.js             # API configuration
-│   │   │   └── brochureGenerator.js # Professional brochure generation
-│   │   ├── styles/                # CSS stylesheets
-│   │   ├── App.jsx                # Main App component
-│   │   └── main.jsx               # Entry point
-│   ├── package.json
-│   └── vite.config.js
-├── data/                           # MongoDB data files
-├── create-sample-data.js           # Sample data creation script
-├── package.json                    # Root package.json
-└── README.md                       # This file
+│   ├── src/                         # Source code
+│   │   ├── features/                # Feature-based modules
+│   │   │   ├── auth/                # Authentication pages
+│   │   │   ├── events/              # Event Management pages
+│   │   │   ├── Home/                # Enhanced home page
+│   │   │   ├── claims/              # Claims Management
+│   │   │   ├── certificates/        # Certificate Management
+│   │   │   ├── participants/        # Participant pages
+│   │   │   └── admin/               # Admin pages
+│   │   ├── shared/                  # Shared resources
+│   │   │   ├── components/          # Reusable components
+│   │   │   ├── services/            # API services
+│   │   │   ├── utils/               # Shared utilities
+│   │   │   ├── constants/           # Application constants
+│   │   │   ├── context/             # React contexts
+│   │   │   └── hooks/               # Custom React hooks
+│   │   ├── App.jsx                  # Main App component
+│   │   └── main.jsx                 # Entry point
+│   ├── public/                      # Static assets
+│   │   ├── anna-university-logo.jpg # Anna University logo
+│   │   ├── CEG_logo.png            # CEG logo
+│   │   ├── Anna_University.jpg      # Campus background
+│   │   └── AnnaUniversityAIIMG.jpg  # Additional campus image
+│   ├── package.json                 # Dependencies and scripts
+│   └── vite.config.js               # Vite configuration
+├── PROJECT_STRUCTURE.md             # Detailed structure documentation
+├── INTEGRATION_MANUAL.md            # Integration guide
+├── package.json                     # Root package.json
+└── README.md                        # This file
 ```
 
 ---
@@ -464,16 +442,6 @@ POST /api/auth/register          # User registration
 POST /api/auth/login             # User login
 POST /api/auth/forgot-password   # Password reset
 GET  /api/auth/verify-token      # Token verification
-```
-
-### **Admin Endpoints**
-```http
-GET    /api/admin/feedback-questions           # Get all feedback questions
-POST   /api/admin/feedback-questions           # Create feedback question
-PUT    /api/admin/feedback-questions/:id       # Update feedback question
-DELETE /api/admin/feedback-questions/:id       # Delete feedback question
-PUT    /api/admin/feedback-questions/reorder   # Reorder questions
-POST   /api/admin/feedback-questions/initialize # Initialize default questions
 ```
 
 ### **HOD (Head of Department) Endpoints**
@@ -491,20 +459,15 @@ PUT  /api/hod/events/:id/status         # Update event status
 ### **Coordinator Endpoints**
 ```http
 GET  /api/coordinator/dashboard                    # Dashboard data
-GET  /api/coordinator/events                       # Get coordinator events
-GET  /api/coordinator/events/:id                   # Get specific event
-POST /api/coordinator/events                       # Create new event
-PUT  /api/coordinator/events/:id                   # Update event
-GET  /api/coordinator/participants/:eventId        # Get participants
-POST /api/coordinator/participants/:eventId        # Add participant
-POST /api/coordinator/brochure/:eventId           # Generate brochure
-GET  /api/coordinator/brochure/:eventId           # Download brochure
-POST /api/coordinator/claims/:eventId             # Submit claim
-GET  /api/coordinator/claims/:eventId             # Get claim details
-POST /api/coordinator/generate-claim/:eventId     # Generate claim PDF
-GET  /api/coordinator/feedback-stats/:eventId     # Get feedback statistics
-POST /api/coordinator/organizing-committee        # Manage committee
-PUT  /api/coordinator/budget-sync/:eventId        # Sync budget data
+GET  /api/coordinator/programmes                   # Get coordinator events
+GET  /api/coordinator/programmes/:id               # Get specific event
+POST /api/coordinator/programmes                   # Create new event
+PUT  /api/coordinator/programmes/:id               # Update event
+DELETE /api/coordinator/programmes/:id             # Delete event
+GET  /api/coordinator/programmes/:id/pdf           # Download event PDF
+POST /api/coordinator/claims/:eventId              # Submit claim
+GET  /api/coordinator/claims/:eventId/pdf          # Download claim PDF
+POST /api/coordinator/brochures/:eventId/save      # Save brochure
 ```
 
 ### **Participant Endpoints**
@@ -524,26 +487,6 @@ POST /api/certificates/bulk-generate         # Bulk generate certificates
 GET  /api/certificates/:id                   # Get certificate details
 GET  /api/certificates/download/:id          # Download certificate
 GET  /api/certificates/verify/:id            # Verify certificate (public)
-GET  /api/certificates/event/:eventId        # Get event certificates
-GET  /api/certificates/participant/:userId   # Get user certificates
-```
-
-### **Claim Management Endpoints**
-```http
-GET    /api/claims/:eventId                  # Get event claims
-POST   /api/claims/:eventId                  # Submit claim
-PUT    /api/claims/:eventId/:itemId          # Update claim item
-DELETE /api/claims/:eventId/:itemId          # Delete claim item
-POST   /api/claims/:eventId/approve          # Approve claim
-POST   /api/claims/:eventId/reject           # Reject claim
-GET    /api/claims/:eventId/pdf              # Download claim PDF
-```
-
-### **Budget Sync Endpoints**
-```http
-GET  /api/budget-sync/:eventId               # Get budget data
-POST /api/budget-sync/:eventId               # Sync budget
-PUT  /api/budget-sync/:eventId               # Update budget
 ```
 
 ---
@@ -564,87 +507,72 @@ PUT  /api/budget-sync/:eventId               # Update budget
 | 🔐 **Security** | ✅ Complete | JWT auth with role-based access |
 | 📱 **Responsive UI** | ✅ Complete | Material-UI based interface |
 | 🏆 **Certificate System** | ✅ Complete | Automated generation with QR codes |
+| 🎨 **Professional Brochures** | ✅ Complete | AI-enhanced brochure generation |
+| 🏠 **Enhanced Home Page** | ✅ Complete | Professional landing page with branding |
 
 </div>
 
-### **Event Schema Overview**
+### **Enhanced Features**
 
-The event model includes comprehensive fields for:
+#### **🏠 Professional Home Page**
+- **University Branding**: Official Anna University and CEG logos
+- **Campus Imagery**: Beautiful campus background with gradient overlays
+- **Smooth Animations**: Fade-in effects, hover animations, and transitions
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Navigation**: Smooth scrolling navigation with sections for:
+  - About College of Engineering Guindy
+  - About Department of Computer Science and Engineering
+  - Development Team Information
+  - Technology Stack Display
 
-```javascript
-// Key Event Fields (50+ total fields)
-{
-  // Basic Information
-  title, startDate, endDate, venue, mode, duration, type,
-  objectives, outcomes, budget, status,
-  
-  // Registration System
-  registrationProcedure: {
-    enabled, instructions, submissionMethod, deadline,
-    participantLimit, selectionCriteria, confirmationDate,
-    certificateRequirements, paymentDetails, registrationForm
-  },
-  
-  // Financial Management
-  budgetBreakdown: {
-    income: [{ category, expectedParticipants, amount, gst }],
-    expenses: [{ category, amount }],
-    totalIncome, totalExpenditure, universityOverhead
-  },
-  
-  // Claims Processing
-  claimBill: {
-    expenses: [{ category, budgetAmount, actualAmount, status }],
-    totalBudgetAmount, totalExpenditure, status, approvedBy
-  },
-  
-  // Multi-Department Support
-  organizingDepartments: {
-    primary: "DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING",
-    associative: ["CENTRE FOR CYBER SECURITY (CCS)"]
-  },
-  
-  // Approval Workflow
-  departmentApprovers: [{
-    department, hodName, hodDesignation, approved, approvedDate
-  }],
-  
-  // Document Management
-  brochure: { data, contentType, fileName },
-  claimPDF: { data, contentType, fileName },
-  brochurePDF: { data, contentType, fileName }
-}
-```
+#### **🎨 Professional Brochure Generation**
+- **AI-Enhanced Content**: Intelligent course descriptions based on event data
+- **Anna University Branding**: Official logos and color schemes
+- **Dynamic Layout**: Professional two-column design
+- **Comprehensive Sections**:
+  - Event information and objectives
+  - Organizing committee (from database)
+  - Registration procedures and payment details
+  - Contact information and venue details
+- **Export Options**: High-quality PDF generation
 
-### **Integration Points for Future Modules**
+#### **💰 Advanced Financial Management**
+- **Budget Breakdown**: Detailed income and expense tracking
+- **Claim Processing**: Item-wise claim management with approval workflow
+- **University Overhead**: Automatic 30% overhead calculation
+- **GST Handling**: Built-in GST calculations and reporting
+- **PDF Generation**: Professional claim documents with signatures
 
-```mermaid
-graph LR
-    A[Module 4: Events] --> B[Module 1: Student OD]
-    A --> C[Module 2: Internships]
-    A --> D[Module 3: Faculty OD]
-    A --> E[Module 5: Facilities]
-    A --> F[Module 10: Purchase]
-    
-    B --> G[OD Requests for Event Participation]
-    C --> H[Workshop-based Internships]
-    D --> I[Faculty Event Conducting]
-    E --> J[Venue Booking Integration]
-    F --> K[Financial Claims Processing]
-```
+---
 
-### **Database Collections**
+## 👥 Development Team
 
-| Collection | Purpose | Key Features |
-|------------|---------|--------------|
-| 📅 **events** | Event management | 50+ fields, multi-department support |
-| 👤 **users** | User authentication | Role-based permissions |
-| 👥 **participants** | Participant tracking | Registration and feedback |
-| 🏆 **certificates** | Certificate management | QR verification, bulk generation |
-| 💰 **claims** | Financial claims | Item-wise tracking, approval workflow |
-| 📝 **feedback** | Event feedback | Question bank, analytics |
-| 👨‍💼 **convenorcommittees** | Committee management | Role assignments |
-| 🎓 **trainingprogrammes** | Program specifics | Detailed course information |
+<div align="center">
+
+### **Batch 2023-27 | Department of Computer Science and Engineering**
+### **College of Engineering Guindy, Anna University**
+
+</div>
+
+| Team Member | Roll Number | Contribution |
+|-------------|-------------|--------------|
+| **Siva Sankar S** | 2023103082 | Full Stack Development, System Architecture |
+| **Dhanush T** | 2023103507 | Backend Development, API Design |
+| **Viswa S** | 2023103564 | Frontend Development, UI/UX Design |
+| **Kathir Kalidass B** | 2023103546 | System Integration, Database Design |
+| **Magesh Gumar M** | 2023103612 | Testing, Documentation, Quality Assurance |
+
+### **Academic Information**
+- **Program**: B.E. Computer Science and Engineering
+- **Institution**: College of Engineering Guindy, Anna University
+- **Academic Year**: 2023-2024
+- **Project Type**: Academic Project
+- **Batch**: 2023-27
+
+### **Project Supervision**
+- **Department**: Computer Science and Engineering (DCSE)
+- **Institution**: College of Engineering Guindy
+- **University**: Anna University, Chennai
 
 ---
 
@@ -662,9 +590,9 @@ graph LR
 
 2. **Clone and Setup**
    ```bash
-   git clone https://github.com/DhanushT7/Events-Management-Application.git
+   git clone https://github.com/your-username/Events-Management-Application.git
    cd Events-Management-Application
-   npm run setup  # Installs all dependencies
+   npm install  # Install root dependencies
    ```
 
 3. **Environment Configuration**
@@ -675,7 +603,7 @@ graph LR
    JWT_SECRET=your-super-secret-key
    NODE_ENV=development
    
-   # Frontend/.env
+   # Frontend/.env (optional)
    VITE_API_BASE_URL=http://localhost:5050/api
    VITE_APP_NAME=Events Management System
    ```
@@ -684,76 +612,34 @@ graph LR
 
 ```bash
 # Root level commands
-npm run setup           # Install all dependencies
-npm run dev            # Start both frontend and backend
 npm run backend        # Start backend only
 npm run frontend       # Start frontend only
-npm run build          # Build for production
-npm run test           # Run all tests
-npm run clean          # Clean node_modules
+npm run dev           # Start both frontend and backend (if configured)
 
 # Backend specific
 cd Backend
-npm run dev            # Development with nodemon
-npm run start          # Production start
-npm run test           # Backend tests
-npm run seed           # Seed database
+npm run dev           # Development with nodemon
+npm run start         # Production start
 
 # Frontend specific
 cd Frontend
-npm run dev            # Development server
-npm run build          # Production build
-npm run preview        # Preview production build
-npm run test           # Frontend tests
-```
-
-### **Code Structure Guidelines**
-
-#### **Backend Structure**
-```
-Backend/
-├── controllers/
-│   ├── admin/              # Admin-specific logic
-│   ├── coordinator/        # Coordinator operations
-│   ├── hod/               # HOD management
-│   ├── participant/       # Participant features
-│   └── auth/              # Authentication
-├── models/                # MongoDB schemas
-├── routes/                # API route definitions
-├── middleware/            # Custom middleware
-├── services/              # Business logic
-├── utils/                 # Helper functions
-└���─ config/                # Configuration files
-```
-
-#### **Frontend Structure**
-```
-Frontend/src/
-├── components/            # Reusable UI components
-├── pages/                # Page-level components
-│   ├── Auth/             # Authentication pages
-│   ├── coordinator/      # Coordinator dashboard
-│   ├── HOD/              # HOD interface
-│   └── Participants/     # Participant views
-├── services/             # API integration
-├── context/              # React context providers
-├── hooks/                # Custom React hooks
-├── utils/                # Helper functions
-└── styles/               # CSS and styling
+npm run dev           # Development server (Vite)
+npm run build         # Production build
+npm run preview       # Preview production build
 ```
 
 ### **Adding New Features**
 
 1. **Backend Feature Development**
    ```bash
-   # 1. Create model (if needed)
-   touch Backend/models/newFeatureModel.js
-   
-   # 2. Create controller
+   # 1. Create controller
    touch Backend/controllers/newFeatureController.js
    
-   # 3. Create routes
+   # 2. Create routes
    touch Backend/routes/newFeatureRoutes.js
+   
+   # 3. Create model (if needed)
+   touch Backend/models/newFeatureModel.js
    
    # 4. Add to main server
    # Edit Backend/server.js to include new routes
@@ -762,133 +648,16 @@ Frontend/src/
 2. **Frontend Feature Development**
    ```bash
    # 1. Create component
-   touch Frontend/src/components/NewFeature.jsx
+   touch Frontend/src/features/NewFeature/NewFeature.jsx
    
-   # 2. Create page (if needed)
-   touch Frontend/src/pages/NewFeaturePage.jsx
+   # 2. Add service functions
+   # Edit Frontend/src/shared/services/api.js
    
-   # 3. Add service functions
-   # Edit Frontend/src/services/api.js
-   
-   # 4. Add routing
+   # 3. Add routing
    # Edit Frontend/src/App.jsx
    ```
 
-### **Testing Guidelines**
-
-#### **Backend Testing**
-```javascript
-// Example test structure
-describe('Event Management', () => {
-  test('should create new event', async () => {
-    const eventData = {
-      title: 'Test Workshop',
-      startDate: new Date(),
-      endDate: new Date(),
-      venue: 'Test Hall'
-    };
-    
-    const response = await request(app)
-      .post('/api/coordinator/events')
-      .set('Authorization', `Bearer ${token}`)
-      .send(eventData)
-      .expect(201);
-      
-    expect(response.body.event.title).toBe('Test Workshop');
-  });
-});
-```
-
-#### **Frontend Testing**
-```javascript
-// Example component test
-import { render, screen } from '@testing-library/react';
-import EventCard from '../components/EventCard';
-
-test('renders event card with title', () => {
-  const mockEvent = {
-    title: 'Test Event',
-    startDate: new Date(),
-    venue: 'Test Venue'
-  };
-  
-  render(<EventCard event={mockEvent} />);
-  expect(screen.getByText('Test Event')).toBeInTheDocument();
-});
-```
-
-### **Performance Optimization**
-
-1. **Backend Optimization**
-   - Database indexing on frequently queried fields
-   - Pagination for large datasets
-   - Caching with Redis (future enhancement)
-   - Image compression for uploads
-
-2. **Frontend Optimization**
-   - Code splitting with React.lazy()
-   - Image optimization and lazy loading
-   - Bundle size optimization
-   - Service worker for caching
-
-### **Security Best Practices**
-
-1. **Authentication & Authorization**
-   - JWT token expiration and refresh
-   - Role-based route protection
-   - Input validation and sanitization
-   - Rate limiting on API endpoints
-
-2. **Data Protection**
-   - Password hashing with bcrypt
-   - HTTPS in production
-   - CORS configuration
-   - Environment variable protection
-
-## 🎨 Brochure Generation System
-
-### Features
-- **Professional Layout**: Anna University branded header and footer
-- **AI-Enhanced Content**: Intelligent course descriptions based on event data
-- **Dynamic Sections**: All content pulled from database
-- **Responsive Design**: Optimized for both digital viewing and printing
-- **PDF Export**: High-quality PDF generation using jsPDF
-
-### Usage
-
-#### For Coordinators
-1. Navigate to Event Dashboard
-2. Select an event
-3. Click "Generate Brochure"
-4. Brochure is automatically saved and can be downloaded
-
-#### For HODs
-1. Access HOD Dashboard
-2. View event details
-3. Generate brochure from event overview
-4. Review and approve before distribution
-
-### Customization
-The brochure generator supports:
-- Custom event types and durations
-- Dynamic organizing committee display
-- Flexible registration procedures
-- Intelligent content generation based on event data
-- Professional formatting with consistent styling
-
-## 🔄 Development Workflow
-
-### Adding New Features
-1. **Backend**: Add routes in `Backend/routes/`, controllers in `Backend/controllers/`
-2. **Frontend**: Create components in `Frontend/src/components/` or pages in `Frontend/src/pages/`
-3. **Database**: Update models in `Backend/models/`
-4. **API Integration**: Update services in `Frontend/src/services/`
-
-### Code Style
-- **ES6+ JavaScript**: Use modern JavaScript features
-- **Functional Components**: React functional components with hooks
-- **Async/Await**: Prefer async/await over promises
-- **Error Handling**: Proper error handling with try-catch blocks
+---
 
 ## 🧪 Testing
 
@@ -904,78 +673,137 @@ cd Frontend
 npm test
 ```
 
-## 📦 Building for Production
+### Manual Testing
+1. **Authentication Flow**: Test login/logout for all user roles
+2. **Event Management**: Create, edit, and delete events
+3. **Document Generation**: Test brochure and certificate generation
+4. **Claim Processing**: Submit and approve claims
+5. **Responsive Design**: Test on different screen sizes
 
-### Frontend Build
-```bash
-cd Frontend
-npm run build
-```
-
-### Backend Production
-```bash
-cd Backend
-NODE_ENV=production npm start
-```
+---
 
 ## 🚀 Deployment
 
 ### Frontend Deployment (Vercel/Netlify)
-1. Build the frontend: `npm run build`
+1. Build the frontend: `cd Frontend && npm run build`
 2. Deploy the `dist` folder
 3. Update API base URL in environment variables
 
-### Backend Deployment (Heroku/Railway)
-1. Set environment variables
+### Backend Deployment (Railway/Heroku)
+1. Set environment variables in deployment platform
 2. Deploy the Backend folder
-3. Configure MongoDB connection string
+3. Configure MongoDB connection string (MongoDB Atlas recommended)
 
-### Full Stack Deployment
-Consider using platforms like:
-- **Vercel** + **Railway**
-- **Netlify** + **Heroku**
-- **AWS** (Frontend: S3+CloudFront, Backend: EC2/Lambda)
+### Environment Variables for Production
+```env
+# Backend Production Environment
+PORT=5050
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/events_management
+JWT_SECRET=your-production-jwt-secret
+NODE_ENV=production
+EMAIL_USER=your-production-email@gmail.com
+EMAIL_PASS=your-production-app-password
+```
+
+---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit a Pull Request
+We welcome contributions to improve the Events Management Application!
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/new-feature`
+3. **Make your changes**: Follow the coding standards and guidelines
+4. **Test your changes**: Ensure all tests pass
+5. **Commit your changes**: `git commit -am 'Add new feature'`
+6. **Push to branch**: `git push origin feature/new-feature`
+7. **Submit a Pull Request**: Describe your changes and their benefits
+
+### Coding Standards
+
+- **ES6+ JavaScript**: Use modern JavaScript features
+- **Functional Components**: React functional components with hooks
+- **Async/Await**: Prefer async/await over promises
+- **Error Handling**: Proper error handling with try-catch blocks
+- **Comments**: Document complex logic and functions
+- **Consistent Formatting**: Use Prettier for code formatting
+
+### Areas for Contribution
+
+- 🐛 **Bug Fixes**: Report and fix bugs
+- ✨ **New Features**: Add new functionality
+- 📚 **Documentation**: Improve documentation and guides
+- 🎨 **UI/UX**: Enhance user interface and experience
+- 🔧 **Performance**: Optimize application performance
+- 🧪 **Testing**: Add and improve test coverage
+
+---
 
 ## 📄 License
 
 This project is licensed under the ISC License - see the LICENSE file for details.
 
-## 👨‍💻 Authors
-
-- **Dhanush T** - *Initial work* - [DhanushT7](https://github.com/DhanushT7)
-
 ## 🙏 Acknowledgments
 
-- Anna University for institutional support
-- Material-UI team for excellent React components
-- MongoDB team for reliable database solutions
-- React and Node.js communities for robust frameworks
+- **Anna University** for institutional support and resources
+- **College of Engineering Guindy** for providing the academic environment
+- **Department of Computer Science and Engineering** for guidance and mentorship
+- **Material-UI Team** for excellent React components
+- **MongoDB Team** for reliable database solutions
+- **React and Node.js Communities** for robust frameworks and extensive documentation
 
 ## 📞 Support
 
-For support, email: dhanush@annauniv.edu or create an issue in the GitHub repository.
+For support and queries:
+
+- **Email**: kathirkalidass.b2023cse@smail.ssn.edu.in
+- **GitHub Issues**: Create an issue in the repository
+- **Academic Supervisor**: Contact through department channels
 
 ## 🔮 Future Enhancements
 
-- [ ] Mobile application (React Native)
-- [ ] Advanced analytics and reporting
-- [ ] Integration with university LMS
-- [ ] Automated email notifications
-- [ ] Multi-language support
-- [ ] Advanced PDF customization
-- [ ] Integration with payment gateways
-- [ ] Real-time chat support
-- [ ] Calendar integration
-- [ ] Advanced user roles and permissions
+### Planned Features
+- [ ] **Mobile Application**: React Native mobile app
+- [ ] **Advanced Analytics**: Enhanced reporting and data visualization
+- [ ] **Email Notifications**: Automated email system for events
+- [ ] **Calendar Integration**: Google Calendar and Outlook integration
+- [ ] **Payment Gateway**: Online payment processing
+- [ ] **Multi-language Support**: Tamil and English language options
+- [ ] **Advanced PDF Customization**: Template-based document generation
+- [ ] **Real-time Notifications**: WebSocket-based live updates
+- [ ] **API Documentation**: Swagger/OpenAPI documentation
+- [ ] **Performance Monitoring**: Application performance tracking
+
+### Integration with Other Modules
+- **Module 1**: Student OD requests for event participation
+- **Module 2**: Workshop-based internship programs
+- **Module 3**: Faculty event conducting and OD management
+- **Module 5**: Venue booking integration
+- **Module 10**: Financial claims and purchase committee integration
 
 ---
 
-**Note**: This application is designed specifically for Anna University's event management needs but can be adapted for other educational institutions with minimal modifications.
+## 📊 Project Statistics
+
+- **Total Lines of Code**: 15,000+
+- **Components**: 50+ React components
+- **API Endpoints**: 40+ REST endpoints
+- **Database Collections**: 8 MongoDB collections
+- **Features Implemented**: 25+ major features
+- **Development Time**: 6 months (Academic Year 2023-24)
+
+---
+
+<div align="center">
+
+**🎓 Developed with ❤️ by Batch 2023-27 DCSE Students**
+
+**College of Engineering Guindy, Anna University, Chennai**
+
+---
+
+*This application is designed specifically for Anna University's event management needs but can be adapted for other educational institutions with minimal modifications.*
+
+</div>

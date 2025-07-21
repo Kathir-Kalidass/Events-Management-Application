@@ -1,21 +1,21 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SnackbarProvider } from 'notistack';
-import Home from "./pages/Home/Home";
-import EnhancedParticipantDashboard from "./pages/Participants/Components/EnhancedDashboard";
-import RegisterForm from "./pages/Auth/RegisterForm";
-import LoginForm from "./pages/Auth/LoginForm";
-import HodDashboard from "./pages/HOD/dashboard";
-import Form from "./pages/Participants/Components/Form";
-import Feedback from "./pages/Feedback/feedback";
-import ForgotPassword from "./pages/Auth/ForgotPassword";
-import ProtectedRoute from "./pages/Auth/ProtectedRoute";
-import CertificatePage from "./pages/Participants/CertificatePage";
-import CoordinatorDashboard from "./pages/coordinator/coordinatorDashboard";
-import CoordinatorEventDashboard from "./pages/coordinator/EventDashboard";
-import HODEventDashboard from "./pages/HOD/EventDashboard";
-import CertificateVerification from "./components/CertificateVerification";
-import CertificateManagement from "./pages/coordinator/CertificateManagement";
+import Home from "./features/Home/Home";
+import EnhancedParticipantDashboard from "./features/participants/Components/EnhancedDashboard";
+import RegisterForm from "./features/auth/RegisterForm";
+import LoginForm from "./features/auth/LoginForm";
+import HodDashboard from "./features/events/hod/dashboard";
+import Form from "./features/participants/Components/Form";
+import Feedback from "./features/feedback/feedback";
+import ForgotPassword from "./features/auth/ForgotPassword";
+import ProtectedRoute from "./features/auth/ProtectedRoute";
+import CertificatePage from "./features/participants/CertificatePage";
+import CoordinatorDashboard from "./features/events/coordinatorDashboard";
+import CoordinatorEventDashboard from "./features/events/EventDashboard";
+import HODEventDashboard from "./features/events/hod/EventDashboard";
+import CertificateVerification from "./shared/components/CertificateVerification";
+import CertificateManagement from "./features/events/CertificateManagement";
 
 function App() {
   return (

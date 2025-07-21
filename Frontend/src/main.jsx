@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
-import { EventProvider } from './context/eventProvider.jsx'
-import { SnackbarProvider } from './pages/HOD/utils/useSnackbar.jsx'
+import { EventProvider } from './shared/context/eventProvider.jsx'
+import { SnackbarProvider } from './features/events/hod/utils/useSnackbar.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

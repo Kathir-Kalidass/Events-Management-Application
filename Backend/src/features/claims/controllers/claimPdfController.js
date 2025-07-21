@@ -1,4 +1,4 @@
-import event from "../../models/eventModel.js";
+import event from "../../../shared/models/eventModel.js";
 import PDFDocument from "pdfkit";
 import pkg from "number-to-words";
 const { toWords } = pkg;

@@ -4,15 +4,17 @@
   "description": "A comprehensive web application for managing educational events, training programs, workshops, and certificate courses at Anna University with role-based access and professional document generation.",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run backend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "backend": "cd Backend && npm run dev",
     "frontend": "cd Frontend && npm run dev",
     "install-all": "npm install && cd Backend && npm install && cd ../Frontend && npm install",
     "build": "cd Frontend && npm run build",
-    "start": "npm run backend",
+    "start": "cd Backend && npm start",
     "test": "cd Backend && npm test && cd ../Frontend && npm test",
     "clean": "rm -rf node_modules Backend/node_modules Frontend/node_modules",
-    "setup": "npm run install-all"
+    "setup": "npm run install-all",
+    "lint": "cd Frontend && npm run lint",
+    "format": "cd Frontend && npm run format"
   },
   "keywords": [
     "events-management",
