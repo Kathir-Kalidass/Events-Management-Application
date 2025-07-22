@@ -7,7 +7,7 @@ import Certificate from '../models/certificateModel.js';
 import Event from '../models/eventModel.js';
 import User from '../models/userModel.js';
 import { ensureBuffer, isValidBuffer, getBufferSizeString } from '../utils/bufferUtils.js';
-import { fetchHODInfo, ensureHODExists } from '../utils/hodUtils.js';
+import { fetchHODInfo, fetchActiveHODWithSignature, ensureHODExists } from '../utils/hodUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -129,7 +129,8 @@ class CertificateGenerationService {
       hodName = process.env.DEPARTMENT_HEAD || "Dr. Department Head",
       coordinatorName = "Program Coordinator",
       organizingDepartments = {},
-      departmentApprovers = []
+      departmentApprovers = [],
+      hodSignature = null
     } = certificateData;
 
     const formatDate = (date) => {
@@ -160,16 +161,27 @@ class CertificateGenerationService {
     const participantNameFontSize = this.calculateResponsiveFontSizes(participantName, 40, 30);
     const venueFontSize = this.calculateResponsiveFontSizes(venue, 12, 50);
 
-    // Get HOD name from department approvers or use default
+    // Get HOD name - prioritize the passed hodName over defaults
     let finalHodName = hodName;
-    if (departmentApprovers && departmentApprovers.length > 0) {
-      const primaryApprover = departmentApprovers.find(approver => 
-        approver.department === 'DCSE' || approver.approved
-      );
-      if (primaryApprover) {
-        finalHodName = primaryApprover.hodName || hodName;
+    
+    // If hodName is the default value, try to get from department approvers
+    if (hodName === process.env.DEPARTMENT_HEAD || hodName === "Dr. Department Head" || hodName === "Department Head") {
+      if (departmentApprovers && departmentApprovers.length > 0) {
+        const primaryApprover = departmentApprovers.find(approver => 
+          approver.department === 'DCSE' || approver.approved
+        );
+        if (primaryApprover && primaryApprover.hodName) {
+          finalHodName = primaryApprover.hodName;
+        }
       }
     }
+
+    // Format HOD name with Dr. prefix if not already present
+    if (finalHodName && !finalHodName.toLowerCase().startsWith('dr.')) {
+      finalHodName = `Dr. ${finalHodName}`;
+    }
+
+    console.log(`🔍 Certificate Generation - HOD Name: ${finalHodName} (original: ${hodName})`);
 
     return `
     <!DOCTYPE html>
@@ -596,6 +608,9 @@ class CertificateGenerationService {
                 background: linear-gradient(to right, transparent 0%, rgba(212, 175, 55, 0.1) 50%, transparent 100%);
                 border-radius: 2px 2px 0 0;
                 width: 150px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .signature-space::before {
@@ -606,6 +621,14 @@ class CertificateGenerationService {
                 right: 0;
                 height: 1px;
                 background: linear-gradient(to right, transparent 0%, #d4af37 50%, transparent 100%);
+            }
+            
+            .signature-image {
+                max-width: 140px;
+                max-height: 20px;
+                object-fit: contain;
+                z-index: 10;
+                position: relative;
             }
             
             .signature-name {
@@ -733,7 +756,9 @@ class CertificateGenerationService {
             
             <div class="signatures-section">
                 <div class="signature-block">
-                    <div class="signature-space"></div>
+                    <div class="signature-space">
+                        ${hodSignature ? `<img src="${hodSignature}" alt="HOD Signature" class="signature-image">` : ''}
+                    </div>
                     <div class="signature-name">${finalHodName}</div>
                     <div class="signature-title">Head of Department</div>
                     <div class="signature-department">Department of CSE</div>
@@ -751,8 +776,54 @@ class CertificateGenerationService {
       // Fetch certificate data from MongoDB
       const { certificate, participant, event } = await this.fetchCertificateData(certificateId);
       
+      // Fetch active HOD information and signature - prioritize active HODs with signatures
+      let activeHod = await User.findOne({ 
+        role: 'hod', 
+        isActive: true,
+        'signature.isActive': true
+      }).select('name signature department');
+      
+      // If no HOD with active signature found, try to find any active HOD
+      if (!activeHod) {
+        activeHod = await User.findOne({ 
+          role: 'hod', 
+          isActive: true 
+        }).select('name signature department');
+      }
+      
+      // If still no HOD found, try to find any HOD (even inactive)
+      if (!activeHod) {
+        activeHod = await User.findOne({ 
+          role: 'hod'
+        }).select('name signature department');
+      }
+      
+      console.log(`🔍 Certificate Generation - Found HOD: ${activeHod ? activeHod.name : 'None'}`);
+      console.log(`🔍 Certificate Generation - HOD has signature: ${activeHod?.signature?.imageData ? 'Yes' : 'No'}`);
+      console.log(`🔍 Certificate Generation - Signature active: ${activeHod?.signature?.isActive ? 'Yes' : 'No'}`);
+      
       // Generate QR code
       const qrCodeDataURL = await this.generateQRCode(certificateId);
+      
+      // Get HOD name and signature
+      let hodName = "Department Head";
+      let hodSignature = null;
+      
+      if (activeHod) {
+        hodName = activeHod.name;
+        // Only use signature if it exists and is active
+        if (activeHod.signature?.imageData && activeHod.signature?.isActive) {
+          hodSignature = activeHod.signature.imageData;
+        }
+      } else {
+        // Fallback to environment variable or default
+        hodName = process.env.DEPARTMENT_HEAD || "Dr. N. Sairam";
+      }
+      
+      // Ensure HOD name has proper title
+      if (hodName && !hodName.toLowerCase().startsWith('dr.')) {
+        hodName = `Dr. ${hodName}`;
+      }
       
       // Prepare certificate data with MongoDB information
       const certificateData = {
@@ -771,9 +842,13 @@ class CertificateGenerationService {
         skills: certificate.skills || [],
         organizingDepartments: event.organizingDepartments || {},
         departmentApprovers: event.departmentApprovers || [],
-        hodName: process.env.DEPARTMENT_HEAD || "Dr. Department Head",
+        hodName: hodName,
+        hodSignature: hodSignature,
         coordinatorName: "Program Coordinator"
       };
+      
+      console.log(`🔍 Certificate Generation - Final HOD Name: ${hodName}`);
+      console.log(`🔍 Certificate Generation - Using HOD Signature: ${hodSignature ? 'Yes' : 'No'}`);
       
       // Generate certificate
       const results = await this.generateCertificate(certificateData, formats);

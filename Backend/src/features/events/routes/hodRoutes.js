@@ -30,6 +30,22 @@ import {
   getAllEventsFeedbackStats
 } from '../../feedback/controllers/feedbackStats.js';
 
+// Import signature management controllers
+import {
+  uploadSignature,
+  getSignature,
+  deleteSignature,
+  activateSignature,
+  getSignatureForCertificate
+} from '../../hod/controllers/signatureController.js';
+
+// Import HOD management middleware
+import {
+  getActiveHOD,
+  getAllHODs,
+  toggleHODStatus
+} from '../../../shared/middleware/hodManagementMiddleware.js';
+
 const hodRoutes = express.Router();
 
 // Apply authentication middleware to all HOD routes
@@ -68,5 +84,17 @@ hodRoutes.put('/convenor-committee/:id', updateConvenorCommitteeMember);
 hodRoutes.delete('/convenor-committee/:id', deleteConvenorCommitteeMember);
 hodRoutes.post('/convenor-committee/initialize-default', initializeDefaultCommittee);
 hodRoutes.get('/convenor-committee/available-roles', getAvailableRoles);
+
+// Signature Management Routes
+hodRoutes.post('/signature/upload', uploadSignature);
+hodRoutes.get('/signature', getSignature);
+hodRoutes.delete('/signature', deleteSignature);
+hodRoutes.put('/signature/activate', activateSignature);
+hodRoutes.get('/signature/for-certificate/:hodId', getSignatureForCertificate);
+
+// HOD Management Routes (Admin access)
+hodRoutes.get('/management/active', getActiveHOD);
+hodRoutes.get('/management/all', getAllHODs);
+hodRoutes.put('/management/:hodId/toggle-status', toggleHODStatus);
 
 export default hodRoutes;

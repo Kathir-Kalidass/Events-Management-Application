@@ -1102,13 +1102,7 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .moveDown(1);
 
   // Add coordinator approval date prominently
-  doc.fontSize(11).font('Helvetica-Bold')
-     .fillColor('#0066cc')
-     .text(`Approved by Coordinator on: ${formattedApprovalDate}`, 50, doc.y)
-     .fillColor('#000000')
-     .font('Helvetica')
-     .moveDown(1);
-
+ 
   // Event details box
   const eventDetailsY = doc.y;
   doc.rect(50, eventDetailsY, 500, 60)
@@ -1202,11 +1196,7 @@ function generateReceiptInClaimPDF(doc, programme, expense, receiptNumber) {
      .text(`Status: APPROVED - Amount: Rs. ${approvedAmount.toLocaleString('en-IN')}/-`, 60, footerY + 55);
 
   // Add coordinator approval details prominently
-  doc.fillColor('#0066cc')
-     .font('Helvetica-Bold')
-     .text(`Coordinator Approval: ${formattedApprovalDate}`, 300, footerY + 25)
-     .fillColor('#000000')
-     .font('Helvetica');
+  
 
   // Add additional approval details if available
   if (expense.reviewedBy) {

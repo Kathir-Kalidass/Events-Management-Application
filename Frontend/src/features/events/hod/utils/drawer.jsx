@@ -47,6 +47,11 @@ export default function TemporaryDrawer({
     onClose();
   }
 
+  function handleSignatureManagement(){
+    setActivePage("signatureManagement");
+    onClose();
+  }
+
   function handleLogOut() {
     onClose();
     localStorage.removeItem('userInfo');
@@ -109,6 +114,14 @@ export default function TemporaryDrawer({
           onClick={handleEventOrganizers}
         >
           <ListItemText primary="Event Organizers" />
+        </ListItem>
+
+        <ListItem
+          sx={{ margin: "4px", cursor: "pointer" }}
+          component="button"
+          onClick={handleSignatureManagement}
+        >
+          <ListItemText primary="Signature Management" />
         </ListItem>
 
         <ListItem

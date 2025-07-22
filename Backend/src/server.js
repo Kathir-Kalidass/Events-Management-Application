@@ -17,7 +17,7 @@ import claimItemRoutes from './features/claims/routes/claimItemRoutes.js';
 import budgetSyncRoutes from './features/claims/routes/budgetSyncRoutes.js';
 import certificateRoutes from './features/certificates/routes/certificateRoutes.js';
 import adminRoutes from './features/admin/routes/adminRoutes.js';
-import debugRoutes from './features/admin/routes/debugRoutes.js';
+import debugRoutes from './features/debug/routes/debugRoutes.js';
 
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);

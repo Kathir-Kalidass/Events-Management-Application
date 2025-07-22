@@ -134,11 +134,23 @@ const EnhancedCertificateViewer = ({ userId, showPreview = true }) => {
         }
       );
 
+      // Map format to correct file extension
+      const getFileExtension = (format) => {
+        switch (format) {
+          case 'image':
+            return 'jpg';
+          case 'pdf':
+            return 'pdf';
+          default:
+            return format;
+        }
+      };
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `certificate-${certificate.certificateId}.${format}`);
+      link.setAttribute('download', `certificate-${certificate.certificateId}.${getFileExtension(format)}`);
       document.body.appendChild(link);
       link.click();
       link.remove();

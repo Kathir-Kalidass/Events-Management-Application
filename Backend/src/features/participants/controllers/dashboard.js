@@ -557,6 +557,22 @@ const generateCertificate = async (participantId, eventId, participantName) => {
       }
     };
 
+    // Fetch active HOD information for certificate
+    const activeHod = await User.findOne({ 
+      role: 'hod', 
+      isActive: true 
+    }).select('name signature department');
+
+    console.log(`🔍 Participant Dashboard - Found HOD: ${activeHod ? activeHod.name : 'None'}`);
+    console.log(`🔍 Participant Dashboard - HOD has signature: ${activeHod?.signature?.imageData ? 'Yes' : 'No'}`);
+    console.log(`🔍 Participant Dashboard - Signature active: ${activeHod?.signature?.isActive ? 'Yes' : 'No'}`);
+
+    // Format HOD name with Dr. prefix if not already present
+    let hodName = activeHod?.name || "Department Head";
+    if (hodName && !hodName.toLowerCase().startsWith('dr.')) {
+      hodName = `Dr. ${hodName}`;
+    }
+
     // Prepare certificate data
     const certificateData = {
       participantName: participant.name,
@@ -569,7 +585,11 @@ const generateCertificate = async (participantId, eventId, participantName) => {
       venue: event.venue,
       issuedDate: new Date(),
       certificateId,
+      hodName: hodName,
+      hodSignature: activeHod?.signature?.imageData || null,
     };
+
+    console.log(`🔍 Participant Dashboard - Certificate data prepared with HOD: ${hodName}`);
 
     // Generate certificate image
     let certificateBuffer;

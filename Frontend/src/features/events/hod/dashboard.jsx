@@ -11,6 +11,7 @@ import Finance from "./drawerPages/Finance/Finance";
 import FinalBudget from "./drawerPages/Finance/finalBudget";
 import ProposalLetter from "./utils/proposalLetter";
 import ConvenorCommitteeManagement from "./Components/ConvenorCommitteeManagement";
+import SignatureManagement from "./Components/SignatureManagement";
 
 export const SelectedEventContext = createContext();
 
@@ -125,6 +126,10 @@ const HodDashboard = () => {
 
           {activePage === "convenorCommittee" && (
             <ConvenorCommitteeManagement />
+          )}
+
+          {activePage === "signatureManagement" && (
+            <SignatureManagement />
           )}
         </Box>
       </Box>

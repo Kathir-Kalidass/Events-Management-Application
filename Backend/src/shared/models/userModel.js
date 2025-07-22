@@ -24,6 +24,14 @@ const userSchema = mongoose.Schema(
       type: String
     },
 
+    // Active status for HODs (only one active HOD allowed)
+    isActive: {
+      type: Boolean,
+      default: function() {
+        return this.role !== 'hod'; // Non-HODs are active by default, HODs need to be explicitly activated
+      }
+    },
+
     institution: {
       type: String,
       required: false,
@@ -33,6 +41,42 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+
+    // Signature management for HODs
+    signature: {
+      imageData: {
+        type: String, // Base64 encoded signature image
+        default: null
+      },
+      fileName: {
+        type: String,
+        default: null
+      },
+      uploadedAt: {
+        type: Date,
+        default: null
+      },
+      isActive: {
+        type: Boolean,
+        default: false
+      },
+      signatureType: {
+        type: String,
+        enum: ['drawn', 'uploaded'],
+        default: 'uploaded'
+      }
+    },
+
+    // HOD specific information
+    designation: {
+      type: String,
+      default: function() {
+        if (this.role === 'hod') {
+          return `Head of Department, ${this.department || 'CSE'}`;
+        }
+        return null;
+      }
     },
   },
   {
