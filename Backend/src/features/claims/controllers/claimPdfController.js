@@ -83,14 +83,13 @@ const generateFundTransferRequest = (doc, programme, approvalDate) => {
 
     }
 
-    const gstPercentage = registrationIncome ? registrationIncome.gstPercentage || 0 : 0;
     const universityOverhead = programme.budgetBreakdown?.universityOverhead || (totalRegistrationFee * 0.30);
 
     // Calculate amounts excluding GST and overhead
-    const amountExcludingGSTAndOverhead = totalRegistrationFee - (totalRegistrationFee * gstPercentage / 100) - universityOverhead;
+    const amountExcludingGSTAndOverhead = totalRegistrationFee  - universityOverhead;
     
-    // Calculate overhead for centre (if applicable)
-    let overheadForCentre = associativeDepts.length > 0 ? (totalRegistrationFee * 0.10) : 0; // 10% overhead for centre
+    // Calculate overhead for centre (if applicable)Implementation later
+    let overheadForCentre =0//= associativeDepts.length > 0 ? (totalRegistrationFee * 0.10) : 0; // 10% overhead for centre
     
     const totalTransferAmount = amountExcludingGSTAndOverhead + overheadForCentre;
     
