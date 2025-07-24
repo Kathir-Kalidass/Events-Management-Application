@@ -50,10 +50,10 @@ class CertificateGenerationService {
     }
   }
 
-  // Load logo as base64 from Backend/logo directory
+  // Load logo as base64 from Backend/src/assets/logo directory
   async loadLogoAsBase64(logoPath) {
     try {
-      const fullPath = path.join(__dirname, '../logo', logoPath);
+      const fullPath = path.join(__dirname, '../../assets/logo', logoPath);
       if (fs.existsSync(fullPath)) {
         const logoBuffer = fs.readFileSync(fullPath);
         const base64Logo = logoBuffer.toString('base64');
