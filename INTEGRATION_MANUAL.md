@@ -720,8 +720,8 @@ Phase 5 (Month 9): Testing & Deployment
 MONGODB_URI=mongodb://localhost:27017/events_management
 
 # Module 4 (Current)
-MODULE4_PORT=5050
-MODULE4_API_URL=http://localhost:5050/api
+MODULE4_PORT=4000
+MODULE4_API_URL=http://localhost:4000/api
 
 # Other Modules (to be implemented)
 MODULE1_PORT=5001
@@ -744,7 +744,7 @@ MODULE10_PORT=5010
 MODULE10_API_URL=http://localhost:5010/api
 
 # Frontend
-VITE_API_BASE_URL=http://localhost:5050/api
+VITE_API_BASE_URL=http://localhost:4000/api
 VITE_MODULE_GATEWAY_URL=http://localhost:3001/api
 
 # Email Configuration
@@ -786,7 +786,7 @@ services:
   module4-events:
     build: ./Backend
     ports:
-      - "5050:5050"
+      - "4000:4000"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/events_management
@@ -802,7 +802,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_BASE_URL=http://localhost:5050/api
+      - VITE_API_BASE_URL=http://localhost:4000/api
     depends_on:
       - module4-events
 
@@ -812,7 +812,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - MODULE4_URL=http://module4-events:5050
+      - MODULE4_URL=http://module4-events:4000
     depends_on:
       - module4-events
 
@@ -905,7 +905,7 @@ npm run migrate
 npm run seed
 
 # 8. Verify deployment
-curl http://localhost:5050/api/health
+curl http://localhost:4000/api/health
 curl http://localhost:3000
 ```
 

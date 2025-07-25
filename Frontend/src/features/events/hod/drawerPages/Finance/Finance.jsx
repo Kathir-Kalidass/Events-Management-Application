@@ -56,7 +56,7 @@ export default Finance;
 <FinancialEventCard
           event={{
             title: "Annual Conference",
-            budget: 75050,
+            budget: 74000,
             income: 68000,
             expenses: 72000,
           }}

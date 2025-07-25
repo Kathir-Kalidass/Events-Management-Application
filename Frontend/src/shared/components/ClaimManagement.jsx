@@ -128,7 +128,7 @@ const ClaimManagement = ({ eventId }) => {
   const fetchEventData = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5050/api/coordinator/programmes/${eventId}`,
+        `http://localhost:4000/api/coordinator/programmes/${eventId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         }
@@ -157,8 +157,8 @@ const ClaimManagement = ({ eventId }) => {
       setLoading(true);
       const response = await axios.get(
         eventId 
-          ? `http://localhost:5050/api/coordinator/events/${eventId}/claims`
-          : `http://localhost:5050/api/coordinator/claims`,
+          ? `http://localhost:4000/api/coordinator/events/${eventId}/claims`
+          : `http://localhost:4000/api/coordinator/claims`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         }
@@ -175,7 +175,7 @@ const ClaimManagement = ({ eventId }) => {
   const fetchStatistics = async () => {
     try {
       const response = await axios.get(
-        'http://localhost:5050/api/coordinator/claims/statistics',
+        'http://localhost:4000/api/coordinator/claims/statistics',
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         }
@@ -204,7 +204,7 @@ const ClaimManagement = ({ eventId }) => {
   const handleViewDetails = async (claimId) => {
     try {
       const response = await axios.get(
-        `http://localhost:5050/api/coordinator/claims/${claimId}`,
+        `http://localhost:4000/api/coordinator/claims/${claimId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         }
@@ -225,7 +225,7 @@ const ClaimManagement = ({ eventId }) => {
   const submitApproval = async () => {
     try {
       await axios.put(
-        `http://localhost:5050/api/coordinator/claims/${selectedClaim._id}/status`,
+        `http://localhost:4000/api/coordinator/claims/${selectedClaim._id}/status`,
         {
           status: approvalAction,
           comments: approvalComments,
@@ -302,7 +302,7 @@ const ClaimManagement = ({ eventId }) => {
       });
 
       const response = await axios.post(
-        `http://localhost:5050/api/coordinator/events/${eventId}/claims`,
+        `http://localhost:4000/api/coordinator/events/${eventId}/claims`,
         formData,
         {
           headers: { 

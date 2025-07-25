@@ -38,7 +38,7 @@ This guide provides step-by-step instructions for deploying the Events Managemen
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
 │  │   Nginx     │  │   Node.js   │  │      MongoDB        │  │
-│  │ (Port 80)   │  │ (Port 5050) │  │   (Port 27017)     │  │
+│  │ (Port 80)   │  │ (Port 4000) │  │   (Port 27017)     │  │
 │  │             │  │             │  │                     │  │
 │  │ Static      │  │ Backend     │  │ Database            │  │
 │  │ Frontend    │  │ API Server  │  │ Storage             │  │
@@ -48,7 +48,7 @@ This guide provides step-by-step instructions for deploying the Events Managemen
 
 ### **Access Points**
 - **Frontend**: `http://lab-server-ip/` or `http://dcse-events.local/`
-- **Backend API**: `http://lab-server-ip:5050/api/`
+- **Backend API**: `http://lab-server-ip:4000/api/`
 - **Database**: `mongodb://localhost:27017/events_management`
 
 ---
@@ -60,7 +60,7 @@ This guide provides step-by-step instructions for deploying the Events Managemen
 - **RAM**: Minimum 4GB (Recommended 8GB)
 - **Storage**: Minimum 20GB free space
 - **Network**: Static IP address or domain name
-- **Ports**: 80, 443, 5050, 27017 available
+- **Ports**: 80, 443, 4000, 27017 available
 
 ### **Software Requirements**
 - **Node.js**: Version 16.x or higher
@@ -212,7 +212,7 @@ sudo nano .env
 **Backend Environment Configuration (.env):**
 ```env
 # Server Configuration
-PORT=5050
+PORT=4000
 NODE_ENV=production
 
 # Database Configuration
@@ -267,7 +267,7 @@ nano .env.production
 
 **Frontend Environment Configuration (.env.production):**
 ```env
-VITE_API_BASE_URL=http://your-server-ip:5050/api
+VITE_API_BASE_URL=http://your-server-ip:4000/api
 VITE_APP_NAME=DCSE Events Management System
 VITE_APP_VERSION=1.0.0
 VITE_UNIVERSITY_NAME=Anna University
@@ -426,7 +426,7 @@ server {
     
     # Backend API proxy
     location /api/ {
-        proxy_pass http://localhost:5050;
+        proxy_pass http://localhost:4000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -490,7 +490,7 @@ sudo ufw status
 sudo ufw allow 22    # SSH
 sudo ufw allow 80    # HTTP
 sudo ufw allow 443   # HTTPS (for future SSL)
-sudo ufw allow 5050  # Backend API (optional, for direct access)
+sudo ufw allow 4000  # Backend API (optional, for direct access)
 
 # Enable firewall (if not already enabled)
 sudo ufw enable
@@ -696,8 +696,8 @@ sudo chmod +x /usr/local/bin/events-backup.sh
 # Check PM2 logs
 pm2 logs events-backend
 
-# Check if port 5050 is in use
-sudo netstat -tulpn | grep 5050
+# Check if port 4000 is in use
+sudo netstat -tulpn | grep 4000
 
 # Restart backend
 pm2 restart events-backend
@@ -849,7 +849,7 @@ free -h                      # Check memory usage
 ### **Verification Steps**
 
 - [ ] **Frontend Access**: Can access application at `http://server-ip/`
-- [ ] **Backend API**: Can access API at `http://server-ip:5050/api/`
+- [ ] **Backend API**: Can access API at `http://server-ip:4000/api/`
 - [ ] **Database Connection**: Backend connects to MongoDB successfully
 - [ ] **User Registration**: Can create new user accounts
 - [ ] **User Login**: Can login with different user roles

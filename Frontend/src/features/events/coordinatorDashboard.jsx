@@ -214,7 +214,7 @@ const CoordinatorDashboard = () => {
       return;
     }
     const token = localStorage.getItem("token");
-    fetch(`http://localhost:5050/api/coordinator/getHOD?id=${user._id}`, {
+    fetch(`http://localhost:4000/api/coordinator/getHOD?id=${user._id}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -234,7 +234,7 @@ const CoordinatorDashboard = () => {
 
     const token = localStorage.getItem("token");
   
-  fetch(`http://localhost:5050/api/coordinator/claims/${id}/pdf`, {
+  fetch(`http://localhost:4000/api/coordinator/claims/${id}/pdf`, {
     method: "GET",
     headers: {
       'Accept': 'application/pdf', // Explicitly request PDF
@@ -285,7 +285,7 @@ const CoordinatorDashboard = () => {
       // Clean up the URL after a reasonable time
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5050); // Increased timeout to 5 seconds
+      }, 4000); // Increased timeout to 5 seconds
     })
     .catch((err) => {
       console.error("Error fetching PDF:", err.message);
@@ -307,7 +307,7 @@ const CoordinatorDashboard = () => {
 
   /*function handleViewFinalBudget(id) {
 
-    fetch(`http://localhost:5050/api/coordinator/event/claimPdf/${id}`, {
+    fetch(`http://localhost:4000/api/coordinator/event/claimPdf/${id}`, {
       method: "GET",
     })
       .then((res) => {
@@ -386,7 +386,7 @@ const CoordinatorDashboard = () => {
       // console.log("Submit Claim Bill - cliam data");
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5050/api/coordinator/claims/${selectedProgramme._id}`,
+        `http://localhost:4000/api/coordinator/claims/${selectedProgramme._id}`,
         {
           expenses: claimData,
         },
@@ -424,7 +424,7 @@ const CoordinatorDashboard = () => {
       setTimeout(async () => {
         try {
           const token = localStorage.getItem("token");
-          const response = await axios.get("http://localhost:5050/api/coordinator/programmes", {
+          const response = await axios.get("http://localhost:4000/api/coordinator/programmes", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -459,7 +459,7 @@ const CoordinatorDashboard = () => {
         setLoading(true);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5050/api/coordinator/programmes",
+          "http://localhost:4000/api/coordinator/programmes",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -527,7 +527,7 @@ const CoordinatorDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5050/api/coordinator/programmes/${id}`,
+        `http://localhost:4000/api/coordinator/programmes/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -561,7 +561,7 @@ const CoordinatorDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:5050/api/coordinator/programmes/${id}`,
+        `http://localhost:4000/api/coordinator/programmes/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -582,7 +582,7 @@ const CoordinatorDashboard = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5050/api/coordinator/programmes",
+        "http://localhost:4000/api/coordinator/programmes",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -871,7 +871,7 @@ const CoordinatorDashboard = () => {
       // Fetch event data with organizing committee from HOD API
       let eventWithOrganizingCommittee;
       try {
-        const response = await axios.get(`http://localhost:5050/api/hod/events/${eventData._id}`, {
+        const response = await axios.get(`http://localhost:4000/api/hod/events/${eventData._id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         eventWithOrganizingCommittee = response.data;
@@ -908,7 +908,7 @@ const CoordinatorDashboard = () => {
       // Clean up
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5050);
+      }, 4000);
       
       // Also try to save to backend
       try {
@@ -916,7 +916,7 @@ const CoordinatorDashboard = () => {
         formData.append('brochurePDF', pdfBlob, `Brochure_${eventData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
         
         const token = localStorage.getItem("token");
-        await fetch(`http://localhost:5050/api/coordinator/brochures/${eventData._id}/save`, {
+        await fetch(`http://localhost:4000/api/coordinator/brochures/${eventData._id}/save`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1142,7 +1142,7 @@ const CoordinatorDashboard = () => {
 
       if (editId) {
         await axios.put(
-          `http://localhost:5050/api/coordinator/programmes/${editId}`,
+          `http://localhost:4000/api/coordinator/programmes/${editId}`,
           formPayload,
           {
             headers: {
@@ -1157,7 +1157,7 @@ const CoordinatorDashboard = () => {
         });
       } else {
         await axios.post(
-          "http://localhost:5050/api/coordinator/programmes",
+          "http://localhost:4000/api/coordinator/programmes",
           formPayload,
           {
             headers: {
@@ -1601,7 +1601,7 @@ const CoordinatorDashboard = () => {
                         try {
                           const token = localStorage.getItem("token");
                           const response = await axios.get(
-                            `http://localhost:5050/api/coordinator/programmes/${event._id}/pdf`,
+                            `http://localhost:4000/api/coordinator/programmes/${event._id}/pdf`,
                             {
                               responseType: "blob",
                               headers: {
@@ -1665,7 +1665,7 @@ const CoordinatorDashboard = () => {
                             try {
 
                               const response = await axios.get(
-                                `http://localhost:5050/api/coordinator/claims/${event._id}/pdf`,
+                                `http://localhost:4000/api/coordinator/claims/${event._id}/pdf`,
                                 { responseType: "blob" }
                               );
 

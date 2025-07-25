@@ -27,7 +27,7 @@ export const initializeDataValidation = (options = {}) => {
       } catch (error) {
         console.error('❌ Startup data validation failed:', error.message);
       }
-    }, 5050); // Wait 5 seconds after startup
+    }, 4000); // Wait 5 seconds after startup
   }
 
   // Set up periodic validation
