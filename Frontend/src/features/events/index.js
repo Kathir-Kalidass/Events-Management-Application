@@ -1,6 +1,6 @@
 // Events Feature Module
-export { default as CoordinatorDashboard } from './coordinatorDashboard.jsx';
-export { default as EventDashboard } from './EventDashboard.jsx';
+export { default as CoordinatorDashboard } from './coordinator/CoordinatorDashboard.jsx';
+export { default as CoordinatorEventDashboard } from './coordinator/components/CoordinatorEventDashboard.jsx';
 export { default as CertificateManagement } from './CertificateManagement.jsx';
 export { default as ErrorBoundary } from './ErrorBoundary.jsx';
 
