@@ -55,7 +55,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
     // Force regenerate PDF to ensure latest data and fixes are applied
     const token = localStorage.getItem("token");
     
-    fetch(`http://localhost:4000/api/hod/event/claimPdf/${id}?forceRegenerate=true`, {
+    fetch(`http://10.5.12.1:4000/api/hod/event/claimPdf/${id}?forceRegenerate=true`, {
       method: "GET",
       headers: {
         'Authorization': `Bearer ${token}`, // Add authentication header

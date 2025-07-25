@@ -62,7 +62,7 @@ const EnhancedMyEvents = ({ onDataChange }) => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://localhost:4000/api/participant/my-events/${participantId}`, {
+      const response = await fetch(`http://10.5.12.1:4000/api/participant/my-events/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",

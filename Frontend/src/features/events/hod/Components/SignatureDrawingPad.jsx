@@ -219,7 +219,7 @@ const SignatureDrawingPad = ({ onSignatureSaved, existingSignature = null }) => 
       
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/hod/signature/upload',
+        'http://10.5.12.1:4000/api/hod/signature/upload',
         {
           imageData: signatureDataURL,
           fileName: `signature-${Date.now()}.png`,

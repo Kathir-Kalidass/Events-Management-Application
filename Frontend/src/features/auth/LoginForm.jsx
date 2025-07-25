@@ -16,7 +16,7 @@ const LoginForm = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/login", { email, password });
+      const res = await axios.post("http://10.5.12.1:4000/api/auth/login", { email, password });
 
       if (res.data.role === role) {
         localStorage.setItem("userInfo", JSON.stringify(res.data)); //  Save all user info

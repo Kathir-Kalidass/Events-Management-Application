@@ -82,7 +82,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/coordinator/participants/add',
+        'http://10.5.12.1:4000/api/coordinator/participants/add',
         {
           email: singleEmail.trim(),
           eventId: eventId
@@ -155,7 +155,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/coordinator/participants/add-multiple',
+        'http://10.5.12.1:4000/api/coordinator/participants/add-multiple',
         {
           emails: emailArray,
           eventId: eventId
@@ -224,7 +224,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
 
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/coordinator/participants/upload',
+        'http://10.5.12.1:4000/api/coordinator/participants/upload',
         formData,
         {
           headers: {
@@ -252,7 +252,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://localhost:4000/api/coordinator/participants/template',
+        'http://10.5.12.1:4000/api/coordinator/participants/template',
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

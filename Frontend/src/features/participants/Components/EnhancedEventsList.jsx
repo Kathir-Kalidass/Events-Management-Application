@@ -90,7 +90,7 @@ const EnhancedEventsList = ({ onDataChange }) => {
       const token = localStorage.getItem("token");
 
       // Fetch all events
-      const eventsResponse = await fetch('http://localhost:4000/api/participant/events', {
+      const eventsResponse = await fetch('http://10.5.12.1:4000/api/participant/events', {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ const EnhancedEventsList = ({ onDataChange }) => {
       }
 
       // Fetch my registrations
-      const registrationsResponse = await fetch(`http://localhost:4000/api/participant/my-events/${participantId}`, {
+      const registrationsResponse = await fetch(`http://10.5.12.1:4000/api/participant/my-events/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -229,7 +229,7 @@ const EnhancedEventsList = ({ onDataChange }) => {
       setRegistering(eventId);
       const token = localStorage.getItem("token");
 
-      const response = await fetch('http://localhost:4000/api/participant/register', {
+      const response = await fetch('http://10.5.12.1:4000/api/participant/register', {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",

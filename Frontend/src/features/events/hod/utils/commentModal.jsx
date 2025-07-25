@@ -39,7 +39,7 @@ function CommentModal({ event, open, handleClose }) {
     const token = localStorage.getItem("token");
     setLoading(true);
 
-    fetch("http://localhost:4000/api/hod/event/comment", {
+    fetch("http://10.5.12.1:4000/api/hod/event/comment", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,

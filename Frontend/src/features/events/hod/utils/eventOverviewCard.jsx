@@ -83,7 +83,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     setLoading(true);
 
     const token = localStorage.getItem("token");
-    fetch("http://localhost:4000/api/hod/event/approve", {
+    fetch("http://10.5.12.1:4000/api/hod/event/approve", {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -111,7 +111,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     const token = localStorage.getItem("token");
     setLoading(true);
 
-    fetch("http://localhost:4000/api/hod/event/reject", {
+    fetch("http://10.5.12.1:4000/api/hod/event/reject", {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
