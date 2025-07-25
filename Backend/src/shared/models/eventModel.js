@@ -59,12 +59,6 @@ const eventSchema = mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
     },
 
-    brochure: {
-      data: Buffer,
-      contentType: String,
-      fileName: String,
-    },
-
     claimBill: {
       expenses: [
         {
@@ -144,11 +138,55 @@ const eventSchema = mongoose.Schema(
       fileName: String,
     },
 
+    // AI-Enhanced Brochure PDF (Single unified brochure system)
     brochurePDF: {
       data: Buffer,
       contentType: String,
       fileName: String,
+      generatedAt: {
+        type: Date,
+        default: Date.now
+      },
+      version: {
+        type: String,
+        default: '2.0'
+      },
+      features: {
+        type: [String],
+        default: ['ai-content', 'smart-layout', 'registration-form', 'organizing-committee', 'intelligent-descriptions']
+      }
     },
+
+    // Brochure generation tracking
+    brochureGenerated: {
+      type: Boolean,
+      default: false,
+    },
+
+    brochureGeneratedAt: {
+      type: Date,
+    },
+
+    // Brochure generation metadata
+    brochureGenerationHistory: [{
+      generatedAt: {
+        type: Date,
+        default: Date.now
+      },
+      version: {
+        type: String,
+        default: '2.0'
+      },
+      features: {
+        type: [String],
+        default: ['ai-content', 'smart-layout', 'registration-form', 'organizing-committee']
+      },
+      fileSize: Number,
+      generatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    }],
 
     claimSubmitted: { type: Boolean, default: false },
 

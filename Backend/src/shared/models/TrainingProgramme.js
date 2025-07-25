@@ -62,12 +62,7 @@ const trainingProgrammeSchema = new mongoose.Schema(
       universityOverhead: Number, // 30% of totalIncome
     },
 
-    brochure: {
-      data: Buffer,
-      contentType: String,
-      fileName: String,
-    },
-    claimBill: {
+        claimBill: {
       expenses: [
         {
           category: String,

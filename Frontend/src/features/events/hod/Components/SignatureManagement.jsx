@@ -66,7 +66,7 @@ const SignatureManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5050/api/hod/signature', {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/signature`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -125,7 +125,7 @@ const SignatureManagement = () => {
         
         const token = localStorage.getItem('token');
         const response = await axios.post(
-          'http://localhost:5050/api/hod/signature/upload',
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/signature/upload`,
           {
             imageData: base64Data,
             fileName: selectedFile.name
@@ -157,7 +157,7 @@ const SignatureManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.delete('http://localhost:5050/api/hod/signature', {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/signature`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -178,7 +178,7 @@ const SignatureManagement = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        'http://localhost:5050/api/hod/signature/activate',
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/signature/activate`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

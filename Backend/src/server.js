@@ -16,6 +16,7 @@ import hodRoutes from './features/events/routes/hodRoutes.js';
 import claimItemRoutes from './features/claims/routes/claimItemRoutes.js';
 import budgetSyncRoutes from './features/claims/routes/budgetSyncRoutes.js';
 import certificateRoutes from './features/certificates/routes/certificateRoutes.js';
+import brochureRoutes from './features/documents/routes/brochureRoutes.js';
 import adminRoutes from './features/admin/routes/adminRoutes.js';
 import debugRoutes from './features/debug/routes/debugRoutes.js';
 
@@ -39,6 +40,7 @@ app.use("/api/hod", hodRoutes);
 app.use("/api/claims", claimItemRoutes);
 app.use("/api/budget-sync", budgetSyncRoutes);
 app.use("/api/certificates", certificateRoutes);
+app.use("/api/brochures", brochureRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/debug", debugRoutes);
 

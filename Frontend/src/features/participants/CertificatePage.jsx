@@ -12,7 +12,7 @@ const CertificatePage = () => {
       const user = JSON.parse(localStorage.getItem("userInfo")); // assumes your user info has ID
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`http://localhost:5050/api/participant/my-certificates/${user._id}`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/my-certificates/${user._id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

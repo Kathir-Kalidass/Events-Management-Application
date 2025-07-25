@@ -99,11 +99,11 @@ coordinatorRoutes.use((req, res, next) => {
 coordinatorRoutes.get('/getHOD', getHod);
 coordinatorRoutes.route('/programmes')
   .get(getProgrammes)
-  .post(authorizeRoles('coordinator', 'admin'), upload.single('brochure'), createProgramme);
+  .post(authorizeRoles('coordinator', 'admin'), createProgramme);
 
 coordinatorRoutes.route('/programmes/:id')
   .get(getProgrammeById)
-  .put(authorizeResourceOwnership('event', 'id'), upload.single('brochure'), updateProgramme)
+  .put(authorizeResourceOwnership('event', 'id'), updateProgramme)
   .delete(authorizeResourceOwnership('event', 'id'), deleteProgramme);
 
 // Add the PDF routes with proper authorization
@@ -119,6 +119,19 @@ coordinatorRoutes.get('/claims/:id/fund-transfer-pdf', generateFundTransferReque
 coordinatorRoutes.get('/brochures/:id/pdf', generateBrochurePDF);
 coordinatorRoutes.get('/brochures/:eventId/download', downloadBrochurePDF);
 coordinatorRoutes.post('/brochures/:id/save', authorizeResourceOwnership('event', 'id'), upload.single('brochurePDF'), saveBrochurePDF);
+
+// Enhanced Brochure Generation Routes
+import {
+  generateEnhancedBrochurePDF,
+  generateAdvancedBrochurePDF,
+  downloadBrochurePDF as downloadEnhancedBrochurePDF,
+  saveBrochurePDF as saveEnhancedBrochurePDF
+} from '../controllers/programmeController.js';
+
+coordinatorRoutes.get('/programmes/:id/brochure/enhanced', generateEnhancedBrochurePDF);
+coordinatorRoutes.get('/programmes/:id/brochure/advanced', generateAdvancedBrochurePDF);
+coordinatorRoutes.get('/programmes/:id/brochure/download', downloadEnhancedBrochurePDF);
+coordinatorRoutes.post('/programmes/:id/brochure/save', authorizeResourceOwnership('event', 'id'), upload.single('brochurePDF'), saveEnhancedBrochurePDF);
 
 // Participant Management Routes with proper authorization
 coordinatorRoutes.get('/participants', getParticipants);

@@ -131,7 +131,7 @@ const RegistrationProcedureManager = ({ eventId, event, onUpdate }) => {
       setLoading(true);
       
       await axios.put(
-        `http://localhost:5050/api/coordinator/events/${eventId}/registration-procedure`,
+        `http://localhost:4000/api/coordinator/events/${eventId}/registration-procedure`,
         { registrationProcedure },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }

@@ -302,7 +302,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 1. **Backend Environment Setup**
    Create a `.env` file in the `Backend` directory:
    ```env
-   PORT=5050
+   PORT=4000
    MONGODB_URI=mongodb://localhost:27017/events-management
    JWT_SECRET=your-super-secret-jwt-key
    EMAIL_USER=your-email@gmail.com
@@ -312,7 +312,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 2. **Frontend Configuration**
    Update API base URL in `Frontend/src/services/api.js` if needed:
    ```javascript
-   const API_BASE_URL = 'http://localhost:5050/api';
+   const API_BASE_URL = 'http://localhost:4000/api';
    ```
 
 ### Database Setup
@@ -349,7 +349,7 @@ cd Frontend && npm run dev
 ## 📱 Application Access
 
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5050
+- **Backend API**: http://localhost:4000
 - **MongoDB**: mongodb://localhost:27017
 
 ## 👥 Default User Accounts
@@ -598,13 +598,13 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
 3. **Environment Configuration**
    ```bash
    # Backend/.env
-   PORT=5050
+   PORT=4000
    MONGODB_URI=mongodb://localhost:27017/events_management
    JWT_SECRET=your-super-secret-key
    NODE_ENV=development
    
    # Frontend/.env (optional)
-   VITE_API_BASE_URL=http://localhost:5050/api
+   VITE_API_BASE_URL=http://localhost:4000/api
    VITE_APP_NAME=Events Management System
    ```
 
@@ -697,7 +697,7 @@ npm test
 ### Environment Variables for Production
 ```env
 # Backend Production Environment
-PORT=5050
+PORT=4000
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/events_management
 JWT_SECRET=your-production-jwt-secret
 NODE_ENV=production

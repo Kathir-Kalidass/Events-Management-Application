@@ -83,7 +83,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     setLoading(true);
 
     const token = localStorage.getItem("token");
-    fetch("http://localhost:5050/api/hod/event/approve", {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/event/approve`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -111,7 +111,7 @@ const EventOverviewCard = ({ event, activePage, setActivePage }) => {
     const token = localStorage.getItem("token");
     setLoading(true);
 
-    fetch("http://localhost:5050/api/hod/event/reject", {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/event/reject`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,

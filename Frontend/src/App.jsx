@@ -28,7 +28,7 @@ function App() {
     >
       <Router>
         <Routes>
-          <Route path="/" element={<Home />}></Route>
+          <Route path="/" element={<Home />} />
           <Route path="/register/:role" element={<RegisterForm />} />
           <Route path="/login/:role" element={<LoginForm />} />
           <Route path="/forgot-password/:role" element={<ForgotPassword />} />
@@ -41,12 +41,11 @@ function App() {
             }
           />
           <Route path="/participant/register" element={<Form />} />
-           <Route path="/coordinator/dashboard" element={
+          <Route path="/coordinator/dashboard" element={
             <ProtectedRoute allowedRole="coordinator">
               <CoordinatorDashboard/>
             </ProtectedRoute>
           } />
-
           <Route path="/hod/dashboard" element={
             <ProtectedRoute allowedRole="hod">
               <HodDashboard />
@@ -66,11 +65,11 @@ function App() {
             <ProtectedRoute allowedRole="coordinator">
               <CertificateManagement />
             </ProtectedRoute>
-          } /> 
-          <Route path="/participant/feedback" element={<Feedback />}></Route>
-          <Route path="/certificate" element={<CertificatePage/>}></Route>
-          <Route path="/verify-certificate" element={<CertificateVerification />}></Route>
-          <Route path="/verify-certificate/:certificateId" element={<CertificateVerification />}></Route>
+          } />
+          <Route path="/participant/feedback" element={<Feedback />} />
+          <Route path="/certificate" element={<CertificatePage/>} />
+          <Route path="/verify-certificate" element={<CertificateVerification />} />
+          <Route path="/verify-certificate/:certificateId" element={<CertificateVerification />} />
         </Routes>
       </Router>
     </SnackbarProvider>

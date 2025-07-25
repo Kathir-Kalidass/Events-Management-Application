@@ -1,5 +1,6 @@
 import event from "../../../shared/models/eventModel.js";
 import ConvenorCommittee from "../../../shared/models/convenorCommitteeModel.js";
+import { generateEventBrochure } from "../../../shared/services/advancedBrochureGenerator.js";
 
 // Create a new training programme
 export const createProgramme = async (req, res) => {
@@ -74,16 +75,70 @@ export const createProgramme = async (req, res) => {
       reviewedBy: req.body.reviewedBy,
     });
 
-    if (req.file) {
-      programme.brochure = {
-        fileName: req.file.filename,
-        filePath: req.file.path,
-        contentType: req.file.mimetype,
-      };
-    }
-
     const savedProgramme = await programme.save();
-    res.status(201).json(savedProgramme);
+    
+    // 🎨 AUTO-GENERATE AI BROCHURE: Generate advanced AI brochure automatically after event creation
+    try {
+      console.log(`🎨 Auto-generating AI brochure for event: ${savedProgramme.title} (ID: ${savedProgramme._id})`);
+
+      // Generate advanced AI brochure using the advancedBrochureGenerator
+      const brochureDoc = await generateEventBrochure(savedProgramme);
+      
+      if (brochureDoc) {
+        const pdfBuffer = Buffer.from(brochureDoc.output('arraybuffer'));
+        
+        // Save AI brochure data directly to MongoDB
+        const brochureUpdateData = {
+          brochureGenerated: true,
+          brochureGeneratedAt: new Date(),
+          brochurePDF: {
+            data: pdfBuffer,
+            contentType: 'application/pdf',
+            fileName: `AI_Brochure_${savedProgramme.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+            generatedAt: new Date(),
+            version: '2.0',
+            features: ['ai-content', 'smart-layout', 'registration-form', 'organizing-committee', 'intelligent-descriptions']
+          },
+          brochureGenerationHistory: [{
+            generatedAt: new Date(),
+            version: '2.0',
+            features: ['ai-content', 'smart-layout', 'registration-form', 'organizing-committee'],
+            fileSize: pdfBuffer.length,
+            generatedBy: req.user?._id
+          }]
+        };
+
+        // Update the saved programme with AI brochure data
+        await event.findByIdAndUpdate(savedProgramme._id, brochureUpdateData);
+
+        console.log(`✅ AI Brochure generated and saved to MongoDB for event: ${savedProgramme.title}`);
+
+        // Return response with brochure status
+        const responseData = {
+          ...savedProgramme.toObject(),
+          brochureGenerated: true,
+          brochureGeneratedAt: new Date().toISOString(),
+          brochureType: 'ai-enhanced'
+        };
+
+        res.status(201).json(responseData);
+      } else {
+        throw new Error('Failed to generate AI brochure document');
+      }
+
+    } catch (brochureError) {
+      console.error(`❌ Failed to auto-generate AI brochure for event ${savedProgramme.title}:`, brochureError);
+
+      // Don't fail the event creation if brochure generation fails
+      // Just log the error and return the event without brochure
+      const responseData = {
+        ...savedProgramme.toObject(),
+        brochureGenerated: false,
+        brochureError: brochureError.message
+      };
+
+      res.status(201).json(responseData);
+    }
   } catch (error) {
     console.error("❌ Error creating programme:", error);
     res.status(500).json({
@@ -107,7 +162,6 @@ export const getProgrammes = async (req, res) => {
 
     const programmes = await event
       .find(query)
-      .select("-brochure")
       .populate('createdBy', 'name email role')
       .populate('reviewedBy', 'name email role')
       .sort({ createdAt: -1 });
@@ -344,5 +398,168 @@ export const deleteProgramme = async (req, res) => {
   } catch (error) {
     console.error("❌ Error deleting programme:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Generate Enhanced Brochure PDF (Backend-generated)
+export const generateEnhancedBrochurePDF = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    
+    if (!eventId) {
+      return res.status(400).json({ message: "Event ID is required" });
+    }
+
+    console.log(`🎨 Generating enhanced brochure PDF for event: ${eventId}`);
+    
+    const pdfBuffer = await generateEnhancedBrochure(eventId);
+    
+    // Get event details for filename
+    const eventData = await event.findById(eventId);
+    const fileName = `Enhanced_Brochure_${eventData?.title?.replace(/\s+/g, '_') || 'Event'}.pdf`;
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    // Send PDF
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error("❌ Error generating enhanced brochure PDF:", error);
+    res.status(500).json({
+      message: "Error generating enhanced brochure PDF",
+      error: error.message,
+    });
+  }
+};
+
+// Generate Advanced Brochure PDF (Frontend-compatible)
+export const generateAdvancedBrochurePDF = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    
+    if (!eventId) {
+      return res.status(400).json({ message: "Event ID is required" });
+    }
+
+    console.log(`🎨 Generating advanced brochure PDF for event: ${eventId}`);
+    
+    // Get event data
+    const eventData = await event.findById(eventId);
+    
+    if (!eventData) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // This endpoint returns the event data for frontend PDF generation
+    // The frontend will use the advancedBrochureGenerator.js to create the PDF
+    res.json({
+      success: true,
+      message: "Event data retrieved for advanced brochure generation",
+      event: eventData,
+      generateUrl: `/api/events/${eventId}/brochure/advanced/generate`
+    });
+    
+  } catch (error) {
+    console.error("❌ Error preparing advanced brochure data:", error);
+    res.status(500).json({
+      message: "Error preparing advanced brochure data",
+      error: error.message,
+    });
+  }
+};
+
+// Download existing brochure PDF from database
+export const downloadBrochurePDF = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    
+    if (!eventId) {
+      return res.status(400).json({ message: "Event ID is required" });
+    }
+    
+    // Retrieve event with PDF data
+    const eventData = await event.findById(eventId).select('brochurePDF title');
+    
+    if (!eventData) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    if (!eventData.brochurePDF || !eventData.brochurePDF.data) {
+      return res.status(404).json({ message: "No brochure PDF found for this event" });
+    }
+
+    // Extract PDF data
+    const { data: pdfBuffer, contentType, fileName } = eventData.brochurePDF;
+    
+    // Validate PDF data
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return res.status(404).json({ message: "Brochure PDF data is empty or corrupted" });
+    }
+    
+    // Set response headers for PDF
+    res.setHeader("Content-Type", contentType || "application/pdf");
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.setHeader("Content-Disposition", `inline; filename="${fileName || 'brochure.pdf'}"`);
+    res.setHeader("Cache-Control", "private, max-age=3600");
+    
+    // Send PDF buffer
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error("❌ Error downloading brochure PDF:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+// Save frontend-generated brochure PDF to database
+export const saveBrochurePDF = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    
+    if (!eventId) {
+      return res.status(400).json({ message: "Event ID is required" });
+    }
+
+    const eventData = await event.findById(eventId);
+    
+    if (!eventData) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Check if brochure PDF file is provided
+    if (!req.file) {
+      return res.status(400).json({ message: "No brochure PDF file provided" });
+    }
+
+    console.log("💾 Saving frontend-generated brochure PDF for event:", eventData.title);
+
+    // Save the PDF to the database
+    eventData.brochurePDF = {
+      data: req.file.buffer,
+      contentType: req.file.mimetype,
+      fileName: req.file.originalname || `Brochure_${eventData.title.replace(/\s+/g, "_")}.pdf`,
+    };
+
+    await eventData.save();
+    console.log("✅ Frontend brochure PDF saved successfully in database");
+
+    res.status(200).json({
+      success: true,
+      message: "Brochure PDF saved successfully",
+      fileName: eventData.brochurePDF.fileName
+    });
+    
+  } catch (error) {
+    console.error("❌ Error saving brochure PDF:", error);
+    res.status(500).json({
+      message: "Error saving brochure PDF",
+      error: error.message,
+    });
   }
 };

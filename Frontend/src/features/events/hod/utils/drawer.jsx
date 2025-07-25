@@ -52,6 +52,11 @@ export default function TemporaryDrawer({
     onClose();
   }
 
+  function handleBrochureManagement(){
+    onClose();
+    navigate("/hod/brochures");
+  }
+
   function handleLogOut() {
     onClose();
     localStorage.removeItem('userInfo');

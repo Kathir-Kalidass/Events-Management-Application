@@ -89,7 +89,7 @@ const CoordinatorEventDashboard = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/api/coordinator/programmes/${eventId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setEvent(response.data);
@@ -113,7 +113,7 @@ const CoordinatorEventDashboard = () => {
   const fetchParticipants = async () => {
     try {
       // Use the correct endpoint for participants
-      const response = await axios.get(`http://localhost:5050/api/coordinator/events/${eventId}/participants`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/events/${eventId}/participants`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       
@@ -144,7 +144,7 @@ const CoordinatorEventDashboard = () => {
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       try {
-        await axios.delete(`http://localhost:5050/api/coordinator/programmes/${eventId}`, {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         enqueueSnackbar("Event deleted successfully", { variant: "success" });
@@ -169,7 +169,7 @@ const CoordinatorEventDashboard = () => {
       };
 
       await axios.post(
-        `http://localhost:5050/api/coordinator/programmes/${eventId}/claim`,
+        `http://localhost:4000/api/coordinator/programmes/${eventId}/claim`,
         claimPayload,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -445,7 +445,7 @@ const CoordinatorEventDashboard = () => {
       // Fetch event data with organizing committee from HOD API
       let eventWithOrganizingCommittee;
       try {
-        const response = await axios.get(`http://localhost:5050/api/hod/events/${eventId}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         eventWithOrganizingCommittee = response.data;
@@ -467,7 +467,7 @@ const CoordinatorEventDashboard = () => {
         formData.append('brochurePDF', pdfBlob, `Brochure_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
         
         const token = localStorage.getItem("token");
-        await fetch(`http://localhost:5050/api/coordinator/brochures/${event._id}/save`, {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/brochures/${event._id}/save`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -500,7 +500,7 @@ const CoordinatorEventDashboard = () => {
       // Clean up the URL after a reasonable time
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
-      }, 5050);
+      }, 4000);
       
     } catch (error) {
       console.error("Error generating styled brochure:", error.message);
@@ -513,7 +513,7 @@ const CoordinatorEventDashboard = () => {
       console.log("Opening programme PDF (note order)...");
       
       // Call the backend endpoint to generate the programme PDF
-      const response = await fetch(`http://localhost:5050/api/coordinator/programmes/${eventId}/pdf`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}/pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,

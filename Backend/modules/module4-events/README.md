@@ -181,7 +181,7 @@ const certificates = await certificateService.generateBulkCertificates({
 const claim = await claimService.processClaim({
   eventId: "event123",
   claimType: "expense",
-  amount: 15050,
+  amount: 14000,
   description: "Event expenses",
   receipts: ["receipt1.pdf", "receipt2.pdf"]
 });

@@ -55,7 +55,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
     // Force regenerate PDF to ensure latest data and fixes are applied
     const token = localStorage.getItem("token");
     
-    fetch(`http://localhost:5050/api/hod/event/claimPdf/${id}?forceRegenerate=true`, {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/event/claimPdf/${id}?forceRegenerate=true`, {
       method: "GET",
       headers: {
         'Authorization': `Bearer ${token}`, // Add authentication header
@@ -226,7 +226,7 @@ const FinancialEventCard = ({ event, activePage, setActivePage }) => {
 // Example usage:
 // <FinancialEventCard event={{
 //   title: "Q3 Marketing Campaign",
-//   budget: 50500,
+//   budget: 40000,
 //   income: 42000,
 //   expenses: 38000
 // }} />

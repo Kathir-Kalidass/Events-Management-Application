@@ -82,7 +82,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5050/api/coordinator/participants/add',
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/add`,
         {
           email: singleEmail.trim(),
           eventId: eventId
@@ -155,7 +155,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5050/api/coordinator/participants/add-multiple',
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/add-multiple`,
         {
           emails: emailArray,
           eventId: eventId
@@ -224,7 +224,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
 
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5050/api/coordinator/participants/upload',
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/upload`,
         formData,
         {
           headers: {
@@ -252,7 +252,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://localhost:5050/api/coordinator/participants/template',
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/template`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'
