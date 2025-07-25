@@ -62,7 +62,6 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../shared/context/eventProvider";
-import { generateEventBrochure } from "../../shared/services/brochureGenerator";
 import ClaimManagement from "../../shared/components/ClaimManagement";
 import EnhancedParticipantDashboard from "../../shared/components/EnhancedParticipantDashboard";
 import FeedbackStatsCard from "../../shared/components/FeedbackStatsCard";
@@ -412,101 +411,7 @@ const CoordinatorEventDashboard = () => {
     return brochureText;
   };
 
-  // Generate brochure using frontend generator (with designs and logo)
-  const generateStyledBrochure = async () => {
-    try {
-
-      const brochureDoc = await generateEventBrochure(event);
-      
-      if (brochureDoc) {
-        const pdfBlob = brochureDoc.output('blob');
-        
-        // Create download link
-        const url = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure_styled.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        enqueueSnackbar("Styled brochure generated successfully!", { variant: "success" });
-      }
-    } catch (error) {
-      console.error("Error generating styled brochure:", error);
-      enqueueSnackbar(`Failed to generate styled brochure: ${error.message}`, { variant: "error" });
-    }
-  };
-
-  const downloadCompleteBrochure = async () => {
-    try {
-
-      // Fetch event data with organizing committee from HOD API
-      let eventWithOrganizingCommittee;
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        eventWithOrganizingCommittee = response.data;
-
-      } catch (hodApiError) {
-        console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
-        eventWithOrganizingCommittee = event;
-      }
-      
-      // Generate the professional styled brochure using frontend jsPDF
-      const doc = await generateEventBrochure(eventWithOrganizingCommittee);
-      
-      // Convert to blob
-      const pdfBlob = doc.output('blob');
-      
-      // Also save a copy to the backend for future access
-      try {
-        const formData = new FormData();
-        formData.append('brochurePDF', pdfBlob, `Brochure_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
-        
-        const token = localStorage.getItem("token");
-        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/brochures/${event._id}/save`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData
-        });
-
-      } catch (saveError) {
-        console.warn("Failed to save brochure to backend:", saveError.message);
-        // Continue with download even if save fails
-      }
-      
-      // Download the styled brochure
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const newWindow = window.open(pdfUrl);
-      
-      // Check if popup was blocked
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        // Fallback: trigger download instead
-        const link = document.createElement('a');
-        link.href = pdfUrl;
-        link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        alert('Professional brochure PDF downloaded successfully!');
-      }
-
-      // Clean up the URL after a reasonable time
-      setTimeout(() => {
-        URL.revokeObjectURL(pdfUrl);
-      }, 4000);
-      
-    } catch (error) {
-      console.error("Error generating styled brochure:", error.message);
-      alert(`Failed to generate brochure: ${error.message}`);
-    }
-  };
+  
 
   const viewProposalPDF = async () => {
     try {
@@ -604,13 +509,6 @@ const CoordinatorEventDashboard = () => {
             disabled={event.status === "approved"}
           >
             Delete
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={downloadCompleteBrochure}
-          >
-            Download Professional Brochure (PDF)
           </Button>
         </Box>
       </Box>
@@ -1222,6 +1120,70 @@ const CoordinatorEventDashboard = () => {
                         No brochure uploaded yet
                       </Alert>
                     )}
+                    
+                    {/* Advanced AI Brochure Generation Button */}
+                    <Box sx={{ mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<Visibility />}
+                        onClick={async () => {
+                          try {
+                            // Import the advanced brochure generator dynamically
+                            const { generateEventBrochure } = await import('../../shared/services/advancedBrochureGenerator');
+                            
+                            // Generate the advanced AI brochure
+                            const doc = await generateEventBrochure(event);
+                            
+                            // Convert to blob and view in new window
+                            const pdfBlob = doc.output('blob');
+                            const pdfUrl = URL.createObjectURL(pdfBlob);
+                            const newWindow = window.open(pdfUrl);
+                            
+                            // Check if popup was blocked
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                              // Fallback: trigger download instead
+                              const link = document.createElement('a');
+                              link.href = pdfUrl;
+                              link.download = `${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_advanced_brochure.pdf`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              
+                              enqueueSnackbar('Advanced AI brochure downloaded successfully!', { variant: 'success' });
+                            }
+
+                            // Clean up
+                            setTimeout(() => {
+                              URL.revokeObjectURL(pdfUrl);
+                            }, 4000);
+                            
+                            // Also try to save to backend
+                            try {
+                              const formData = new FormData();
+                              formData.append('brochurePDF', pdfBlob, `Advanced_Brochure_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
+                              
+                              const token = localStorage.getItem("token");
+                              await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${event._id}/brochure/save`, {
+                                method: 'POST',
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                },
+                                body: formData
+                              });
+
+                            } catch (saveError) {
+                              console.warn("Failed to save advanced brochure to backend:", saveError.message);
+                            }
+                            
+                          } catch (error) {
+                            console.error("Error generating advanced brochure:", error.message);
+                            enqueueSnackbar(`Failed to generate advanced brochure: ${error.message}`, { variant: 'error' });
+                          }
+                        }}
+                      >
+                        View Brochure
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

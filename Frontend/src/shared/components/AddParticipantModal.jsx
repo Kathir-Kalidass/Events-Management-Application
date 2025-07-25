@@ -207,6 +207,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       }
 
       setCsvFile(file);
+      setUploadResults(null); // Clear previous results when new file is selected
     }
   };
 
@@ -239,10 +240,22 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       onParticipantAdded();
     } catch (error) {
       console.error('Error uploading file:', error);
-      enqueueSnackbar(
-        error.response?.data?.message || 'Error uploading file',
-        { variant: 'error' }
-      );
+      
+      // Show detailed error information
+      const errorMessage = error.response?.data?.message || 'Error uploading file';
+      const errors = error.response?.data?.errors || [];
+      
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+      
+      // If there are validation errors, show them in the results
+      if (errors.length > 0) {
+        setUploadResults({
+          added: 0,
+          updated: 0,
+          skipped: 0,
+          errors: errors
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -262,7 +275,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'participants_template.xlsx');
+      link.setAttribute('download', 'participants_template_enhanced.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -387,17 +400,29 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
         {tabValue === 2 && (
           <Box>
             <Alert severity="info" sx={{ mb: 3 }}>
-              Upload a CSV or Excel file with participant data. Download the template to see the required format.
+              <Typography variant="subtitle2" gutterBottom>
+                Upload Excel/CSV File with Participant Data
+              </Typography>
+              <Typography variant="body2">
+                • Download the template to see the exact format required<br/>
+                • Required columns: <strong>Full Name</strong> and <strong>Email Address</strong><br/>
+                • Optional columns: Department, Phone, Institution, Designation<br/>
+                • The system will auto-approve all uploaded participants
+              </Typography>
             </Alert>
 
             <Box display="flex" gap={2} mb={3}>
               <Button
-                variant="outlined"
+                variant="contained"
                 startIcon={<Download />}
                 onClick={downloadTemplate}
+                color="primary"
               >
                 Download Template
               </Button>
+              <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
+                Use this template for the correct format
+              </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
@@ -416,14 +441,26 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                   fullWidth
                   sx={{ py: 2 }}
                 >
-                  {csvFile ? csvFile.name : 'Choose File'}
+                  {csvFile ? csvFile.name : 'Choose Excel/CSV File'}
                 </Button>
               </label>
+              {csvFile && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Selected: {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)
+                </Typography>
+              )}
             </Box>
 
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Important:</strong> Make sure your Excel file follows the template format exactly. 
+                The first row should contain headers, and data should start from the second row.
+              </Typography>
+            </Alert>
+
             {uploadResults && (
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="subtitle2" gutterBottom color="primary">
                   Upload Results:
                 </Typography>
                 <List dense>
@@ -431,19 +468,30 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                     <ListItemIcon>
                       <CheckCircle color="success" />
                     </ListItemIcon>
-                    <ListItemText primary={`Added: ${uploadResults.added}`} />
+                    <ListItemText 
+                      primary={`Successfully Added: ${uploadResults.added}`}
+                      secondary="New participants created and approved"
+                    />
                   </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <Warning color="warning" />
-                    </ListItemIcon>
-                    <ListItemText primary={`Updated: ${uploadResults.updated}`} />
-                  </ListItem>
+                  {uploadResults.updated > 0 && (
+                    <ListItem>
+                      <ListItemIcon>
+                        <Warning color="warning" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={`Updated: ${uploadResults.updated}`}
+                        secondary="Existing user information updated"
+                      />
+                    </ListItem>
+                  )}
                   <ListItem>
                     <ListItemIcon>
                       <Warning color="info" />
                     </ListItemIcon>
-                    <ListItemText primary={`Skipped: ${uploadResults.skipped}`} />
+                    <ListItemText 
+                      primary={`Skipped: ${uploadResults.skipped}`}
+                      secondary="Already registered for this event"
+                    />
                   </ListItem>
                   {uploadResults.errors.length > 0 && (
                     <ListItem>
@@ -452,7 +500,23 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                       </ListItemIcon>
                       <ListItemText 
                         primary={`Errors: ${uploadResults.errors.length}`}
-                        secondary={uploadResults.errors.slice(0, 3).join('; ')}
+                        secondary={
+                          <Box>
+                            <Typography variant="caption" color="error">
+                              Issues found:
+                            </Typography>
+                            {uploadResults.errors.slice(0, 5).map((error, index) => (
+                              <Typography key={index} variant="caption" display="block" color="error">
+                                • {error}
+                              </Typography>
+                            ))}
+                            {uploadResults.errors.length > 5 && (
+                              <Typography variant="caption" color="error">
+                                ... and {uploadResults.errors.length - 5} more errors
+                              </Typography>
+                            )}
+                          </Box>
+                        }
                       />
                     </ListItem>
                   )}

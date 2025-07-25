@@ -477,6 +477,8 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
     const { eventId } = req.body;
     const coordinatorId = req.user._id;
     
+    console.log('📁 Upload request received:', { eventId, hasFile: !!req.file, coordinatorId });
+    
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -484,22 +486,47 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
       });
     }
     
-    // Verify coordinator owns this event
-    const event = await Event.findOne({ _id: eventId, createdBy: coordinatorId });
+    if (!eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "Event ID is required"
+      });
+    }
+    
+    // Verify coordinator owns this event or is HOD/admin
+    const event = await Event.findById(eventId);
     if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
+    }
+    
+    if (req.user.role === 'coordinator' && event.createdBy.toString() !== coordinatorId.toString()) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to add participants to this event"
       });
     }
     
+    console.log('📊 Processing file:', req.file.originalname, 'Size:', req.file.size);
+    
     // Parse Excel file
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(req.file.buffer);
     const worksheet = workbook.getWorksheet(1);
     
+    if (!worksheet) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Excel file or no worksheets found"
+      });
+    }
+    
     const participants = [];
     const errors = [];
+    
+    console.log('📋 Worksheet has', worksheet.rowCount, 'rows');
     
     // Process each row (skip header) - Handle flexible column structure
     for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
@@ -535,13 +562,15 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
       
       participants.push({
         name,
-        email,
+        email: email.toLowerCase(),
         department: department || '',
         phone: phone || '',
         institution: institution || 'Anna University',
         designation: designation || 'Student',
       });
     }
+    
+    console.log('✅ Parsed', participants.length, 'participants with', errors.length, 'errors');
     
     if (errors.length > 0) {
       return res.status(400).json({
@@ -551,7 +580,7 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
       });
     }
     
-    // Process participants
+    // Process participants using User and ParticipantEvent models
     const results = {
       added: 0,
       updated: 0,
@@ -559,60 +588,94 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
       errors: []
     };
     
+    const addedParticipants = [];
+    
     for (const participantData of participants) {
       try {
-        // Check if participant already exists
-        let participant = await Participant.findOne({ email: participantData.email });
+        const { name, email, department, phone, institution, designation } = participantData;
+        const username = email.split('@')[0];
         
-        if (participant) {
-          // Check if already registered for this event
-          const existingRegistration = participant.eventRegistrations.find(
-            reg => reg.eventId.toString() === eventId
-          );
-          
-          if (existingRegistration) {
-            results.skipped++;
-            continue;
-          }
-          
-          // Add event registration to existing participant
-          participant.eventRegistrations.push({
-            eventId,
-            registrationDate: new Date(),
-            approved: false,
+        // Check if user already exists in User model
+        let user = await User.findOne({ email });
+        
+        if (!user) {
+          // Create new user with email as password initially
+          user = new User({
+            name,
+            email,
+            password: email, // Password is email initially
+            role: 'participant',
+            department: department || '',
+            phone: phone || '',
+            institution: institution || 'Anna University',
+            designation: designation || 'Student'
           });
           
-          await participant.save();
-          results.updated++;
+          await user.save();
+          console.log('👤 Created new user:', email);
         } else {
-          // Create new participant
-          const password = formatDOBAsPassword(participantData.dateOfBirth);
+          // Update existing user with any new information
+          if (name && name !== user.name) user.name = name;
+          if (department && department !== user.department) user.department = department;
+          if (phone && phone !== user.phone) user.phone = phone;
+          if (institution && institution !== user.institution) user.institution = institution;
+          if (designation && designation !== user.designation) user.designation = designation;
           
-          participant = new Participant({
-            ...participantData,
-            eventRegistrations: [{
-              eventId,
-              registrationDate: new Date(),
-              approved: false,
-            }],
-            createdBy: coordinatorId,
-            password,
-          });
-          
-          await participant.save();
-          results.added++;
+          await user.save();
+          console.log('🔄 Updated existing user:', email);
         }
+        
+        // Check if already registered for this event in ParticipantEvent model
+        const existingParticipantEvent = await ParticipantEvent.findOne({
+          participantId: user._id,
+          eventId: eventId
+        });
+        
+        if (existingParticipantEvent) {
+          results.skipped++;
+          console.log('⏭️ Skipped (already registered):', email);
+          continue;
+        }
+        
+        // Create new ParticipantEvent record with approved status
+        const participantEvent = new ParticipantEvent({
+          participantId: user._id,
+          eventId: eventId,
+          registrationDate: new Date(),
+          approved: true, // Auto-approve participants added by coordinator
+          approvedBy: coordinatorId,
+          approvedDate: new Date(),
+          attended: false,
+          feedbackGiven: false,
+          certificateGenerated: false
+        });
+        
+        await participantEvent.save();
+        
+        addedParticipants.push({
+          userId: user._id,
+          name: user.name,
+          email: user.email
+        });
+        
+        results.added++;
+        console.log('✅ Added participant:', email);
       } catch (error) {
+        console.error('❌ Error processing participant:', participantData.email, error);
         results.errors.push(`Error processing ${participantData.email}: ${error.message}`);
       }
     }
     
+    console.log('📊 Upload results:', results);
+    
     res.status(200).json({
       success: true,
-      message: "Participants processed successfully",
-      results
+      message: `Processed ${participants.length} participants. Added: ${results.added}, Skipped: ${results.skipped}, Errors: ${results.errors.length}`,
+      results,
+      addedParticipants
     });
   } catch (error) {
+    console.error('❌ Upload participants error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -650,6 +713,10 @@ export const generateTemplate = asyncHandler(async (req, res) => {
     const headers = [
       { header: 'Full Name*', key: 'name', width: 30, required: true },
       { header: 'Email Address*', key: 'email', width: 35, required: true },
+      { header: 'Department', key: 'department', width: 25, required: false },
+      { header: 'Phone', key: 'phone', width: 15, required: false },
+      { header: 'Institution', key: 'institution', width: 30, required: false },
+      { header: 'Designation', key: 'designation', width: 20, required: false },
     ];
     
     // Set column headers
@@ -680,23 +747,43 @@ export const generateTemplate = asyncHandler(async (req, res) => {
     const sampleData = [
       {
         name: 'Dr. John Doe',
-        email: 'john.doe@university.edu'
+        email: 'john.doe@university.edu',
+        department: 'Computer Science',
+        phone: '9876543210',
+        institution: 'Anna University',
+        designation: 'Professor'
       },
       {
         name: 'Ms. Jane Smith',
-        email: 'jane.smith@student.edu'
+        email: 'jane.smith@student.edu',
+        department: 'Information Technology',
+        phone: '9876543211',
+        institution: 'Anna University',
+        designation: 'Student'
       },
       {
         name: 'Mr. Raj Kumar',
-        email: 'raj.kumar@company.com'
+        email: 'raj.kumar@company.com',
+        department: 'Electronics',
+        phone: '9876543212',
+        institution: 'Industry Professional',
+        designation: 'Engineer'
       },
       {
         name: 'Prof. Sarah Wilson',
-        email: 'sarah.wilson@college.edu'
+        email: 'sarah.wilson@college.edu',
+        department: 'Mechanical Engineering',
+        phone: '9876543213',
+        institution: 'Anna University',
+        designation: 'Associate Professor'
       },
       {
         name: 'Alex Johnson',
-        email: 'alex.johnson@gmail.com'
+        email: 'alex.johnson@gmail.com',
+        department: 'Civil Engineering',
+        phone: '9876543214',
+        institution: 'Anna University',
+        designation: 'Student'
       }
     ];
     

@@ -265,13 +265,17 @@ export const generateBrochurePDF = async (req, res) => {
       
       // Try to add Anna University logo
       try {
-        const logoPath = path.join(process.cwd(), 'Frontend', 'public', 'anna-university-logo.jpg');
+        const logoPath = path.join(process.cwd(), 'Backend', 'src', 'assets', 'logo', 'anna-university-logo.jpg');
+        console.log(`🔍 Loading brochure logo from: ${logoPath}`);
         if (fs.existsSync(logoPath)) {
           // Add logo on the left side
           doc.image(logoPath, 15, 5, { width: 25, height: 25 });
+          console.log(`✅ Brochure logo loaded successfully`);
+        } else {
+          console.error(`❌ Brochure logo file not found: ${logoPath}`);
         }
       } catch (error) {
-
+        console.error('Error loading brochure logo:', error);
       }
       
       // Anna University Text (centered)
@@ -564,13 +568,13 @@ export const generateBrochurePDF = async (req, res) => {
       
       // Try to add Anna University logo in footer
       try {
-        const logoPath = path.join(process.cwd(), 'Frontend', 'public', 'anna-university-logo.jpg');
+        const logoPath = path.join(process.cwd(), 'Backend', 'src', 'assets', 'logo', 'anna-university-logo.jpg');
         if (fs.existsSync(logoPath)) {
           // Add smaller logo in footer
           doc.image(logoPath, 15, footerY - 2, { width: 20, height: 20 });
         }
       } catch (error) {
-
+        console.error('Error loading footer logo:', error);
       }
       
       doc.fillColor('white')

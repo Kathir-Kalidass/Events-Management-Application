@@ -60,7 +60,6 @@ import {
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { eventState } from "../../../shared/context/eventProvider";
-import { generateEventBrochure } from "../../../shared/services/brochureGenerator";
 import EnhancedParticipantDashboard from "../../../shared/components/EnhancedParticipantDashboard";
 import FeedbackStatsCard from "../../../shared/components/FeedbackStatsCard";
 import AddParticipantModal from "../../../shared/components/AddParticipantModal";

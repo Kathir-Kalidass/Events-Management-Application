@@ -860,75 +860,6 @@ const CoordinatorDashboard = () => {
     }
   };
 
-  // Generate professional styled brochure
-  const handleGenerateBrochure = async (eventData) => {
-    try {
-
-      // Fetch event data with organizing committee from HOD API
-      let eventWithOrganizingCommittee;
-      try {
-        const response = await axios.get(`http://localhost:4000/api/hod/events/${eventData._id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        eventWithOrganizingCommittee = response.data;
-
-      } catch (hodApiError) {
-        console.warn("Failed to fetch from HOD API, using coordinator event data:", hodApiError.message);
-        eventWithOrganizingCommittee = eventData;
-      }
-      
-      // Import the brochure generator dynamically
-      const { generateEventBrochure } = await import('../../shared/services/brochureGenerator');
-      
-      // Generate the professional styled brochure
-      const doc = await generateEventBrochure(eventWithOrganizingCommittee);
-      
-      // Convert to blob and download
-      const pdfBlob = doc.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const newWindow = window.open(pdfUrl);
-      
-      // Check if popup was blocked
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        // Fallback: trigger download instead
-        const link = document.createElement('a');
-        link.href = pdfUrl;
-        link.download = `${eventData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        enqueueSnackbar('Professional brochure downloaded successfully!', { variant: 'success' });
-      }
-
-      // Clean up
-      setTimeout(() => {
-        URL.revokeObjectURL(pdfUrl);
-      }, 4000);
-      
-      // Also try to save to backend
-      try {
-        const formData = new FormData();
-        formData.append('brochurePDF', pdfBlob, `Brochure_${eventData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
-        
-        const token = localStorage.getItem("token");
-        await fetch(`http://localhost:4000/api/coordinator/brochures/${eventData._id}/save`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData
-        });
-
-      } catch (saveError) {
-        console.warn("Failed to save brochure to backend:", saveError.message);
-      }
-      
-    } catch (error) {
-      console.error("Error generating brochure:", error.message);
-      enqueueSnackbar(`Failed to generate brochure: ${error.message}`, { variant: 'error' });
-    }
-  };
 
   const validateCurrentStep = () => {
     switch (activeStep) {
@@ -1198,38 +1129,9 @@ const CoordinatorDashboard = () => {
           budgetBreakdown: formData.budgetBreakdown,
           registrationProcedure: formData.registrationProcedure
         };
-
-        // Import the brochure generator dynamically
-        const { generateEventBrochure } = await import('../../shared/services/brochureGenerator');
-        
-        // Generate the professional styled brochure
-        const doc = await generateEventBrochure(eventData);
-        
-        if (doc) {
-          // Convert to blob and download
-          const pdfBlob = doc.output('blob');
-          const pdfUrl = URL.createObjectURL(pdfBlob);
-          
-          // Create download link
-          const link = document.createElement('a');
-          link.href = pdfUrl;
-          link.download = `${formData.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}_brochure.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // Clean up
-          setTimeout(() => {
-            URL.revokeObjectURL(pdfUrl);
-          }, 5000);
-          
-          enqueueSnackbar('Brochure automatically generated and downloaded!', { variant: 'success' });
-        }
-      } catch (brochureError) {
-        console.warn('Failed to auto-generate brochure:', brochureError.message);
-        // Don't show error to user as brochure generation is optional
+      } catch (error) {
+        console.error("Error generating brochure:", error);
       }
-
     } catch (error) {
       console.error("❌ Submission error:", error);
 
@@ -1258,7 +1160,7 @@ const CoordinatorDashboard = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   // Helper function to reset form
   const resetForm = () => {
@@ -1758,7 +1660,7 @@ const CoordinatorDashboard = () => {
                             // Generate the advanced AI brochure
                             const doc = await generateEventBrochure(event);
                             
-                            // Convert to blob and download
+                            // Convert to blob and view in new window
                             const pdfBlob = doc.output('blob');
                             const pdfUrl = URL.createObjectURL(pdfBlob);
                             const newWindow = window.open(pdfUrl);

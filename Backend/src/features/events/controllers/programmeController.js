@@ -402,38 +402,7 @@ export const deleteProgramme = async (req, res) => {
 };
 
 // Generate Enhanced Brochure PDF (Backend-generated)
-export const generateEnhancedBrochurePDF = async (req, res) => {
-  try {
-    const eventId = req.params.id;
-    
-    if (!eventId) {
-      return res.status(400).json({ message: "Event ID is required" });
-    }
 
-    console.log(`🎨 Generating enhanced brochure PDF for event: ${eventId}`);
-    
-    const pdfBuffer = await generateEnhancedBrochure(eventId);
-    
-    // Get event details for filename
-    const eventData = await event.findById(eventId);
-    const fileName = `Enhanced_Brochure_${eventData?.title?.replace(/\s+/g, '_') || 'Event'}.pdf`;
-    
-    // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    
-    // Send PDF
-    res.send(pdfBuffer);
-    
-  } catch (error) {
-    console.error("❌ Error generating enhanced brochure PDF:", error);
-    res.status(500).json({
-      message: "Error generating enhanced brochure PDF",
-      error: error.message,
-    });
-  }
-};
 
 // Generate Advanced Brochure PDF (Frontend-compatible)
 export const generateAdvancedBrochurePDF = async (req, res) => {

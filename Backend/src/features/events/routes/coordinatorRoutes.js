@@ -122,16 +122,10 @@ coordinatorRoutes.post('/brochures/:id/save', authorizeResourceOwnership('event'
 
 // Enhanced Brochure Generation Routes
 import {
-  generateEnhancedBrochurePDF,
   generateAdvancedBrochurePDF,
-  downloadBrochurePDF as downloadEnhancedBrochurePDF,
-  saveBrochurePDF as saveEnhancedBrochurePDF
 } from '../controllers/programmeController.js';
 
-coordinatorRoutes.get('/programmes/:id/brochure/enhanced', generateEnhancedBrochurePDF);
 coordinatorRoutes.get('/programmes/:id/brochure/advanced', generateAdvancedBrochurePDF);
-coordinatorRoutes.get('/programmes/:id/brochure/download', downloadEnhancedBrochurePDF);
-coordinatorRoutes.post('/programmes/:id/brochure/save', authorizeResourceOwnership('event', 'id'), upload.single('brochurePDF'), saveEnhancedBrochurePDF);
 
 // Participant Management Routes with proper authorization
 coordinatorRoutes.get('/participants', getParticipants);

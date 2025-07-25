@@ -50,16 +50,59 @@ class CertificateGenerationService {
     }
   }
 
-  // Load logo as base64 from Backend/src/assets/logo directory
+  // Load logo as base64 from Backend/src/assets directory
   async loadLogoAsBase64(logoPath) {
     try {
-      const fullPath = path.join(__dirname, '../../assets/logo', logoPath);
-      if (fs.existsSync(fullPath)) {
-        const logoBuffer = fs.readFileSync(fullPath);
-        const base64Logo = logoBuffer.toString('base64');
-        const mimeType = logoPath.endsWith('.png') ? 'image/png' : 'image/jpeg';
-        return `data:${mimeType};base64,${base64Logo}`;
+      // Try multiple possible paths - including both assets and assets/logo directories
+      const possiblePaths = [
+        // Try assets/logo directory first
+        path.join(__dirname, '../assets/logo', logoPath),
+        path.join(__dirname, '../../assets/logo', logoPath),
+        // Try assets directory directly
+        path.join(__dirname, '../assets', logoPath),
+        path.join(__dirname, '../../assets', logoPath),
+        // Try from process.cwd()
+        path.join(process.cwd(), 'Backend', 'src', 'assets', 'logo', logoPath),
+        path.join(process.cwd(), 'Backend', 'src', 'assets', logoPath),
+        path.join(process.cwd(), 'src', 'assets', 'logo', logoPath),
+        path.join(process.cwd(), 'src', 'assets', logoPath)
+      ];
+      
+      console.log(`🔍 Attempting to load logo: ${logoPath}`);
+      console.log(`🔍 __dirname: ${__dirname}`);
+      console.log(`🔍 process.cwd(): ${process.cwd()}`);
+      
+      for (const fullPath of possiblePaths) {
+        console.log(`🔍 Trying path: ${fullPath}`);
+        if (fs.existsSync(fullPath)) {
+          const logoBuffer = fs.readFileSync(fullPath);
+          const base64Logo = logoBuffer.toString('base64');
+          const mimeType = logoPath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+          console.log(`✅ Logo loaded successfully from: ${fullPath} (${mimeType})`);
+          return `data:${mimeType};base64,${base64Logo}`;
+        }
       }
+      
+      console.error(`❌ Logo file not found in any of the attempted paths for: ${logoPath}`);
+      console.error(`❌ Available files in assets directory:`);
+      
+      // Debug: List files in assets directory
+      try {
+        const assetsDir = path.join(__dirname, '../assets');
+        if (fs.existsSync(assetsDir)) {
+          const files = fs.readdirSync(assetsDir);
+          console.log(`📁 Assets directory (${assetsDir}):`, files);
+        }
+        
+        const assetsLogoDir = path.join(__dirname, '../assets/logo');
+        if (fs.existsSync(assetsLogoDir)) {
+          const logoFiles = fs.readdirSync(assetsLogoDir);
+          console.log(`📁 Assets/logo directory (${assetsLogoDir}):`, logoFiles);
+        }
+      } catch (debugError) {
+        console.error('Debug error:', debugError);
+      }
+      
       return null;
     } catch (error) {
       console.error('Error loading logo:', error);

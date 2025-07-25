@@ -16,7 +16,6 @@ import DownloadPDF from "./downloadEventDetails";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { SelectedEventContext } from "../dashboard";
-import { generateEventBrochure } from "../../../../shared/services/brochureGenerator";
 import { useSnackbar } from "notistack";
 
 const EventOverviewCard = ({ event, activePage, setActivePage }) => {

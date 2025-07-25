@@ -45,7 +45,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
-const EnhancedMyEvents = ({ onDataChange }) => {
+const EnhancedMyEvents = ({ onNavigate }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [myEvents, setMyEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -303,9 +303,14 @@ const EnhancedMyEvents = ({ onDataChange }) => {
           severity="warning" 
           sx={{ mb: 3 }}
           action={
-            <Button color="inherit" size="small">
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => onNavigate('feedback')}
+            >
               Submit Feedback
             </Button>
+
           }
         >
           You have {stats.pendingFeedback} event(s) waiting for feedback. Submit feedback to earn your certificates!
