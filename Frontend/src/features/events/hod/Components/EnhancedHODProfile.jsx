@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Box,
   Typography,
   Button,
-  Box,
   useTheme,
   alpha,
   Grid,
@@ -27,7 +23,8 @@ import {
   Work,
   LocationOn,
   CalendarToday,
-  Badge
+  Badge,
+  Timeline
 } from '@mui/icons-material';
 import { eventState } from '../../../../shared/context/eventProvider';
 import { useSnackbar } from 'notistack';
@@ -64,7 +61,7 @@ const OptimizedTextField = memo(({
   />
 ));
 
-const ProfileDialog = ({ open, onClose }) => {
+const EnhancedHODProfile = () => {
   const theme = useTheme();
   const { user, setUser } = eventState();
   const { enqueueSnackbar } = useSnackbar();
@@ -81,28 +78,32 @@ const ProfileDialog = ({ open, onClose }) => {
     joiningDate: '',
     address: '',
     bio: '',
+    qualifications: [],
     specializations: [],
-    qualifications: []
+    experience: '',
+    researchInterests: []
   });
 
-  // Initialize profile data when dialog opens
+  // Initialize profile data
   useEffect(() => {
-    if (user && open) {
+    if (user) {
       setProfileData({
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        designation: user.designation || '',
+        designation: user.designation || 'Head of Department',
         department: user.department || 'DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING (DCSE)',
         employeeId: user.employeeId || '',
         joiningDate: user.joiningDate || '',
         address: user.address || '',
         bio: user.bio || '',
+        qualifications: user.qualifications || [],
         specializations: user.specializations || [],
-        qualifications: user.qualifications || []
+        experience: user.experience || '',
+        researchInterests: user.researchInterests || []
       });
     }
-  }, [user, open]);
+  }, [user]);
 
   // Optimized input change handler
   const handleInputChange = useCallback((event) => {
@@ -113,19 +114,17 @@ const ProfileDialog = ({ open, onClose }) => {
     }));
   }, []);
 
-  // Memoized save profile handler
+  // Save profile handler
   const handleSaveProfile = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      // Validate required fields
       if (!profileData.name || !profileData.email) {
         enqueueSnackbar('Name and email are required fields', { variant: 'error' });
         return;
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(profileData.email)) {
         enqueueSnackbar('Please enter a valid email address', { variant: 'error' });
@@ -133,7 +132,7 @@ const ProfileDialog = ({ open, onClose }) => {
       }
 
       const response = await axios.put(
-        'http://localhost:4000/api/coordinator/profile',
+        'http://localhost:4000/api/hod/profile',
         profileData,
         {
           headers: { 
@@ -155,8 +154,6 @@ const ProfileDialog = ({ open, onClose }) => {
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
-      } else if (error.response?.data?.details) {
-        errorMessage = error.response.data.details.map(d => d.message).join(', ');
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -254,6 +251,16 @@ const ProfileDialog = ({ open, onClose }) => {
       </Grid>
       <Grid item xs={12} md={6}>
         <OptimizedTextField
+          name="experience"
+          label="Years of Experience"
+          value={profileData.experience}
+          onChange={handleInputChange}
+          disabled={!editMode}
+          icon={Timeline}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <OptimizedTextField
           name="address"
           label="Address"
           value={profileData.address}
@@ -271,50 +278,37 @@ const ProfileDialog = ({ open, onClose }) => {
           disabled={!editMode}
           multiline
           rows={3}
-          placeholder="Tell us about yourself, your expertise, and interests..."
+          placeholder="Tell us about yourself, your expertise, and leadership philosophy..."
         />
       </Grid>
     </Grid>
-  ), [profileData.designation, profileData.department, profileData.joiningDate, profileData.address, profileData.bio, editMode, handleInputChange]);
+  ), [profileData.designation, profileData.department, profileData.joiningDate, profileData.experience, profileData.address, profileData.bio, editMode, handleInputChange]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          minHeight: '70vh'
-        }
-      }}
-    >
-      <DialogTitle 
-        sx={{ 
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          py: 3,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Box sx={{ p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      {/* Header Section */}
+      <Paper sx={{ p: 4, mb: 3, borderRadius: 3, background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)` }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           <Avatar 
             sx={{ 
-              width: 60, 
-              height: 60,
+              width: 80, 
+              height: 80,
               backgroundColor: theme.palette.primary.main,
-              fontSize: '1.5rem',
+              fontSize: '2rem',
               fontWeight: 600
             }}
           >
-            {user?.name?.charAt(0)?.toUpperCase() || 'C'}
+            {user?.name?.charAt(0)?.toUpperCase() || 'H'}
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h5" component="div" sx={{ fontWeight: 600, mb: 0.5 }}>
-              {editMode ? 'Edit Profile' : 'Coordinator Profile'}
+            <Typography variant="h4" component="div" sx={{ fontWeight: 600, mb: 1 }}>
+              {editMode ? 'Edit HOD Profile' : 'HOD Profile'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage your personal information
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+              {user?.name || 'Head of Department'}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {user?.department || 'Department of Computer Science and Engineering'}
             </Typography>
           </Box>
           <IconButton
@@ -330,85 +324,69 @@ const ProfileDialog = ({ open, onClose }) => {
             {editMode ? <Cancel /> : <Edit />}
           </IconButton>
         </Box>
-      </DialogTitle>
+      </Paper>
 
-      <DialogContent sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          {/* Basic Information */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Person color="primary" />
-                Basic Information
-              </Typography>
-              {basicInfoFields}
-            </Paper>
+      {/* Profile Content */}
+      <Paper sx={{ borderRadius: 2 }}>
+        <Box sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Basic Information */}
+            <Grid item xs={12}>
+              <Paper sx={{ p: 3, borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Person color="primary" />
+                  Basic Information
+                </Typography>
+                {basicInfoFields}
+              </Paper>
+            </Grid>
+
+            {/* Professional Information */}
+            <Grid item xs={12}>
+              <Paper sx={{ p: 3, borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Work color="primary" />
+                  Professional Information
+                </Typography>
+                {professionalInfoFields}
+              </Paper>
+            </Grid>
           </Grid>
+        </Box>
+      </Paper>
 
-          {/* Professional Information */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Work color="primary" />
-                Professional Information
-              </Typography>
-              {professionalInfoFields}
-            </Paper>
-          </Grid>
-        </Grid>
-      </DialogContent>
-
-      <DialogActions 
-        sx={{ 
-          p: 3, 
-          borderTop: `1px solid ${theme.palette.divider}`,
-          background: alpha(theme.palette.background.default, 0.5),
-          gap: 2
-        }}
-      >
-        <Button 
-          onClick={onClose}
-          sx={{ 
-            borderRadius: 2,
-            px: 3,
-            textTransform: 'none'
-          }}
-        >
-          Close
-        </Button>
-        
-        {editMode && (
-          <>
-            <Button
-              onClick={toggleEditMode}
-              variant="outlined"
-              sx={{ 
-                borderRadius: 2,
-                px: 3,
-                textTransform: 'none'
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveProfile}
-              variant="contained"
-              disabled={loading}
-              startIcon={loading ? <LinearProgress size={20} /> : <Save />}
-              sx={{ 
-                borderRadius: 2,
-                px: 4,
-                textTransform: 'none',
-                fontWeight: 600
-              }}
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </>
-        )}
-      </DialogActions>
-    </Dialog>
+      {/* Action Buttons */}
+      {editMode && (
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+          <Button
+            onClick={toggleEditMode}
+            variant="outlined"
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              textTransform: 'none'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveProfile}
+            variant="contained"
+            disabled={loading}
+            startIcon={loading ? <LinearProgress size={20} /> : <Save />}
+            sx={{ 
+              borderRadius: 2,
+              px: 4,
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </Box>
+      )}
+    </Box>
   );
 };
 
-export default ProfileDialog;
+export default EnhancedHODProfile;

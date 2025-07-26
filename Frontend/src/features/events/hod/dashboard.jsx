@@ -12,6 +12,9 @@ import FinalBudget from "./drawerPages/Finance/finalBudget";
 import ProposalLetter from "./utils/proposalLetter";
 import ConvenorCommitteeManagement from "./Components/ConvenorCommitteeManagement";
 import SignatureManagement from "./Components/SignatureManagement";
+import EnhancedHODProfile from "./Components/EnhancedHODProfile";
+import EventCalendar from "./Components/EventCalendar";
+import NotificationCenter from "./Components/NotificationCenter";
 
 export const SelectedEventContext = createContext();
 
@@ -130,6 +133,18 @@ const HodDashboard = () => {
 
           {activePage === "signatureManagement" && (
             <SignatureManagement />
+          )}
+
+          {activePage === "profile" && (
+            <EnhancedHODProfile />
+          )}
+
+          {activePage === "calendar" && (
+            <EventCalendar />
+          )}
+
+          {activePage === "notifications" && (
+            <NotificationCenter />
           )}
         </Box>
       </Box>

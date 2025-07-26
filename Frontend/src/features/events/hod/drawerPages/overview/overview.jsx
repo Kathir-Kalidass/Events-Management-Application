@@ -1,343 +1,333 @@
-import {useState, useEffect} from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
-import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
-import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Paper,
+  useTheme,
+  alpha,
+  Avatar,
+  Chip,
+  LinearProgress,
+  IconButton,
+  Tooltip,
+  Button
+} from "@mui/material";
+import {
+  Description as DescriptionIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Cancel as CancelIcon,
+  TrendingUp as TrendingUpIcon,
+  Event as EventIcon,
+  AccountBalance as FinanceIcon,
+  Notifications as NotificationsIcon,
+  CalendarToday as CalendarIcon,
+  Assessment as AssessmentIcon
+} from "@mui/icons-material";
 import { eventState } from "../../../../../shared/context/eventProvider";
 import DashboardCharts from "./eventstatistics";
 
 const Overview = ({ activePage, setActivePage }) => {
+  const theme = useTheme();
+  const { user, events } = eventState();
 
-  const {user, events, setEvents} = eventState();
+  const approvedCount = () => events.filter(e => e.status === "approved").length;
+  const pendingCount = () => events.filter(e => e.status === "pending").length;
+  const rejectedCount = () => events.filter(e => e.status === "rejected").length;
+  const totalBudget = () => events.reduce((sum, e) => sum + (Number(e.budget) || 0), 0);
 
-  function approvedCount(){
-    let count = 0;
-    for(let i=0;i<events.length;i++){
-      if(events[i].status === "approved"){
-        count++;
-      }   
+  const statsCards = [
+    {
+      title: "Total Proposals",
+      value: events.length,
+      icon: <DescriptionIcon />,
+      color: theme.palette.primary.main,
+      bgGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+      changeType: "positive"
+    },
+    {
+      title: "Approved Events",
+      value: approvedCount(),
+      icon: <CheckCircleIcon />,
+      color: theme.palette.success.main,
+      bgGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+      changeType: "positive"
+    },
+    {
+      title: "Pending Review",
+      value: pendingCount(),
+      icon: <ScheduleIcon />,
+      color: theme.palette.warning.main,
+      bgGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
+      changeType: "negative"
+    },
+    {
+      title: "Rejected Proposals",
+      value: rejectedCount(),
+      icon: <CancelIcon />,
+      color: theme.palette.error.main,
+      bgGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
+      changeType: "positive"
     }
-    return count;
-  }
+  ];
 
-  function pendingCount(){
-    let count = 0;
-        for(let i=0;i<events.length;i++){
-          if(events[i].status === "pending"){
-            count++;
-          }   
-        }
-    return count;
-  }
-
-  function rejectedCount(){
-    let count = 0;
-            for(let i=0;i<events.length;i++){
-              if(events[i].status === "rejected"){
-                count++;
-              }   
-            }
-    return count;
-  }
+  const quickActions = [
+    {
+      title: "Review Proposals",
+      description: "Review pending event proposals",
+      icon: <ScheduleIcon />,
+      action: () => setActivePage("pendingProposal"),
+      color: theme.palette.warning.main,
+      count: pendingCount()
+    },
+    {
+      title: "Finance Overview",
+      description: "Monitor budget and expenses",
+      icon: <FinanceIcon />,
+      action: () => setActivePage("finance"),
+      color: theme.palette.info.main,
+      count: `₹${totalBudget().toLocaleString()}`
+    },
+    {
+      title: "Event Calendar",
+      description: "View upcoming events",
+      icon: <CalendarIcon />,
+      action: () => setActivePage("calendar"),
+      color: theme.palette.secondary.main,
+      count: events.filter(e => new Date(e.endDate) > new Date()).length
+    }
+  ];
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-        alignItems: "center",
-        flexDirection: "column",
-        position: "relative",
-        zIndex: 5,
-      }}
-    >
-      <Box
+    <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto' }}>
+      {/* Welcome Header */}
+      <Paper
+        elevation={0}
         sx={{
-          height: "100px",
-          backgroundImage: "linear-gradient(to right, #6366f1, #4338ca)",
-          color: "#fff",
-          width: "60%",
-          borderRadius: "8px",
-          marginTop: "12px",
-          display: "flex",
-          flexDirection: "column",
-          pt: 4,
-          pl: 4,
-          position: "relative",
-          zIndex: 1,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          color: 'white',
+          borderRadius: 4,
+          p: 4,
+          mb: 4,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: "sans-serif",
-            fontSize: 26,
-            fontWeight: "bold",
-          }}
-        >
-          {`Welcome back, DR.${user && user.name}`}
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: "sans-serif",
-            fontWeight: "medium",
-          }}
-        >
-          {`Here's an overview of the department events`}
-        </Typography>
-      </Box>
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+            <Avatar
+              sx={{
+                width: 64,
+                height: 64,
+                backgroundColor: alpha(theme.palette.common.white, 0.2),
+                color: 'white',
+                fontSize: '1.5rem',
+                fontWeight: 700
+              }}
+            >
+              {user?.name?.charAt(0)?.toUpperCase() || 'H'}
+            </Avatar>
+            <Box>
+              <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                Welcome back, Dr. {user?.name || 'HOD'}
+              </Typography>
+              <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 400 }}>
+                Here's your department's event management overview
+              </Typography>
+              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                <Chip
+                  label="Department Head"
+                  sx={{
+                    backgroundColor: alpha(theme.palette.success.main, 0.8),
+                    color: 'white',
+                    fontWeight: 600
+                  }}
+                />
+                <Chip
+                  label="Administrative Portal"
+                  sx={{
+                    backgroundColor: alpha(theme.palette.info.main, 0.8),
+                    color: 'white',
+                    fontWeight: 600
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
 
-      <Box
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {statsCards.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                background: stat.bgGradient,
+                color: 'white',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.15)'
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
+                      {stat.title}
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                      {stat.value}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: stat.changeType === 'positive' ? '#4ade80' : '#f87171',
+                          fontWeight: 600
+                        }}
+                      >
+                        {stat.change}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      backgroundColor: alpha(theme.palette.common.white, 0.15),
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  >
+                    {stat.icon}
+                  </Box>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min((stat.value / Math.max(events.length, 1)) * 100, 100)}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: alpha(theme.palette.common.white, 0.2),
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: alpha(theme.palette.common.white, 0.8),
+                      borderRadius: 3
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Quick Actions */}
+      <Paper
         sx={{
-          marginTop: 12,
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "1fr 1fr",
-            md: "1fr 1fr 1fr",
-            lg: "1fr 1fr 1fr 1fr"
-          },
+          p: 4,
+          borderRadius: 3,
+          mb: 4,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
         }}
       >
-        <Box
-          sx={{
-            display:"flex",
-            flexDirection:"column",
-            pt: 2,
-            pb: 4,
-            pl: 2,
-            pr: 2,
-            mr: 2,
-            mb: 4,
-            boxShadow: "0px 2px 12px rgba(0, 0, 0, 0.2)",
-            borderRadius: "8px",
-            width : {
-              sm:370,
-              md:320,
-              lg:300,
-            }
-          }}
-        >
-          <Typography
-            sx={{
-              mb: 2,
-              fontWeight: "large",
-            }}
-          >
-            Total Proposals
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              pl:4,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontSize="22px" fontWeight="600">
-              {events.length}
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: "rgb(68, 142, 216)",
-                p: 1.5,
-                borderRadius: "50%",
-              }}
-            >
-              <DescriptionOutlinedIcon
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, color: theme.palette.primary.main }}>
+          🚀 Quick Actions
+        </Typography>
+        <Grid container spacing={3}>
+          {quickActions.map((action, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card
                 sx={{
-                  color: "white",
+                  borderRadius: 3,
+                  border: `1px solid ${alpha(action.color, 0.2)}`,
+                  transition: 'all 0.3s ease-in-out',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 8px 25px ${alpha(action.color, 0.15)}`,
+                    borderColor: action.color
+                  }
                 }}
-              ></DescriptionOutlinedIcon>
-            </Box>
-          </Box>
-        </Box>
+                onClick={action.action}
+              >
+                <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 2,
+                      backgroundColor: alpha(action.color, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                      color: action.color
+                    }}
+                  >
+                    {action.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                    {action.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {action.description}
+                  </Typography>
+                  <Chip
+                    label={action.count}
+                    sx={{
+                      backgroundColor: alpha(action.color, 0.1),
+                      color: action.color,
+                      fontWeight: 600
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Paper>
 
-        <Box
-          sx={{
-            pt: 2,
-            pb: 4,
-            pl: 2,
-            pr: 2,
-            mb: 4,
-            boxShadow: "0px 2px 12px rgba(0, 0, 0, 0.2)",
-            mr: 2,
-            borderRadius: "8px",
-            display:"flex",
-            flexDirection:"column",
-            width : {
-              sm:370,
-              md:320,
-              lg:300,
-            }
-          }}
-        >
-          <Typography
-            sx={{
-              mb: 2,
-              fontWeight: "large",
-            }}
-          >
-            Approved Proposals
+      {/* Charts Section */}
+      <Paper
+        sx={{
+          p: 4,
+          borderRadius: 3,
+          background: theme.palette.background.paper
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
+            📊 Event Analytics
           </Typography>
-          <Box
-            sx={{
-              display: "flex",pl:4,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+          <Button
+            variant="outlined"
+            startIcon={<TrendingUpIcon />}
+            onClick={() => console.log("View detailed analytics")}
+            sx={{ borderRadius: 2 }}
           >
-            <Typography fontSize="22px" fontWeight="600">
-              {approvedCount()}
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: "rgb(69, 225, 100)",
-                p: 1,
-                borderRadius: "50%",
-              }}
-            >
-              <TaskAltOutlinedIcon
-                sx={{
-                  color: "white",
-                  fontSize: 30,
-                }}
-              ></TaskAltOutlinedIcon>
-            </Box>
-          </Box>
+            View Details
+          </Button>
         </Box>
-
-        <Box
-          sx={{
-            pt: 2,
-            pb: 4,
-            pl: 2,
-            pr: 2,
-            mb: 4,
-            boxShadow: "0px 2px 12px rgba(0, 0, 0, 0.2)",
-            mr: 2,
-            borderRadius: "8px",
-            display:"flex",
-            flexDirection:"column",
-            width : {
-              sm:370,
-              md:320,
-              lg:300,
-            }
-          }}
-        >
-          <Typography
-            sx={{
-              mb: 2,
-              fontWeight: "large",
-            }}
-          >
-            Pending Review
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",pl:4,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontSize="22px" fontWeight="600">
-              {pendingCount()}
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: "rgb(245 158 11)",
-                p: 1,
-                borderRadius: "50%",
-              }}
-            >
-              <AccessTimeOutlinedIcon
-                sx={{
-                  color: "white",
-                  fontSize: 30,
-                }}
-              ></AccessTimeOutlinedIcon>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            pt: 2,
-            pb: 4,
-            pl: 2,
-            pr: 2,
-            mb: 4,
-            boxShadow: "0px 2px 12px rgba(0, 0, 0, 0.2)",
-            mr: 2,
-            borderRadius: "8px",
-            display:"felx",
-            flexDirection:"column",
-            width : {
-              xs:410,
-              sm:370,
-              md:320,
-              lg:300,
-            }
-          }}
-        >
-          <Typography
-            sx={{
-              mb: 2,
-              fontWeight: "large",
-            }}
-          >
-            Rejected Proposals
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              pl:4,
-              justifyContent: "space-between",
-              alignItems: "center",
-              
-            }}
-          >
-            <Typography fontSize="22px" fontWeight="600" >
-              {rejectedCount()}
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: "rgb(216, 44, 44)",
-                p: 1,
-                borderRadius: "50%",
-              }}
-            >
-              <HighlightOffIcon
-                sx={{
-                  color: "white",
-                  fontSize: 30,
-                }}
-              ></HighlightOffIcon>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box>
-        <Box>
-          <Typography
-            sx={{
-              fontSize:"1.5rem",
-              fontWeight:"600",
-              mt:2,
-              mb:2,
-              pl:1,
-              textAlign:"left"
-            }}
-          >
-            Events Statistics
-          </Typography>
-        </Box>
-        <DashboardCharts></DashboardCharts>
-      </Box>
-
+        <DashboardCharts />
+      </Paper>
     </Box>
   );
 };
