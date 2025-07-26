@@ -54,12 +54,10 @@ const AdminLogin = () => {
 
       const { token, role, name, email, _id } = response.data;
 
-      // Store admin data in localStorage
+      // Store admin data in localStorage in the format expected by ProtectedRoute
+      const userData = { token, role, name, email, _id };
+      localStorage.setItem("userInfo", JSON.stringify(userData));
       localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
-      localStorage.setItem('name', name);
-      localStorage.setItem('email', email);
-      localStorage.setItem('userId', _id);
 
       enqueueSnackbar('Admin login successful!', { variant: 'success' });
       navigate('/admin/dashboard');

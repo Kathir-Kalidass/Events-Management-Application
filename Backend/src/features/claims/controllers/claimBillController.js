@@ -1,6 +1,6 @@
 import event from "../../../shared/models/eventModel.js";
 
-// ✅ ENHANCED: Handle claim bill submission with proper synchronization
+// ✅ ENHANCED: Handle claim bill submission with proper synchronization including income
 export const handleClaimBillSubmission = async (req, res) => {
   try {
     const programme = await event.findById(req.params.id);
@@ -8,7 +8,7 @@ export const handleClaimBillSubmission = async (req, res) => {
       return res.status(404).json({ message: "Programme not found" });
     }
 
-    const { expenses } = req.body;
+    const { expenses, income } = req.body;
 
     if (!Array.isArray(expenses) || expenses.length === 0) {
       return res
@@ -21,6 +21,15 @@ export const handleClaimBillSubmission = async (req, res) => {
       (sum, e) => sum + Number(e.amount || 0),
       0
     );
+
+    // Calculate total income if provided
+    let totalClaimIncome = 0;
+    if (income && Array.isArray(income)) {
+      totalClaimIncome = income.reduce(
+        (sum, i) => sum + Number(i.income || 0),
+        0
+      );
+    }
 
     // ✅ FIXED: Update claim bill - preserve existing approval status
     const existingCreatedAt = programme.claimBill?.createdAt;
@@ -87,32 +96,48 @@ export const handleClaimBillSubmission = async (req, res) => {
       updatedAt: new Date()
     };
 
-    // ✅ CRITICAL: Synchronize budget breakdown with claim bill
+    // ✅ CRITICAL: Synchronize budget breakdown with claim bill including income
     if (programme.budgetBreakdown) {
-
       // Update the main budget breakdown with actual claim expenses
       programme.budgetBreakdown.expenses = expenses;
       programme.budgetBreakdown.totalExpenditure = totalClaimExpenditure;
       
-      // Recalculate total including university overhead if it exists
+      // Update income if provided
+      if (income && Array.isArray(income)) {
+        programme.budgetBreakdown.income = income;
+        programme.budgetBreakdown.totalIncome = totalClaimIncome;
+        
+        // Recalculate university overhead (30% of total income)
+        programme.budgetBreakdown.universityOverhead = totalClaimIncome * 0.3;
+      }
+      
+      // Recalculate total expenditure including university overhead if it exists
       if (programme.budgetBreakdown.universityOverhead) {
-        programme.budgetBreakdown.totalExpenditure += Number(programme.budgetBreakdown.universityOverhead);
+        programme.budgetBreakdown.totalExpenditure = totalClaimExpenditure + Number(programme.budgetBreakdown.universityOverhead);
       }
     } else {
       // Create budget breakdown if it doesn't exist
+      const universityOverhead = totalClaimIncome * 0.3;
+      
       programme.budgetBreakdown = {
         expenses,
-        totalExpenditure: totalClaimExpenditure
+        totalExpenditure: totalClaimExpenditure + universityOverhead,
+        income: income || [],
+        totalIncome: totalClaimIncome,
+        universityOverhead: universityOverhead
       };
     }
 
     await programme.save();
 
     res.status(200).json({ 
-      message: "Claim bill stored and synchronized successfully", 
+      message: "Claim bill with income stored and synchronized successfully", 
       claimTotalExpenditure: programme.claimBill.totalExpenditure,
       budgetTotalExpenditure: programme.budgetBreakdown.totalExpenditure,
-      claimExpenses: expenses
+      totalIncome: programme.budgetBreakdown.totalIncome,
+      universityOverhead: programme.budgetBreakdown.universityOverhead,
+      claimExpenses: expenses,
+      incomeData: income || []
     });
   } catch (error) {
     console.error("❌ Error submitting claim bill:", error);
@@ -122,7 +147,7 @@ export const handleClaimBillSubmission = async (req, res) => {
   }
 };
 
-// ✅ ENHANCED: Get programme with proper expense data for claim section
+// ✅ ENHANCED: Get programme with proper expense and income data for claim section
 export const getProgrammeForClaim = async (req, res) => {
   try {
     const programme = await event.findById(req.params.id);
@@ -132,6 +157,7 @@ export const getProgrammeForClaim = async (req, res) => {
 
     // ✅ Determine which expenses to use for claim section (priority: claim bill > budget breakdown)
     let availableExpenses = [];
+    let availableIncome = [];
     let expenseSource = 'none';
     
     if (programme.claimBill?.expenses && Array.isArray(programme.claimBill.expenses) && programme.claimBill.expenses.length > 0) {
@@ -142,9 +168,15 @@ export const getProgrammeForClaim = async (req, res) => {
       expenseSource = 'budgetBreakdown';
     }
 
+    // Get income data from budget breakdown
+    if (programme.budgetBreakdown?.income && Array.isArray(programme.budgetBreakdown.income)) {
+      availableIncome = programme.budgetBreakdown.income;
+    }
+
     const responseData = {
       ...programme.toObject(),
       availableExpenses,
+      availableIncome,
       expenseSource,
       hasExistingClaim: !!programme.claimBill,
       claimSubmitted: programme.claimBill?.claimSubmitted || false

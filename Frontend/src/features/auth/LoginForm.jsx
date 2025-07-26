@@ -55,9 +55,6 @@ const LoginForm = () => {
           />
           <button type="submit">Login</button>
         </form>
-        <p>
-          Not registered? <Link to={`/register/${role}`}>Register here</Link>
-        </p>
         <p style={{ textAlign: "right", marginTop: "5px" }}>
           <Link to={`/forgot-password/${role}`}>Forgot password?</Link>
         </p>

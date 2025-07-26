@@ -76,6 +76,8 @@ const CoordinatorDashboard = () => {
   const {
     claimData,
     setClaimData,
+    incomeData,
+    setIncomeData,
     openClaimDialog,
     setOpenClaimDialog,
     selectedProgramme,
@@ -205,12 +207,14 @@ const CoordinatorDashboard = () => {
         setNewResourcePerson={setNewResourcePerson}
       />
 
-      {/* Claim Bill Dialog */}
+      {/* Enhanced Claim Bill Dialog with Income Support */}
       <ClaimBillDialog
         open={openClaimDialog}
         onClose={() => setOpenClaimDialog(false)}
         claimData={claimData}
         setClaimData={setClaimData}
+        incomeData={incomeData}
+        setIncomeData={setIncomeData}
         selectedProgramme={selectedProgramme}
         onSubmit={handleSubmitClaim}
       />

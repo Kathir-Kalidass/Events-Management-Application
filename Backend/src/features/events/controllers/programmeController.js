@@ -151,14 +151,23 @@ export const createProgramme = async (req, res) => {
 // Get all programmes for the current coordinator
 export const getProgrammes = async (req, res) => {
   try {
-    // For now, show all events to all coordinators
-    // You can modify this logic later if you want to restrict access
     let query = {};
     
-    // Optional: If you want to filter by coordinator, uncomment the following:
-    // if (req.user && req.user._id && req.user.role === 'coordinator') {
-    //   query.createdBy = req.user._id;
-    // }
+    // Filter events based on user role
+    if (req.user && req.user._id) {
+      if (req.user.role === 'coordinator') {
+        // Coordinators can only see events they created
+        query.createdBy = req.user._id;
+      } else if (req.user.role === 'hod') {
+        // HODs can see all events in their department
+        if (req.user.department) {
+          query['organizingDepartments.primary'] = req.user.department;
+        }
+      } else if (req.user.role === 'admin') {
+        // Admins can see all events (no filter)
+        query = {};
+      }
+    }
 
     const programmes = await event
       .find(query)

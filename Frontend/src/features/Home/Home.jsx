@@ -43,8 +43,11 @@ import {
   Code,
   Psychology,
   DataUsage,
-  Web
+  Web,
+  Help,
+  MenuBook
 } from '@mui/icons-material';
+import DashboardGuide from './DashboardGuide';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -54,6 +57,7 @@ const Home = () => {
   const [currentSection, setCurrentSection] = useState('home');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [animateCards, setAnimateCards] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const teamMembers = [
     { 
@@ -477,6 +481,226 @@ const Home = () => {
               ))}
             </Grid>
 
+            {/* Role Guides Section */}
+            <Paper 
+              elevation={8} 
+              sx={{ 
+                p: 6, 
+                borderRadius: 4, 
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                backdropFilter: 'blur(10px)',
+                mb: 6
+              }}
+            >
+              <Typography 
+                variant="h4" 
+                component="h3" 
+                textAlign="center" 
+                gutterBottom 
+                sx={{ 
+                  mb: 4, 
+                  color: '#1976d2',
+                  fontWeight: 'bold'
+                }}
+              >
+                Role Guidelines & Responsibilities
+              </Typography>
+              
+              <Grid container spacing={4}>
+                {/* HOD Role Guide */}
+                <Grid item xs={12} md={6} lg={3}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                      border: '2px solid #1976d2',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 12px 30px rgba(25,118,210,0.2)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box textAlign="center" mb={2}>
+                        <Business sx={{ fontSize: 50, color: '#1976d2', mb: 1 }} />
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                          HOD (Head of Department)
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                        Key Responsibilities:
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: '#555' }}>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Approve and oversee all departmental events
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Manage event coordinators and their assignments
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Review event proposals and budgets
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Monitor event progress and outcomes
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Generate comprehensive reports
+                        </Typography>
+                        <Typography component="li" variant="body2">
+                          Ensure compliance with university policies
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Coordinator Role Guide */}
+                <Grid item xs={12} md={6} lg={3}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
+                      border: '2px solid #4caf50',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 12px 30px rgba(76,175,80,0.2)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box textAlign="center" mb={2}>
+                        <People sx={{ fontSize: 50, color: '#4caf50', mb: 1 }} />
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
+                          Event Coordinator
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                        Key Responsibilities:
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: '#555' }}>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Create and manage events end-to-end
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Handle participant registrations
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Generate and distribute certificates
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Track attendance and participation
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Collect and analyze feedback
+                        </Typography>
+                        <Typography component="li" variant="body2">
+                          Coordinate with HOD for approvals
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Participant Role Guide */}
+                <Grid item xs={12} md={6} lg={3}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+                      border: '2px solid #ff9800',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 12px 30px rgba(255,152,0,0.2)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box textAlign="center" mb={2}>
+                        <Group sx={{ fontSize: 50, color: '#ff9800', mb: 1 }} />
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#ff9800' }}>
+                          Participant
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                        Key Activities:
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: '#555' }}>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Browse and register for events
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          View event details and schedules
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Track registration status
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Download certificates upon completion
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Provide event feedback
+                        </Typography>
+                        <Typography component="li" variant="body2">
+                          Update profile information
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Admin Role Guide */}
+                <Grid item xs={12} md={6} lg={3}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
+                      border: '2px solid #9c27b0',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 12px 30px rgba(156,39,176,0.2)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box textAlign="center" mb={2}>
+                        <Security sx={{ fontSize: 50, color: '#9c27b0', mb: 1 }} />
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#9c27b0' }}>
+                          System Admin
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                        Key Responsibilities:
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: '#555' }}>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Manage user accounts and permissions
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          System configuration and maintenance
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Monitor system performance
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Handle technical support requests
+                        </Typography>
+                        <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                          Backup and data management
+                        </Typography>
+                        <Typography component="li" variant="body2">
+                          Security and access control
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Paper>
+
             {/* Enhanced Login Section */}
             <Paper 
               elevation={8} 
@@ -493,13 +717,40 @@ const Home = () => {
                 textAlign="center" 
                 gutterBottom 
                 sx={{ 
-                  mb: 4, 
+                  mb: 2, 
                   color: '#1976d2',
                   fontWeight: 'bold'
                 }}
               >
                 Access Your Dashboard
               </Typography>
+              
+              {/* First Time Login Information */}
+              <Paper 
+                elevation={2} 
+                sx={{ 
+                  p: 3, 
+                  mb: 4, 
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffeaa7',
+                  borderRadius: 2
+                }}
+              >
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Info sx={{ color: '#856404', mr: 1 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#856404' }}>
+                    First Time Login Information
+                  </Typography>
+                </Box>
+                <Typography variant="body1" sx={{ color: '#856404', lineHeight: 1.6 }}>
+                  <strong>For first-time users:</strong> Your registered email address is your password. 
+                  After your first login, you will be prompted to change your password for security purposes.
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#856404', mt: 1, fontStyle: 'italic' }}>
+                  Example: If your email is john.doe@example.com, use "john.doe@example.com" as your password for the first login.
+                </Typography>
+              </Paper>
+
               <Grid container spacing={3} justifyContent="center">
                 <Grid item xs={12} sm={6} md={3}>
                   <Button
@@ -586,26 +837,38 @@ const Home = () => {
                   </Button>
                 </Grid>
               </Grid>
-              
-              <Box textAlign="center" mt={4}>
-                <Typography variant="body1" color="text.secondary">
-                  Don't have an account?{' '}
-                  <Button 
-                    color="primary" 
-                    onClick={() => navigate('/register/participant')}
-                    sx={{ 
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                      '&:hover': {
-                        backgroundColor: 'rgba(25,118,210,0.1)'
-                      }
-                    }}
-                  >
-                    Register as Participant
-                  </Button>
-                </Typography>
-              </Box>
             </Paper>
+
+            {/* Dashboard Guide Section */}
+            <Box textAlign="center" sx={{ mt: 6 }}>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => setGuideOpen(true)}
+                startIcon={<MenuBook />}
+                sx={{
+                  py: 2,
+                  px: 4,
+                  fontSize: '1.1rem',
+                  borderColor: '#1976d2',
+                  color: '#1976d2',
+                  borderWidth: 2,
+                  background: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    borderColor: '#1565c0',
+                    backgroundColor: 'rgba(25,118,210,0.1)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(25,118,210,0.2)'
+                  }
+                }}
+              >
+                📚 Dashboard User Guide - Learn How to Use Each Role
+              </Button>
+              <Typography variant="body2" sx={{ mt: 2, color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }}>
+                New to the system? Click above for detailed step-by-step instructions for each role
+              </Typography>
+            </Box>
 
             {/* Tech Stack Section */}
             <Box mt={8}>
@@ -674,6 +937,48 @@ const Home = () => {
                   various engineering disciplines and has produced numerous distinguished alumni who have 
                   made significant contributions to industry and academia worldwide.
                 </Typography>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    size="medium"
+                    href="https://annauniv.edu"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<School />}
+                    sx={{
+                      borderColor: '#1976d2',
+                      color: '#1976d2',
+                      '&:hover': {
+                        borderColor: '#1565c0',
+                        backgroundColor: 'rgba(25,118,210,0.1)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 15px rgba(25,118,210,0.2)'
+                      }
+                    }}
+                  >
+                    Anna University Official
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="medium"
+                    href="https://ceg.annauniv.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<Business />}
+                    sx={{
+                      borderColor: '#4caf50',
+                      color: '#4caf50',
+                      '&:hover': {
+                        borderColor: '#388e3c',
+                        backgroundColor: 'rgba(76,175,80,0.1)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 15px rgba(76,175,80,0.2)'
+                      }
+                    }}
+                  >
+                    CEG Official Website
+                  </Button>
+                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Box
@@ -751,6 +1056,28 @@ const Home = () => {
                   With state-of-the-art laboratories, experienced faculty, and a vibrant research environment, 
                   DCSE continues to be a preferred destination for aspiring computer science engineers and researchers.
                 </Typography>
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    href="https://www.auegov.ac.in/Department/cse"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<Web />}
+                    sx={{
+                      borderColor: '#1976d2',
+                      color: '#1976d2',
+                      '&:hover': {
+                        borderColor: '#1565c0',
+                        backgroundColor: 'rgba(25,118,210,0.1)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 15px rgba(25,118,210,0.2)'
+                      }
+                    }}
+                  >
+                    Visit Official Department Website
+                  </Button>
+                </Box>
               </Grid>
               <Grid item xs={12} md={4}>
                 <Paper elevation={3} sx={{ p: 3, backgroundColor: '#fff' }}>
@@ -992,6 +1319,12 @@ const Home = () => {
           </Container>
         </Box>
       </Box>
+
+      {/* Dashboard Guide Dialog */}
+      <DashboardGuide 
+        open={guideOpen} 
+        onClose={() => setGuideOpen(false)} 
+      />
     </Box>
   );
 };

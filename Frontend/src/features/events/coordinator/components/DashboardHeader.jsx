@@ -164,9 +164,9 @@ const DashboardHeader = ({ onLogout, onCreateNew }) => {
                     transition: 'all 0.2s ease-in-out'
                   }}
                 >
-                  <Badge badgeContent={3} color="error">
+                  
                     <NotificationsIcon />
-                  </Badge>
+                 
                 </IconButton>
               </Tooltip>
             </Box>

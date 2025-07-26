@@ -2,7 +2,14 @@ import { useState, useCallback } from 'react';
 import axios from 'axios';
 
 export const useClaimOperations = (setEvents, enqueueSnackbar) => {
-  const [claimData, setClaimData] = useState([]);
+  const [claimData, setClaimData] = useState([{ category: "", amount: "" }]);
+  const [incomeData, setIncomeData] = useState([{ 
+    category: "", 
+    expectedParticipants: "", 
+    perParticipantAmount: "", 
+    gstPercentage: 0,
+    income: "" 
+  }]);
   const [openClaimDialog, setOpenClaimDialog] = useState(false);
   const [selectedProgramme, setSelectedProgramme] = useState(null);
 
@@ -11,6 +18,7 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
     
     // Check if there are existing claim bill expenses, otherwise use budget breakdown expenses
     let expensesToUse = [];
+    let incomeToUse = [];
     
     if (programme.claimBill && programme.claimBill.expenses && programme.claimBill.expenses.length > 0) {
       // If claim bill already exists, use those expenses for editing
@@ -29,17 +37,45 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
       expensesToUse = [{ category: "", amount: "" }];
     }
 
+    // Handle income data - check multiple sources
+    if (programme.budgetBreakdown && programme.budgetBreakdown.income && programme.budgetBreakdown.income.length > 0) {
+      // Use existing income data from budget breakdown
+      incomeToUse = programme.budgetBreakdown.income.map(income => ({
+        category: income.category || '',
+        expectedParticipants: income.expectedParticipants || '',
+        perParticipantAmount: income.perParticipantAmount || '',
+        gstPercentage: income.gstPercentage || 0,
+        income: income.income || ''
+      }));
+    } else {
+      // Default to one income row with sample data to help users understand the format
+      incomeToUse = [{ 
+        category: "Registration Fees", 
+        expectedParticipants: "", 
+        perParticipantAmount: "", 
+        gstPercentage: 18,
+        income: "" 
+      }];
+    }
+
+    console.log("Setting income data:", incomeToUse); // Debug log
+    console.log("Setting expense data:", expensesToUse); // Debug log
+
     setClaimData(expensesToUse);
+    setIncomeData(incomeToUse);
     setOpenClaimDialog(true);
   }, []);
 
   const handleSubmitClaim = useCallback(async () => {
     try {
+      console.log("Submitting claim with data:", { expenses: claimData, income: incomeData }); // Debug log
+      
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `http://localhost:4000/api/coordinator/claims/${selectedProgramme._id}`,
         {
           expenses: claimData,
+          income: incomeData,
         },
         {
           headers: {
@@ -48,9 +84,18 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
         }
       );
       
-      enqueueSnackbar("Claim Bill submitted successfully! The HOD will see the updated financial data.", {
+      console.log("Claim submission response:", response.data); // Debug log
+      
+      enqueueSnackbar("Claim Bill with income data submitted successfully! The HOD will see the updated financial data.", {
         variant: "success",
       });
+      
+      // Calculate totals for local update
+      const totalExpenditure = claimData.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const totalIncome = incomeData.reduce((sum, item) => sum + Number(item.income || 0), 0);
+      const universityOverhead = totalIncome * 0.3;
+      
+      console.log("Calculated totals:", { totalExpenditure, totalIncome, universityOverhead }); // Debug log
       
       // Update the local event data to reflect the submission
       setEvents(prevEvents => 
@@ -58,11 +103,18 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
           event._id === selectedProgramme._id 
             ? { 
                 ...event, 
-                claimBill: { expenses: claimData },
+                claimBill: { 
+                  expenses: claimData,
+                  totalExpenditure: totalExpenditure,
+                  claimSubmitted: true
+                },
                 budgetBreakdown: {
                   ...event.budgetBreakdown,
                   expenses: claimData,
-                  totalExpenditure: claimData.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+                  income: incomeData,
+                  totalExpenditure: totalExpenditure + universityOverhead,
+                  totalIncome: totalIncome,
+                  universityOverhead: universityOverhead
                 }
               }
             : event
@@ -86,14 +138,21 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
         }
       }, 1000);
       
-      // Clear the claim data form - reset to default
+      // Clear the form data - reset to defaults
       setClaimData([{ category: "", amount: "" }]);
+      setIncomeData([{ 
+        category: "", 
+        expectedParticipants: "", 
+        perParticipantAmount: "", 
+        gstPercentage: 0,
+        income: "" 
+      }]);
       setSelectedProgramme(null);
     } catch (error) {
       console.error("Claim submission error:", error);
-      enqueueSnackbar("Failed to submit claim bill", { variant: "error" });
+      enqueueSnackbar(`Failed to submit claim bill: ${error.response?.data?.message || error.message}`, { variant: "error" });
     }
-  }, [claimData, selectedProgramme, setEvents, enqueueSnackbar]);
+  }, [claimData, incomeData, selectedProgramme, setEvents, enqueueSnackbar]);
 
   const handleViewFinalBudget = useCallback((id) => {
     const token = localStorage.getItem("token");
@@ -159,6 +218,8 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
   return {
     claimData,
     setClaimData,
+    incomeData,
+    setIncomeData,
     openClaimDialog,
     setOpenClaimDialog,
     selectedProgramme,
