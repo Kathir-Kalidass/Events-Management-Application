@@ -1,19 +1,37 @@
 import express from 'express';
+import { 
+  adminLogin, 
+  getAdminProfile 
+} from '../controllers/adminAuthController.js';
+import { 
+  getAllUsers, 
+  getAllEvents, 
+  addUser, 
+  bulkAddUsers, 
+  updateUser, 
+  deleteUser, 
+  getDashboardStats,
+  upload 
+} from '../controllers/userController.js';
 import authMiddleware from '../../../shared/middleware/authMiddleware.js';
-import { authorizeRoles } from '../../../shared/middleware/roleAuthMiddleware.js';
-import feedbackQuestionController from '../controllers/feedbackQuestionController.js';
 
 const router = express.Router();
 
-// Apply authentication middleware to all admin routes
-router.use(authMiddleware);
+// Admin authentication routes
+router.post('/login', adminLogin);
+router.get('/profile', authMiddleware, getAdminProfile);
 
-// Feedback Questions Management Routes (Admin/HOD only)
-router.get('/feedback-questions', authorizeRoles('admin', 'hod'), feedbackQuestionController.getAllFeedbackQuestions);
-router.post('/feedback-questions', authorizeRoles('admin', 'hod'), feedbackQuestionController.createFeedbackQuestion);
-router.put('/feedback-questions/:id', authorizeRoles('admin', 'hod'), feedbackQuestionController.updateFeedbackQuestion);
-router.delete('/feedback-questions/:id', authorizeRoles('admin', 'hod'), feedbackQuestionController.deleteFeedbackQuestion);
-router.put('/feedback-questions/reorder', authorizeRoles('admin', 'hod'), feedbackQuestionController.reorderFeedbackQuestions);
-router.post('/feedback-questions/initialize', authorizeRoles('admin', 'hod'), feedbackQuestionController.initializeDefaultQuestions);
+// Dashboard routes
+router.get('/dashboard/stats', authMiddleware, getDashboardStats);
+
+// User management routes
+router.get('/users', authMiddleware, getAllUsers);
+router.post('/users', authMiddleware, addUser);
+router.post('/users/bulk', authMiddleware, upload.single('file'), bulkAddUsers);
+router.put('/users/:userId', authMiddleware, updateUser);
+router.delete('/users/:userId', authMiddleware, deleteUser);
+
+// Event management routes
+router.get('/events', authMiddleware, getAllEvents);
 
 export default router;

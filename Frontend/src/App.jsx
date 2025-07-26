@@ -16,6 +16,7 @@ import CoordinatorEventDashboard from "./features/events/coordinator/components/
 import HODEventDashboard from "./features/events/hod/EventDashboard";
 import CertificateVerification from "./shared/components/CertificateVerification";
 import CertificateManagement from "./features/events/CertificateManagement";
+import { AdminLogin, AdminDashboard } from "./features/admin";
 
 function App() {
   return (
@@ -70,6 +71,12 @@ function App() {
           <Route path="/certificate" element={<CertificatePage/>} />
           <Route path="/verify-certificate" element={<CertificateVerification />} />
           <Route path="/verify-certificate/:certificateId" element={<CertificateVerification />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </SnackbarProvider>

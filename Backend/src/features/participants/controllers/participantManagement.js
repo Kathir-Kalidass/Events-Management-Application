@@ -543,35 +543,73 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
     
     console.log('📋 Worksheet has', worksheet.rowCount, 'rows');
     
+    // Helper function to safely extract cell value with enhanced error handling
+    const getCellValue = (row, cellNumber) => {
+      try {
+        const cell = row.getCell(cellNumber);
+        if (!cell || cell.value === null || cell.value === undefined) {
+          return '';
+        }
+        
+        // Handle different cell value types
+        let value = cell.value;
+        
+        // Handle rich text objects
+        if (typeof value === 'object' && value.richText) {
+          value = value.richText.map(rt => rt.text).join('');
+        } else if (typeof value === 'object' && value.text) {
+          // Handle simple rich text
+          value = value.text;
+        } else if (typeof value === 'object' && value.result !== undefined) {
+          // Handle formula results
+          value = value.result;
+        } else if (typeof value === 'object' && value.hyperlink) {
+          // Handle hyperlinks
+          value = value.hyperlink;
+        }
+        
+        // Convert to string and trim
+        return value ? value.toString().trim() : '';
+      } catch (error) {
+        console.warn(`Error extracting cell value at row ${row.number}, cell ${cellNumber}:`, error);
+        return '';
+      }
+    };
+
     // Process each row (skip header) - Handle flexible column structure
     for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
       const row = worksheet.getRow(rowNumber);
       
       // Get values from first two columns (required)
-      const name = row.getCell(1).value?.toString()?.trim();
-      const email = row.getCell(2).value?.toString()?.trim();
+      const name = getCellValue(row, 1);
+      const email = getCellValue(row, 2);
       
       // Get optional values from additional columns if they exist
-      const department = row.getCell(3)?.value?.toString()?.trim() || '';
-      const phone = row.getCell(4)?.value?.toString()?.trim() || '';
-      const institution = row.getCell(5)?.value?.toString()?.trim() || '';
-      const designation = row.getCell(6)?.value?.toString()?.trim() || '';
+      const department = getCellValue(row, 3) || '';
+      const phone = getCellValue(row, 4) || '';
+      const institution = getCellValue(row, 5) || '';
+      const designation = getCellValue(row, 6) || '';
       
-      // Skip empty rows
-      if (!name && !email) {
+      // Skip completely empty rows
+      if (!name && !email && !department && !phone && !institution && !designation) {
         continue;
       }
       
       // Validate required fields - only name and email are required
-      if (!name || !email) {
-        errors.push(`Row ${rowNumber}: Name and email are required`);
+      if (!name || name.length === 0) {
+        errors.push(`Row ${rowNumber}: Name is required (found: "${name}")`);
         continue;
       }
       
-      // Validate email format
+      if (!email || email.length === 0) {
+        errors.push(`Row ${rowNumber}: Email is required (found: "${email}")`);
+        continue;
+      }
+      
+      // Validate email format with more detailed error message
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        errors.push(`Row ${rowNumber}: Invalid email format`);
+        errors.push(`Row ${rowNumber}: Invalid email format (found: "${email}")`);
         continue;
       }
       
@@ -587,11 +625,19 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
     
     console.log('✅ Parsed', participants.length, 'participants with', errors.length, 'errors');
     
-    if (errors.length > 0) {
+    // If there are validation errors but also some valid participants, process the valid ones
+    // and return the errors in the results
+    if (errors.length > 0 && participants.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Validation errors found",
-        errors
+        message: "No valid participants found. Please check the file format and data.",
+        errors,
+        results: {
+          added: 0,
+          updated: 0,
+          skipped: 0,
+          errors: errors
+        }
       });
     }
     
@@ -681,6 +727,11 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
       }
     }
     
+    // Add parsing errors to the final results
+    if (errors.length > 0) {
+      results.errors = [...results.errors, ...errors];
+    }
+    
     console.log('📊 Upload results:', results);
     
     res.status(200).json({
@@ -717,7 +768,7 @@ export const generateTemplate = asyncHandler(async (req, res) => {
     
     // Add instructions
     worksheet.mergeCells('A2:G2');
-    worksheet.getCell('A2').value = 'Instructions: Fields marked with * are required. Please follow the format exactly as shown in the sample data.';
+    //worksheet.getCell('A2').value = 'Instructions: Fields marked with * are required. Please follow the format exactly as shown in the sample data.';
     worksheet.getCell('A2').font = { italic: true, size: 10, color: { argb: 'FF7F8C8D' } };
     worksheet.getCell('A2').alignment = { horizontal: 'center', wrapText: true };
     
@@ -824,7 +875,7 @@ export const generateTemplate = asyncHandler(async (req, res) => {
       });
     });
     
-    // Add validation notes
+   /* // Add validation notes
     const notesStartRow = worksheet.rowCount + 2;
     worksheet.mergeCells(`A${notesStartRow}:G${notesStartRow}`);
     worksheet.getCell(`A${notesStartRow}`).value = 'VALIDATION NOTES:';
@@ -852,7 +903,7 @@ export const generateTemplate = asyncHandler(async (req, res) => {
     worksheet.getCell(`A${footerRow}`).value = `Template generated on ${new Date().toLocaleDateString()} | Events Management System`;
     worksheet.getCell(`A${footerRow}`).font = { italic: true, size: 9, color: { argb: 'FF95A5A6' } };
     worksheet.getCell(`A${footerRow}`).alignment = { horizontal: 'center' };
-    
+    */
     // Set row heights
     worksheet.getRow(1).height = 25;
     worksheet.getRow(2).height = 20;

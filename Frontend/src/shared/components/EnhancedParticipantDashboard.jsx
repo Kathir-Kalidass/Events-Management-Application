@@ -76,7 +76,6 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
-  const [stats, setStats] = useState({});
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('');
@@ -99,8 +98,16 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
     fetchParticipants();
   }, [eventId]);
 
+  // Helper function to get participant registration - moved before stats calculation
+  const getParticipantRegistration = (participant) => {
+    if (userRole === 'hod') {
+      return participant.eventRegistration || { approved: true, attended: false }; // HOD only sees approved
+    }
+    return participant.eventRegistrations?.find(reg => reg.eventId._id === eventId);
+  };
+
   // Memoized stats calculation to prevent recalculation on every render
-  stats = useMemo(() => {
+  const stats = useMemo(() => {
     if (participants.length === 0) {
       return {
         totalRegistered: 0,
@@ -203,48 +210,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
     }
   });
 
-  const fetchStats = async () => {
-    try {
-      // Calculate stats from the participants data instead of separate API call
-      if (participants.length > 0) {
-        const totalRegistered = participants.length;
-        const totalApproved = participants.filter(p => {
-          if (userRole === 'hod') return true; // HOD only sees approved
-          const registration = getParticipantRegistration(p);
-          return registration?.approved === true;
-        }).length;
-        
-        const totalAttended = participants.filter(p => {
-          const registration = getParticipantRegistration(p);
-          return registration?.approved === true && registration?.attended === true;
-        }).length;
-        
-        const totalRejected = participants.filter(p => {
-          const registration = getParticipantRegistration(p);
-          return registration?.approved === false && registration?.rejectionReason;
-        }).length;
-        
-        const totalPending = participants.filter(p => {
-          const registration = getParticipantRegistration(p);
-          return registration?.approved !== true && !registration?.rejectionReason;
-        }).length;
-        
-        const attendanceRate = totalApproved > 0 ? Math.round((totalAttended / totalApproved) * 100) : 0;
-        
-        setStats({
-          totalRegistered,
-          totalApproved,
-          totalAttended,
-          totalRejected,
-          totalPending,
-          attendanceRate
-        });
-      }
-    } catch (error) {
-      console.error('Error calculating stats:', error);
-    }
-  };
-
+  
   const handleApproveParticipant = async (participantId) => {
     try {
       await axios.put(
@@ -403,13 +369,6 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
     if (registration.approved === true) return 'Approved';
     if (registration.approved === false && registration.rejectionReason) return 'Rejected';
     return 'Pending';
-  };
-
-  const getParticipantRegistration = (participant) => {
-    if (userRole === 'hod') {
-      return participant.eventRegistration || { approved: true, attended: false }; // HOD only sees approved
-    }
-    return participant.eventRegistrations?.find(reg => reg.eventId._id === eventId);
   };
 
   const getUniqueDepartments = () => {

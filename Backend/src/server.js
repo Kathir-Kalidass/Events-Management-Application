@@ -19,6 +19,7 @@ import certificateRoutes from './features/certificates/routes/certificateRoutes.
 import brochureRoutes from './features/documents/routes/brochureRoutes.js';
 import adminRoutes from './features/admin/routes/adminRoutes.js';
 import debugRoutes from './features/debug/routes/debugRoutes.js';
+import { createDefaultAdmin } from './features/admin/controllers/adminAuthController.js';
 
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +45,15 @@ app.use("/api/brochures", brochureRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/debug", debugRoutes);
 
-app.listen(process.env.PORT,"0.0.0.0", ()=>{
+app.listen(process.env.PORT,"0.0.0.0", async ()=>{
+  console.log(`Server running on port ${process.env.PORT}`);
+  
+  // Create default admin if none exists
+  try {
+    await createDefaultAdmin();
+  } catch (error) {
+    console.error('Error creating default admin:', error);
+  }
 
   // Initialize data validation after server starts
   initializeDataValidation({

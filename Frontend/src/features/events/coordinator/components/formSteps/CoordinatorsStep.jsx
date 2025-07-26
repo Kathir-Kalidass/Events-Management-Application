@@ -316,38 +316,43 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
             </Typography>
             
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Select additional departments that are co-organizing this event. These departments will appear in the event documentation and brochures.
+              Select additional departments that are co-organizing this event. You can choose from the list or add custom department names.
             </Typography>
 
             <Autocomplete
               multiple
+              freeSolo
               options={availableDepartments}
               value={formData.organizingDepartments?.associative || []}
               onChange={(event, newValue) => {
                 handleOrganizingDepartmentsChange('associative', newValue);
               }}
               renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    variant="outlined"
-                    label={option}
-                    {...getTagProps({ index })}
-                    key={option}
-                    sx={{
-                      borderRadius: 2,
-                      '& .MuiChip-deleteIcon': {
-                        color: 'warning.main'
-                      }
-                    }}
-                  />
-                ))
+                value.map((option, index) => {
+                  const isCustom = !availableDepartments.includes(option);
+                  return (
+                    <Chip
+                      variant="outlined"
+                      label={option}
+                      {...getTagProps({ index })}
+                      key={option}
+                      color={isCustom ? "secondary" : "default"}
+                      sx={{
+                        borderRadius: 2,
+                        '& .MuiChip-deleteIcon': {
+                          color: isCustom ? 'secondary.main' : 'warning.main'
+                        }
+                      }}
+                    />
+                  );
+                })
               }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select Associative Departments"
-                  placeholder="Choose departments..."
-                  helperText="Select departments that are co-organizing this event"
+                  label="Select or Add Associative Departments"
+                  placeholder="Choose from list or type custom department..."
+                  helperText="Select departments from the list or type custom department names and press Enter"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2
@@ -365,17 +370,36 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
                   Selected Co-organizing Departments:
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {formData.organizingDepartments.associative.map((dept, index) => (
-                    <Chip
-                      key={index}
-                      label={dept}
-                      color="primary"
-                      variant="filled"
-                      size="small"
-                      sx={{ borderRadius: 2 }}
-                    />
-                  ))}
+                  {formData.organizingDepartments.associative.map((dept, index) => {
+                    const isCustom = !availableDepartments.includes(dept);
+                    return (
+                      <Chip
+                        key={index}
+                        label={dept}
+                        color={isCustom ? "secondary" : "primary"}
+                        variant="filled"
+                        size="small"
+                        sx={{ 
+                          borderRadius: 2,
+                          ...(isCustom && {
+                            '&::after': {
+                              content: '"✨"',
+                              ml: 0.5,
+                              fontSize: '0.7em'
+                            }
+                          })
+                        }}
+                      />
+                    );
+                  })}
                 </Box>
+                
+                {/* Legend for custom departments */}
+                {formData.organizingDepartments.associative.some(dept => !availableDepartments.includes(dept)) && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    ✨ Custom department names
+                  </Typography>
+                )}
               </Box>
             )}
 
@@ -395,6 +419,10 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
                   Approval workflows (if required)
                 </Typography>
               </Box>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                <strong>📝 Custom Departments:</strong> You can add departments not in the predefined list by typing the name and pressing Enter.
+              </Typography>
             </Box>
           </Box>
         </Collapse>
@@ -404,7 +432,7 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
           <Box sx={{ mt: 2, p: 2, backgroundColor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
             <Typography variant="body2" color="text.secondary">
               <strong>Note:</strong> Associative departments can be added if this event is co-organized with other departments.
-              This is optional and can be configured in advanced settings.
+              This is optional and can be configured in advanced settings. You can select from predefined departments or add custom ones.
             </Typography>
           </Box>
         )}

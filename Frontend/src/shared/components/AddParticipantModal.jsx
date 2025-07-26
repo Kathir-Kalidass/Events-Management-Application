@@ -270,7 +270,31 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     }
   };
 
-  const downloadTemplate = async () => {
+  const downloadTemplate = () => {
+    // Create CSV template content with comprehensive examples
+    const csvContent = `Full Name,Email Address,Department,Phone,Institution,Designation
+Dr. John Doe,john.doe@university.edu,Computer Science,9876543210,Anna University,Professor
+Ms. Jane Smith,jane.smith@student.edu,Information Technology,9876543211,Anna University,Student
+Mr. Raj Kumar,raj.kumar@company.com,Electronics,9876543212,Industry Professional,Engineer
+Prof. Sarah Wilson,sarah.wilson@college.edu,Mechanical Engineering,9876543213,Anna University,Associate Professor
+Alex Johnson,alex.johnson@gmail.com,Civil Engineering,9876543214,Anna University,Student`;
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'participants_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    enqueueSnackbar('Template downloaded successfully!', { variant: 'success' });
+  };
+
+  const downloadExcelTemplate = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
@@ -290,10 +314,10 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      enqueueSnackbar('Template downloaded successfully!', { variant: 'success' });
+      enqueueSnackbar('Excel template downloaded successfully!', { variant: 'success' });
     } catch (error) {
-      console.error('Error downloading template:', error);
-      enqueueSnackbar('Error downloading template', { variant: 'error' });
+      console.error('Error downloading Excel template:', error);
+      enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
     }
   };
 
@@ -408,17 +432,46 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
         {/* CSV Upload Tab */}
         {tabValue === 2 && (
           <Box>
-            <Alert severity="info" sx={{ mb: 3 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
-                Upload Excel/CSV File with Participant Data
+                Instructions for Bulk Upload:
               </Typography>
-              <Typography variant="body2">
-                • Download the template to see the exact format required<br/>
-                • Required columns: <strong>Full Name</strong> and <strong>Email Address</strong><br/>
-                • Optional columns: Department, Phone, Institution, Designation<br/>
-                • The system will auto-approve all uploaded participants
+              <Typography variant="body2" component="div">
+                1. Download the template file using the buttons below<br/>
+                2. Fill in the template with participant data (do not modify column headers)<br/>
+                3. Save the file and upload it below<br/>
+                4. Supported formats: CSV (.csv), Excel (.xlsx, .xls)
               </Typography>
             </Alert>
+
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Important Notes:
+              </Typography>
+              <Typography variant="body2" component="div">
+                • Required columns: <strong>Full Name</strong> and <strong>Email Address</strong><br/>
+                • Optional columns: Department, Phone, Institution, Designation<br/>
+                • All uploaded participants are automatically approved<br/>
+                • Email addresses are used as initial passwords<br/>
+                • Duplicate participants for this event will be skipped
+              </Typography>
+            </Alert>
+
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Required Columns:
+              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="body2" component="div" sx={{ fontFamily: 'monospace' }}>
+                  <strong>Full Name</strong> - Complete name with salutation (e.g., Dr. John Doe)<br/>
+                  <strong>Email Address</strong> - Valid email format (e.g., john.doe@university.edu)<br/>
+                  <strong>Department</strong> - Department name (optional)<br/>
+                  <strong>Phone</strong> - Contact number (optional)<br/>
+                  <strong>Institution</strong> - Institution name (optional)<br/>
+                  <strong>Designation</strong> - Role/Position (optional)
+                </Typography>
+              </Paper>
+            </Box>
 
             <Box display="flex" gap={2} mb={3}>
               <Button
@@ -427,48 +480,43 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                 onClick={downloadTemplate}
                 color="primary"
               >
-                Download Template
+                Download CSV Template
               </Button>
-              <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-                Use this template for the correct format
-              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<Download />}
+                onClick={downloadExcelTemplate}
+                color="secondary"
+              >
+                Download Excel Template
+              </Button>
             </Box>
 
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Select File to Upload:
+              </Typography>
               <input
-                accept=".csv,.xlsx,.xls"
-                style={{ display: 'none' }}
-                id="csv-upload"
                 type="file"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileUpload}
+                style={{ 
+                  marginTop: 8,
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  width: '100%'
+                }}
               />
-              <label htmlFor="csv-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<Upload />}
-                  fullWidth
-                  sx={{ py: 2 }}
-                >
-                  {csvFile ? csvFile.name : 'Choose Excel/CSV File'}
-                </Button>
-              </label>
               {csvFile && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
                   Selected: {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)
                 </Typography>
               )}
             </Box>
 
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>Important:</strong> Make sure your Excel file follows the template format exactly. 
-                The first row should contain headers, and data should start from the second row.
-              </Typography>
-            </Alert>
-
             {uploadResults && (
-              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default', mt: 3 }}>
                 <Typography variant="subtitle2" gutterBottom color="primary">
                   Upload Results:
                 </Typography>
@@ -502,7 +550,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                       secondary="Already registered for this event"
                     />
                   </ListItem>
-                  {uploadResults.errors.length > 0 && (
+                  {uploadResults.errors && uploadResults.errors.length > 0 && (
                     <ListItem>
                       <ListItemIcon>
                         <Error color="error" />

@@ -17,6 +17,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { SelectedEventContext } from "../dashboard";
 import { useSnackbar } from "notistack";
+import { generateEventBrochure } from "../../../../shared/services/advancedBrochureGenerator";
 
 const EventOverviewCard = ({ event, activePage, setActivePage }) => {
   const { selectedEvent, setSelectedEvent } = useContext(SelectedEventContext);

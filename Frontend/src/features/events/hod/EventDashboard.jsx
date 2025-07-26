@@ -63,6 +63,7 @@ import { eventState } from "../../../shared/context/eventProvider";
 import EnhancedParticipantDashboard from "../../../shared/components/EnhancedParticipantDashboard";
 import FeedbackStatsCard from "../../../shared/components/FeedbackStatsCard";
 import AddParticipantModal from "../../../shared/components/AddParticipantModal";
+import { generateEventBrochure } from "../../../shared/services/advancedBrochureGenerator";
 
 const HODEventDashboard = () => {
   const { eventId } = useParams();

@@ -501,7 +501,7 @@ const Home = () => {
                 Access Your Dashboard
               </Typography>
               <Grid container spacing={3} justifyContent="center">
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Button
                     variant="contained"
                     size="large"
@@ -522,7 +522,7 @@ const Home = () => {
                     HOD Login
                   </Button>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Button
                     variant="contained"
                     size="large"
@@ -543,7 +543,7 @@ const Home = () => {
                     Coordinator Login
                   </Button>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Button
                     variant="contained"
                     size="large"
@@ -562,6 +562,27 @@ const Home = () => {
                     }}
                   >
                     Participant Login
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    onClick={() => navigate('/admin/login')}
+                    startIcon={<Security />}
+                    sx={{ 
+                      py: 2,
+                      fontSize: '1.1rem',
+                      background: 'linear-gradient(45deg, #9c27b0 30%, #ba68c8 90%)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #7b1fa2 30%, #9c27b0 90%)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 25px rgba(156,39,176,0.3)'
+                      }
+                    }}
+                  >
+                    Admin Login
                   </Button>
                 </Grid>
               </Grid>
