@@ -312,7 +312,11 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 2. **Frontend Configuration**
    Update API base URL in `Frontend/src/services/api.js` if needed:
    ```javascript
+<<<<<<< HEAD
    const API_BASE_URL = 'http://localhost:4000/api';
+=======
+   const API_BASE_URL = 'http://localhost:4000/api';
+>>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
    ```
 
 ### Database Setup
@@ -604,7 +608,11 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
    NODE_ENV=development
    
    # Frontend/.env (optional)
+<<<<<<< HEAD
    VITE_API_BASE_URL=http://localhost:4000/api
+=======
+   VITE_API_BASE_URL=http://localhost:4000/api
+>>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
    VITE_APP_NAME=Events Management System
    ```
 

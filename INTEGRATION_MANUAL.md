@@ -721,7 +721,11 @@ MONGODB_URI=mongodb://localhost:27017/events_management
 
 # Module 4 (Current)
 MODULE4_PORT=4000
+<<<<<<< HEAD
 MODULE4_API_URL=http://localhost:4000/api
+=======
+MODULE4_API_URL=http://localhost:4000/api
+>>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
 
 # Other Modules (to be implemented)
 MODULE1_PORT=5001
@@ -744,8 +748,13 @@ MODULE10_PORT=5010
 MODULE10_API_URL=http://localhost:5010/api
 
 # Frontend
+<<<<<<< HEAD
 VITE_API_BASE_URL=http://localhost:4000/api
 VITE_MODULE_GATEWAY_URL=http://localhost:3001/api
+=======
+VITE_API_BASE_URL=http://localhost:4000/api
+VITE_MODULE_GATEWAY_URL=http://localhost:3001/api
+>>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
 
 # Email Configuration
 SMTP_HOST=smtp.gmail.com
