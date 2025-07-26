@@ -78,6 +78,62 @@ const userSchema = mongoose.Schema(
         return null;
       }
     },
+
+    // Extended profile information
+    phone: {
+      type: String,
+      default: null
+    },
+
+    employeeId: {
+      type: String,
+      default: null
+    },
+
+    joiningDate: {
+      type: Date,
+      default: null
+    },
+
+    address: {
+      type: String,
+      default: null
+    },
+
+    bio: {
+      type: String,
+      default: null
+    },
+
+    specializations: [{
+      type: String
+    }],
+
+    qualifications: [{
+      degree: String,
+      institution: String,
+      year: String
+    }],
+
+    profileImage: {
+      type: String, // Base64 or URL
+      default: null
+    },
+
+    preferences: {
+      emailNotifications: {
+        type: Boolean,
+        default: true
+      },
+      eventReminders: {
+        type: Boolean,
+        default: true
+      },
+      twoFactorAuth: {
+        type: Boolean,
+        default: false
+      }
+    },
   },
   {
     timestamps: true,

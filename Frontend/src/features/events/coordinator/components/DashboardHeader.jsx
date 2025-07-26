@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,22 +7,28 @@ import {
   useTheme,
   alpha,
   Chip,
-  Avatar
+  Avatar,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Add,
   Dashboard,
   ExitToApp,
   Person,
-  School
+  School,
+  AccountCircle
 } from '@mui/icons-material';
 import { eventState } from '../../../../shared/context/eventProvider';
+import ProfileDialog from './ProfileDialog';
 
 const DashboardHeader = ({ onLogout, onCreateNew }) => {
   const theme = useTheme();
   const { user } = eventState();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
+    <>
     <Paper
       elevation={3}
       sx={{
@@ -99,8 +105,15 @@ const DashboardHeader = ({ onLogout, onCreateNew }) => {
               py: 1,
               borderRadius: 2,
               backgroundColor: alpha(theme.palette.common.white, 0.1),
-              backdropFilter: 'blur(10px)'
-            }}>
+              backdropFilter: 'blur(10px)',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.common.white, 0.15)
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+            onClick={() => setProfileOpen(true)}
+            >
               <Avatar 
                 sx={{ 
                   width: 40, 
@@ -120,6 +133,19 @@ const DashboardHeader = ({ onLogout, onCreateNew }) => {
                   {user.designation || 'Event Coordinator'}
                 </Typography>
               </Box>
+              <Tooltip title="View Profile">
+                <IconButton 
+                  size="small"
+                  sx={{ 
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.common.white, 0.1)
+                    }
+                  }}
+                >
+                  <AccountCircle />
+                </IconButton>
+              </Tooltip>
             </Box>
           )}
 
@@ -173,6 +199,13 @@ const DashboardHeader = ({ onLogout, onCreateNew }) => {
         </Box>
       </Box>
     </Paper>
+
+    {/* Profile Dialog */}
+    <ProfileDialog 
+      open={profileOpen} 
+      onClose={() => setProfileOpen(false)} 
+    />
+    </>
   );
 };
 

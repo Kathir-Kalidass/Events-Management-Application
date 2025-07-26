@@ -51,7 +51,7 @@ const CoordinatorDashboard = () => {
   // Custom hooks for operations
   const {
     fetchEvents,
-    handleEdit,
+    handleEdit: getEventForEdit,
     handleDelete,
     handleGeneratePDF,
     handleViewBrochure
@@ -98,6 +98,21 @@ const CoordinatorDashboard = () => {
     setEditId(null);
     setActiveStep(0);
     setOpenForm(true);
+  };
+
+  // Handle edit event
+  const editEvent = async (eventId) => {
+    try {
+      const eventData = await getEventForEdit(eventId);
+      if (eventData) {
+        setFormData(eventData);
+        setEditId(eventId);
+        setActiveStep(0);
+        setOpenForm(true);
+      }
+    } catch (error) {
+      enqueueSnackbar('Failed to load event for editing', { variant: 'error' });
+    }
   };
 
   // Handle edit mode from navigation
@@ -164,7 +179,7 @@ const CoordinatorDashboard = () => {
       {/* Events Grid */}
       <EventsGrid
         events={events}
-        onEdit={handleEdit}
+        onEdit={editEvent}
         onDelete={handleDelete}
         onApplyClaim={handleApplyClaim}
         onGeneratePDF={handleGeneratePDF}

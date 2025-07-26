@@ -97,13 +97,22 @@ coordinatorRoutes.use((req, res, next) => {
 });
 
 coordinatorRoutes.get('/getHOD', getHod);
+
+// Import profile controller
+import { getProfileStats, updateProfile, getProfile } from '../controllers/profileController.js';
+
+// Profile management routes
+coordinatorRoutes.get('/profile/stats', getProfileStats);
+coordinatorRoutes.get('/profile', getProfile);
+coordinatorRoutes.put('/profile', updateProfile);
+
 coordinatorRoutes.route('/programmes')
   .get(getProgrammes)
-  .post(authorizeRoles('coordinator', 'admin'), createProgramme);
+  .post(authorizeRoles('coordinator', 'admin'), upload.single('brochure'), createProgramme);
 
 coordinatorRoutes.route('/programmes/:id')
   .get(getProgrammeById)
-  .put(authorizeResourceOwnership('event', 'id'), updateProgramme)
+  .put(authorizeResourceOwnership('event', 'id'), upload.single('brochure'), updateProgramme)
   .delete(authorizeResourceOwnership('event', 'id'), deleteProgramme);
 
 // Add the PDF routes with proper authorization

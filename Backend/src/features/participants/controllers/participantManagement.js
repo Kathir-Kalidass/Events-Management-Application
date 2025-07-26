@@ -477,7 +477,17 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
     const { eventId } = req.body;
     const coordinatorId = req.user._id;
     
-    console.log('📁 Upload request received:', { eventId, hasFile: !!req.file, coordinatorId });
+    console.log('📁 Upload request received:', { 
+      eventId, 
+      hasFile: !!req.file, 
+      coordinatorId,
+      bodyKeys: Object.keys(req.body),
+      fileDetails: req.file ? {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
+    });
     
     if (!req.file) {
       return res.status(400).json({
@@ -487,9 +497,14 @@ export const uploadParticipants = asyncHandler(async (req, res) => {
     }
     
     if (!eventId) {
+      console.error('❌ Missing eventId in request body:', req.body);
       return res.status(400).json({
         success: false,
-        message: "Event ID is required"
+        message: "Event ID is required",
+        debug: {
+          receivedBody: req.body,
+          bodyKeys: Object.keys(req.body)
+        }
       });
     }
     

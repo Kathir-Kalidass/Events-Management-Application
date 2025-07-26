@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Grid,
   TextField,
@@ -9,18 +9,45 @@ import {
   Paper,
   Divider,
   useTheme,
-  alpha
+  alpha,
+  Collapse,
+  Chip,
+  Autocomplete,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import {
   Add,
   Delete,
   Person,
   Business,
-  Work
+  Work,
+  ExpandMore,
+  ExpandLess,
+  Settings
 } from '@mui/icons-material';
 
 const CoordinatorsStep = ({ formData, setFormData }) => {
   const theme = useTheme();
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  // Available departments for associative selection
+  const availableDepartments = [
+    "DEPARTMENT OF ELECTRONICS AND COMMUNICATION ENGINEERING (DECE)",
+    "DEPARTMENT OF ELECTRICAL AND ELECTRONICS ENGINEERING (DEEE)",
+    "DEPARTMENT OF MECHANICAL ENGINEERING (DME)",
+    "DEPARTMENT OF CIVIL ENGINEERING (DCE)",
+    "DEPARTMENT OF CHEMICAL ENGINEERING (DCHE)",
+    "DEPARTMENT OF BIOTECHNOLOGY (DBT)",
+    "DEPARTMENT OF INFORMATION TECHNOLOGY (DIT)",
+    "DEPARTMENT OF MATHEMATICS (DMATH)",
+    "DEPARTMENT OF PHYSICS (DPHY)",
+    "DEPARTMENT OF CHEMISTRY (DCHEM)",
+    "DEPARTMENT OF MANAGEMENT STUDIES (DMS)",
+    "CENTRE FOR WATER RESOURCES (CWR)",
+    "CENTRE FOR BIOTECHNOLOGY (CBT)",
+    "CENTRE FOR ENVIRONMENTAL STUDIES (CES)"
+  ];
 
   const handleNestedChange = (section, field, value, index = null) => {
     setFormData((prev) => {
@@ -33,6 +60,16 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
       }
       return updated;
     });
+  };
+
+  const handleOrganizingDepartmentsChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      organizingDepartments: {
+        ...prev.organizingDepartments,
+        [field]: value
+      }
+    }));
   };
 
   const handleAddCoordinator = () => {
@@ -250,13 +287,127 @@ const CoordinatorsStep = ({ formData, setFormData }) => {
           </Grid>
         </Grid>
 
-        {/* Note about associative departments */}
-        <Box sx={{ mt: 2, p: 2, backgroundColor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            <strong>Note:</strong> Associative departments can be added if this event is co-organized with other departments.
-            This is optional and can be configured in advanced settings.
-          </Typography>
+        {/* Advanced Settings Toggle */}
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Settings />}
+            endIcon={showAdvancedSettings ? <ExpandLess /> : <ExpandMore />}
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderStyle: 'dashed',
+              '&:hover': {
+                borderStyle: 'solid'
+              }
+            }}
+          >
+            Advanced Settings - Associative Departments
+          </Button>
         </Box>
+
+        {/* Collapsible Advanced Settings */}
+        <Collapse in={showAdvancedSettings}>
+          <Box sx={{ mt: 3, p: 3, backgroundColor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2, border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}` }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'warning.main' }}>
+              Co-organizing Departments
+            </Typography>
+            
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Select additional departments that are co-organizing this event. These departments will appear in the event documentation and brochures.
+            </Typography>
+
+            <Autocomplete
+              multiple
+              options={availableDepartments}
+              value={formData.organizingDepartments?.associative || []}
+              onChange={(event, newValue) => {
+                handleOrganizingDepartmentsChange('associative', newValue);
+              }}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    {...getTagProps({ index })}
+                    key={option}
+                    sx={{
+                      borderRadius: 2,
+                      '& .MuiChip-deleteIcon': {
+                        color: 'warning.main'
+                      }
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Associative Departments"
+                  placeholder="Choose departments..."
+                  helperText="Select departments that are co-organizing this event"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2
+                    }
+                  }}
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+
+            {/* Display selected associative departments */}
+            {formData.organizingDepartments?.associative?.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Selected Co-organizing Departments:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {formData.organizingDepartments.associative.map((dept, index) => (
+                    <Chip
+                      key={index}
+                      label={dept}
+                      color="primary"
+                      variant="filled"
+                      size="small"
+                      sx={{ borderRadius: 2 }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Information about co-organizing */}
+            <Box sx={{ mt: 3, p: 2, backgroundColor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>💡 Tip:</strong> Co-organizing departments will be displayed in:
+              </Typography>
+              <Box component="ul" sx={{ mt: 1, pl: 2, mb: 0 }}>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  Event brochures and promotional materials
+                </Typography>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  Official event documentation
+                </Typography>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  Approval workflows (if required)
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Collapse>
+
+        {/* Note about associative departments */}
+        {!showAdvancedSettings && (
+          <Box sx={{ mt: 2, p: 2, backgroundColor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Note:</strong> Associative departments can be added if this event is co-organized with other departments.
+              This is optional and can be configured in advanced settings.
+            </Typography>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

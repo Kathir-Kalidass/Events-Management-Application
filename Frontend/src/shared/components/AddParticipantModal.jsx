@@ -217,20 +217,29 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       return;
     }
 
+    if (!eventId) {
+      enqueueSnackbar('Event ID is missing', { variant: 'error' });
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append('file', csvFile);
-      formData.append('eventId', eventId);
+      formData.append('eventId', eventId.toString());
 
       const token = localStorage.getItem('token');
+      
+      console.log('Uploading CSV with eventId:', eventId);
+      console.log('File details:', { name: csvFile.name, size: csvFile.size, type: csvFile.type });
+      
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/upload`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            // Don't set Content-Type manually for FormData, let browser set it with boundary
           }
         }
       );
@@ -501,21 +510,22 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
                       <ListItemText 
                         primary={`Errors: ${uploadResults.errors.length}`}
                         secondary={
-                          <Box>
-                            <Typography variant="caption" color="error">
+                          <>
+                            <Typography variant="caption" color="error" component="span">
                               Issues found:
                             </Typography>
+                            <br />
                             {uploadResults.errors.slice(0, 5).map((error, index) => (
-                              <Typography key={index} variant="caption" display="block" color="error">
+                              <Typography key={index} variant="caption" color="error" component="span" sx={{ display: 'block' }}>
                                 • {error}
                               </Typography>
                             ))}
                             {uploadResults.errors.length > 5 && (
-                              <Typography variant="caption" color="error">
+                              <Typography variant="caption" color="error" component="span" sx={{ display: 'block' }}>
                                 ... and {uploadResults.errors.length - 5} more errors
                               </Typography>
                             )}
-                          </Box>
+                          </>
                         }
                       />
                     </ListItem>

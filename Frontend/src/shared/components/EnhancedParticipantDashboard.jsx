@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   Box,
   Card,
@@ -85,15 +85,68 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const [addParticipantModalOpen, setAddParticipantModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // Debounced search to prevent excessive filtering
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchParticipants();
   }, [eventId]);
 
-  useEffect(() => {
-    fetchStats();
-  }, [participants]);
+  // Memoized stats calculation to prevent recalculation on every render
+  stats = useMemo(() => {
+    if (participants.length === 0) {
+      return {
+        totalRegistered: 0,
+        totalApproved: 0,
+        totalAttended: 0,
+        totalRejected: 0,
+        totalPending: 0,
+        attendanceRate: 0
+      };
+    }
 
-  const fetchParticipants = async () => {
+    const totalRegistered = participants.length;
+    const totalApproved = participants.filter(p => {
+      if (userRole === 'hod') return true; // HOD only sees approved
+      const registration = getParticipantRegistration(p);
+      return registration?.approved === true;
+    }).length;
+    
+    const totalAttended = participants.filter(p => {
+      const registration = getParticipantRegistration(p);
+      return registration?.approved === true && registration?.attended === true;
+    }).length;
+    
+    const totalRejected = participants.filter(p => {
+      const registration = getParticipantRegistration(p);
+      return registration?.approved === false && registration?.rejectionReason;
+    }).length;
+    
+    const totalPending = participants.filter(p => {
+      const registration = getParticipantRegistration(p);
+      return registration?.approved !== true && !registration?.rejectionReason;
+    }).length;
+    
+    const attendanceRate = totalApproved > 0 ? Math.round((totalAttended / totalApproved) * 100) : 0;
+    
+    return {
+      totalRegistered,
+      totalApproved,
+      totalAttended,
+      totalRejected,
+      totalPending,
+      attendanceRate
+    };
+  }, [participants, userRole]);
+
+  const fetchParticipants = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -148,7 +201,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const fetchStats = async () => {
     try {
