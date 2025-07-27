@@ -72,7 +72,7 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
       
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:4000/api/coordinator/claims/${selectedProgramme._id}`,
+        `http://10.5.12.1:4000/api/coordinator/claims/${selectedProgramme._id}`,
         {
           expenses: claimData,
           income: incomeData,
@@ -127,7 +127,7 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
       setTimeout(async () => {
         try {
           const token = localStorage.getItem("token");
-          const response = await axios.get("http://localhost:4000/api/coordinator/programmes", {
+          const response = await axios.get("http://10.5.12.1:4000/api/coordinator/programmes", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -157,7 +157,7 @@ export const useClaimOperations = (setEvents, enqueueSnackbar) => {
   const handleViewFinalBudget = useCallback((id) => {
     const token = localStorage.getItem("token");
   
-    fetch(`http://localhost:4000/api/coordinator/claims/${id}/pdf`, {
+    fetch(`http://10.5.12.1:4000/api/coordinator/claims/${id}/pdf`, {
       method: "GET",
       headers: {
         'Accept': 'application/pdf',

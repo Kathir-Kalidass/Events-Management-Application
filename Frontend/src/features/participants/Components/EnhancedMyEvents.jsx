@@ -62,7 +62,7 @@ const EnhancedMyEvents = ({ onNavigate }) => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/my-events/${participantId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/my-events/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",

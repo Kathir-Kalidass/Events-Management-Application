@@ -137,7 +137,7 @@ When using the "Sample-Based" template, the generator:
 
 ### Environment Variables
 ```env
-FRONTEND_URL=http://localhost:5173  # For QR code generation
+FRONTEND_URL=http://10.5.12.1:5173  # For QR code generation
 ```
 
 ### Dependencies

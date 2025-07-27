@@ -133,7 +133,7 @@ const ProfileDialog = ({ open, onClose }) => {
       }
 
       const response = await axios.put(
-        'http://localhost:4000/api/coordinator/profile',
+        'http://10.5.12.1:4000/api/coordinator/profile',
         profileData,
         {
           headers: { 

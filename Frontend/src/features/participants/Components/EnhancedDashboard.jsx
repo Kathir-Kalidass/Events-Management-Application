@@ -190,7 +190,7 @@ const EnhancedParticipantDashboard = () => {
       const token = localStorage.getItem("token");
 
       // Fetch all approved events
-      const allEventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/events`, {
+      const allEventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/events`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -204,7 +204,7 @@ const EnhancedParticipantDashboard = () => {
       }
 
       // Fetch my registered events
-      const myEventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/my-events/${participantId}`, {
+      const myEventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/my-events/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -219,7 +219,7 @@ const EnhancedParticipantDashboard = () => {
         pendingFeedback = myEventsData.filter(event => event.attended && !event.feedbackGiven).length;
 
         // Fetch certificates
-        const certsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/certificates/${participantId}`, {
+        const certsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/certificates/${participantId}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -254,7 +254,7 @@ const EnhancedParticipantDashboard = () => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/notifications/${participantId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/notifications/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",

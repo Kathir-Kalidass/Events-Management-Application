@@ -132,7 +132,7 @@ const EnhancedHODProfile = () => {
       }
 
       const response = await axios.put(
-        'http://localhost:4000/api/hod/profile',
+        'http://10.5.12.1:4000/api/hod/profile',
         profileData,
         {
           headers: { 

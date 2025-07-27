@@ -48,10 +48,10 @@
   - Add approval comments
 - **👨‍🏫 Coordinator**: 
   - Manage assigned events
-  - Generate professional brochures
+  - Generate professional brochures with AI-enhanced content
   - Handle participant registrations
   - Process claims and budgets
-  - Generate certificates
+  - Generate certificates with QR verification
   - Manage feedback statistics
 - **👨‍🎓 Participant**: 
   - Register for events
@@ -67,12 +67,13 @@
 - **🎯 Dynamic Event Creation**: 
   - Customizable event types (workshops, training programs, seminars, courses)
   - Comprehensive event schema with 50+ fields
-  - Multi-department organizing support
-  - Advanced registration procedures
+  - Multi-department organizing support with associations
+  - Advanced registration procedures with payment integration
 - **👥 Organizing Committee Management**: 
   - Add committee members with roles and designations
   - Department-wise committee assignment
   - HOD approval workflow
+  - Dynamic committee display in brochures
 - **📝 Registration System**: 
   - Flexible registration forms
   - Payment integration support
@@ -85,10 +86,13 @@
 
 ### 📄 **Advanced Document Generation**
 - **🎨 Professional Brochures**: 
-  - AI-enhanced content generation
-  - Anna University branding
-  - Dynamic layout system
+  - AI-enhanced content generation based on event data
+  - Anna University and CEG dual branding
+  - Dynamic three-column layout system
+  - Intelligent course descriptions
   - Multi-format export (PDF, PNG)
+  - Concise content optimization
+  - Professional typography and spacing
 - **🏆 Certificate System**: 
   - Automated certificate generation
   - Bulk processing capabilities
@@ -253,13 +257,13 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 ### **Additional Libraries**
 | Library | Purpose |
 |---------|---------|
-| 📄 **PDFKit 0.17.1** | Server-side PDF generation |
+| 📄 **jsPDF 3.0.1** | Client-side PDF generation |
 | 📧 **Nodemailer 7.0.4** | Email notifications |
 | 🔒 **Bcrypt 6.0.0** | Password hashing |
 | 📁 **Multer 2.0.1** | File upload handling |
 | 📊 **Recharts 2.15.3** | Data visualization |
 | 🔔 **Notistack 3.0.2** | Toast notifications |
-| 📋 **jsPDF 3.0.1** | Client-side PDF generation |
+| 🎨 **Canvas API** | Image processing for logos |
 
 </div>
 
@@ -307,16 +311,13 @@ This application currently implements **Module 4** of a comprehensive 10-module 
    JWT_SECRET=your-super-secret-jwt-key
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASS=your-app-password
+   NODE_ENV=development
    ```
 
 2. **Frontend Configuration**
    Update API base URL in `Frontend/src/services/api.js` if needed:
    ```javascript
-<<<<<<< HEAD
-   const API_BASE_URL = 'http://localhost:4000/api';
-=======
-   const API_BASE_URL = 'http://localhost:4000/api';
->>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
+   const API_BASE_URL = 'http://10.5.12.1:4000/api';
    ```
 
 ### Database Setup
@@ -352,8 +353,8 @@ cd Frontend && npm run dev
 
 ## 📱 Application Access
 
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:4000
+- **Frontend**: http://10.5.12.1:5173
+- **Backend API**: http://10.5.12.1:4000
 - **MongoDB**: mongodb://localhost:27017
 
 ## 👥 Default User Accounts
@@ -396,7 +397,7 @@ Events-Management-Application/
 │   │   │   └── admin/               # Admin & System Management
 │   │   ├── shared/                  # Shared resources
 │   │   │   ├── config/              # Configuration files
-│   │   │   ├── middleware/          # Shared middleware
+│   │   ��   ├── middleware/          # Shared middleware
 │   │   │   ├── models/              # Database models
 │   │   │   ├── utils/               # Shared utilities
 │   │   │   └── services/            # Shared services
@@ -414,9 +415,10 @@ Events-Management-Application/
 │   │   │   ├── certificates/        # Certificate Management
 │   │   │   ├── participants/        # Participant pages
 │   │   │   └── admin/               # Admin pages
-│   │   ├── shared/                  # Shared resources
+│   │   ├─�� shared/                  # Shared resources
 │   │   │   ├── components/          # Reusable components
 │   │   │   ├── services/            # API services
+│   │   │   │   └── advancedBrochureGenerator.js  # Enhanced brochure generator
 │   │   │   ├── utils/               # Shared utilities
 │   │   │   ├── constants/           # Application constants
 │   │   │   ├── context/             # React contexts
@@ -432,6 +434,9 @@ Events-Management-Application/
 │   └── vite.config.js               # Vite configuration
 ├── PROJECT_STRUCTURE.md             # Detailed structure documentation
 ├── INTEGRATION_MANUAL.md            # Integration guide
+├── BROCHURE_GENERATOR_GUIDE.md      # Brochure generation guide
+├── CERTIFICATE_REGENERATION_GUIDE.md # Certificate regeneration guide
+├── DEPLOYMENT_GUIDE.md              # Deployment instructions
 ├── package.json                     # Root package.json
 └── README.md                        # This file
 ```
@@ -505,7 +510,7 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
 |------------------|----------------------|-------------|
 | 🎯 **Event Creation** | ✅ Complete | Full event lifecycle management |
 | 👥 **User Management** | ✅ Complete | Multi-role authentication system |
-| 📄 **Document Generation** | ✅ Complete | Brochures, certificates, claims |
+| 📄 **Document Generation** | ✅ Complete | Enhanced brochures, certificates, claims |
 | 💰 **Financial Tracking** | ✅ Complete | Budget management and claims |
 | 📊 **Analytics** | ✅ Complete | Real-time dashboards and reports |
 | 🔐 **Security** | ✅ Complete | JWT auth with role-based access |
@@ -531,14 +536,23 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
 
 #### **🎨 Professional Brochure Generation**
 - **AI-Enhanced Content**: Intelligent course descriptions based on event data
-- **Anna University Branding**: Official logos and color schemes
-- **Dynamic Layout**: Professional two-column design
+- **Dual Branding**: Anna University and CEG logos positioned symmetrically
+- **Dynamic Layout**: Professional three-column design for better space utilization
 - **Comprehensive Sections**:
   - Event information and objectives
   - Organizing committee (from database)
   - Registration procedures and payment details
   - Contact information and venue details
-- **Export Options**: High-quality PDF generation
+- **Content Optimization**: Concise, readable content without clutter
+- **Export Options**: High-quality PDF generation with proper typography
+
+#### **🎯 Recent Brochure Improvements**
+- **✅ Fixed Text Visibility**: Resolved black background text visibility issues
+- **✅ Removed Footer from First Page**: Clean first page without footer distractions
+- **✅ Reduced Content Length**: Optimized "About the Program" and university sections
+- **✅ Removed Title Background**: Clean event title without colored background
+- **✅ Added CEG Logo**: Dual institutional branding with proper positioning
+- **✅ Three-Column Layout**: Better space utilization and professional appearance
 
 #### **💰 Advanced Financial Management**
 - **Budget Breakdown**: Detailed income and expense tracking
@@ -563,7 +577,7 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
 | **Siva Sankar S** | 2023103082 | Full Stack Development, System Architecture |
 | **Dhanush T** | 2023103507 | Backend Development, API Design |
 | **Viswa S** | 2023103564 | Frontend Development, UI/UX Design |
-| **Kathir Kalidass B** | 2023103546 | System Integration, Database Design |
+| **Kathir Kalidass B** | 2023103546 | System Integration, Database Design, Brochure Enhancement |
 | **Magesh Gumar M** | 2023103612 | Testing, Documentation, Quality Assurance |
 
 ### **Academic Information**
@@ -608,11 +622,7 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
    NODE_ENV=development
    
    # Frontend/.env (optional)
-<<<<<<< HEAD
-   VITE_API_BASE_URL=http://localhost:4000/api
-=======
-   VITE_API_BASE_URL=http://localhost:4000/api
->>>>>>> cac80b5d3abfd08f51962d91d59ee946ea7e4545
+   VITE_API_BASE_URL=http://10.5.12.1:4000/api
    VITE_APP_NAME=Events Management System
    ```
 
@@ -795,12 +805,33 @@ For support and queries:
 
 ## 📊 Project Statistics
 
-- **Total Lines of Code**: 15,000+
-- **Components**: 50+ React components
-- **API Endpoints**: 40+ REST endpoints
+- **Total Lines of Code**: 18,000+
+- **Components**: 60+ React components
+- **API Endpoints**: 45+ REST endpoints
 - **Database Collections**: 8 MongoDB collections
-- **Features Implemented**: 25+ major features
-- **Development Time**: 6 months (Academic Year 2023-24)
+- **Features Implemented**: 30+ major features
+- **Development Time**: 8 months (Academic Year 2023-24)
+- **Recent Updates**: Enhanced brochure generation with AI content and dual branding
+
+---
+
+## 🆕 Recent Updates (Latest)
+
+### **Brochure Generation Enhancements**
+- **✅ AI-Enhanced Content Generation**: Intelligent course descriptions based on event data
+- **✅ Dual Institutional Branding**: Anna University and CEG logos positioned symmetrically
+- **✅ Three-Column Layout**: Optimized space utilization for better readability
+- **✅ Content Optimization**: Reduced verbose content for cleaner presentation
+- **✅ Text Visibility Fixes**: Resolved dark text on dark background issues
+- **✅ Clean First Page**: Removed footer from first page for professional appearance
+- **✅ Typography Improvements**: Better font sizing and spacing throughout
+
+### **Technical Improvements**
+- **Enhanced PDF Generation**: Using jsPDF with advanced features
+- **Logo Integration**: Proper loading and positioning of institutional logos
+- **Error Handling**: Graceful fallbacks for missing assets
+- **Responsive Design**: Better mobile and tablet compatibility
+- **Performance Optimization**: Faster PDF generation and rendering
 
 ---
 

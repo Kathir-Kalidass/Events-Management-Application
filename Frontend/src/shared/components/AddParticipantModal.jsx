@@ -82,7 +82,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/add`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/add`,
         {
           email: singleEmail.trim(),
           eventId: eventId
@@ -155,7 +155,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/add-multiple`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/add-multiple`,
         {
           emails: emailArray,
           eventId: eventId
@@ -234,7 +234,7 @@ const AddParticipantModal = ({ open, onClose, eventId, onParticipantAdded }) => 
       console.log('File details:', { name: csvFile.name, size: csvFile.size, type: csvFile.type });
       
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/upload`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/upload`,
         formData,
         {
           headers: {
@@ -298,7 +298,7 @@ Alex Johnson,alex.johnson@gmail.com,Civil Engineering,9876543214,Anna University
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/template`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/template`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'
