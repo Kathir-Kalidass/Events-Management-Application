@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { usersAPI } from './api.js';
 
 // Helper function to load image as base64
 const loadImageAsBase64 = (src) => {
@@ -22,95 +23,337 @@ const loadImageAsBase64 = (src) => {
   });
 };
 
-export const generateEventBrochure = async (event, layoutType = 'standard') => {
+export const generateEventBrochure = async (event, layoutType = 'landscape') => {
   try {
-    // Choose orientation based on layout type
-    const orientation = layoutType === 'landscape' ? 'l' : 'p';
-    const doc = new jsPDF(orientation, 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
+    // Force landscape orientation for optimized layout
+    const doc = new jsPDF('l', 'mm', 'a4'); // Always landscape
+    const pageWidth = doc.internal.pageSize.width; // 297mm
+    const pageHeight = doc.internal.pageSize.height; // 210mm
     const margin = 15;
     const contentWidth = pageWidth - (2 * margin);
     
     let currentY = margin;
-    const lineHeight = 4.5;
+    const lineHeight = 4.2;
     const sectionSpacing = 6;
 
-    // Load Anna University logo
+    // Enhanced color palette with better contrast
+    const colors = {
+      primary: [25, 118, 210],      // Modern blue
+      secondary: [63, 81, 181],     // Indigo
+      accent: [255, 193, 7],        // Amber
+      success: [76, 175, 80],       // Green
+      text: [33, 33, 33],           // Dark gray
+      lightText: [255, 255, 255],   // White text for dark backgrounds
+      lightGray: [248, 249, 250],   // Very light background
+      mediumGray: [233, 236, 239],  // Medium gray for borders
+      white: [255, 255, 255],       // White
+      gradient1: [26, 35, 126],     // Deep blue
+      gradient2: [63, 81, 181],     // Lighter blue
+      cardBg: [252, 253, 254],      // Card background
+      headerBg: [240, 242, 247]     // Header background
+    };
+
+    // Load Anna University logo and CEG logo
     const logoBase64 = await loadImageAsBase64('/anna-university-logo.jpg');
+    const cegLogoBase64 = await loadImageAsBase64('/CEG_logo.png');
 
     // Helper function to add a new page if needed
     const checkPageBreak = (requiredHeight) => {
-      if (currentY + requiredHeight > pageHeight - margin) {
+      if (currentY + requiredHeight > pageHeight - margin - 20) { // Reserve space for footer
         doc.addPage();
         currentY = margin;
+        return true;
       }
+      return false;
     };
 
-    // Helper function to add text with proper wrapping
-    const addWrappedText = (text, x, y, maxWidth, fontSize = 11, style = 'normal') => {
+    // Enhanced text helper with better typography and overflow protection
+    const addWrappedText = (text, x, y, maxWidth, fontSize = 10, style = 'normal', align = 'left', color = colors.text) => {
       doc.setFontSize(fontSize);
       doc.setFont('helvetica', style);
+      doc.setTextColor(color[0], color[1], color[2]);
       
-      const lines = doc.splitTextToSize(text, maxWidth);
-      const textHeight = lines.length * lineHeight;
+      // Ensure maxWidth is reasonable and prevent overflow with better padding
+      const safeMaxWidth = Math.max(maxWidth - 8, 15); // Increased padding to 8mm, minimum 15mm width
+      const lines = doc.splitTextToSize(text, safeMaxWidth);
+      const textHeight = lines.length * (lineHeight * 0.9); // Slightly tighter line spacing
       
-      checkPageBreak(textHeight + 3);
+      // Add more padding to prevent text from touching borders
+      const paddedX = x + 3;
+      const paddedMaxWidth = maxWidth - 6;
       
-      doc.text(lines, x, currentY);
+      if (align === 'center') {
+        doc.text(lines, paddedX + paddedMaxWidth/2, currentY, { align: 'center' });
+      } else if (align === 'right') {
+        doc.text(lines, paddedX + paddedMaxWidth, currentY, { align: 'right' });
+      } else {
+        doc.text(lines, paddedX, currentY);
+      }
       currentY += textHeight;
       return textHeight;
     };
 
-    // Two-column layout helper
-    const addTwoColumnSection = (leftContent, rightContent) => {
-      const colWidth = (contentWidth - 8) / 2;
-      const leftX = margin;
-      const rightX = margin + colWidth + 8;
-      const startY = currentY;
+    // Add gradient background helper
+    const addGradientBackground = (x, y, width, height, color1, color2) => {
+      // Create gradient effect with multiple rectangles
+      const steps = 20;
+      const stepHeight = height / steps;
       
-      // Left column
-      currentY = startY;
-      leftContent.forEach(item => {
-        if (item.type === 'header') {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(item.text, leftX, currentY);
-          currentY += lineHeight;
-        } else {
-          addWrappedText(item.text, leftX, currentY, colWidth, 9);
-        }
-      });
-      
-      const leftEndY = currentY;
-      
-      // Right column
-      currentY = startY;
-      rightContent.forEach(item => {
-        if (item.type === 'header') {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(item.text, rightX, currentY);
-          currentY += lineHeight;
-        } else {
-          addWrappedText(item.text, rightX, currentY, colWidth, 9);
-        }
-      });
-      
-      currentY = Math.max(leftEndY, currentY) + 4;
+      for (let i = 0; i < steps; i++) {
+        const ratio = i / steps;
+        const r = Math.round(color1[0] + (color2[0] - color1[0]) * ratio);
+        const g = Math.round(color1[1] + (color2[1] - color1[1]) * ratio);
+        const b = Math.round(color1[2] + (color2[2] - color1[2]) * ratio);
+        
+        doc.setFillColor(r, g, b);
+        doc.rect(x, y + (i * stepHeight), width, stepHeight, 'F');
+      }
     };
 
-    // Section header helper
-    const addSectionHeader = (title) => {
-      checkPageBreak(15);
-      doc.setFillColor(240, 240, 240);
-      doc.rect(margin, currentY - 2, contentWidth, 8, 'F');
+    // Enhanced card/box helper with better design and contrast
+    const addCard = (x, y, width, height, title, content, bgColor = colors.cardBg, borderColor = colors.primary) => {
+      // Card shadow effect (subtle)
+      doc.setFillColor(220, 220, 220, 0.3);
+      doc.rect(x + 0.5, y + 0.5, width, height, 'F');
       
-      doc.setFontSize(11);
+      // Card background with better contrast
+      doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      doc.rect(x, y, width, height, 'F');
+      
+      // Card border with softer color
+      doc.setDrawColor(colors.mediumGray[0], colors.mediumGray[1], colors.mediumGray[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(x, y, width, height, 'S');
+      
+      // Title bar with better contrast
+      if (title) {
+        // Use a lighter header background for better readability
+        doc.setFillColor(colors.headerBg[0], colors.headerBg[1], colors.headerBg[2]);
+        doc.rect(x, y, width, 10, 'F');
+        
+        // Add a subtle border under the header
+        doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+        doc.setLineWidth(0.5);
+        doc.line(x, y + 10, x + width, y + 10);
+        
+        // Title text with dark color for better contrast
+        doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        
+        // Center the title text and ensure it fits
+        const titleWidth = doc.getTextWidth(title);
+        const titleX = x + (width - titleWidth) / 2;
+        doc.text(title, titleX, y + 6.5);
+      }
+      
+      return { 
+        contentX: x + 4, 
+        contentY: y + (title ? 14 : 4), 
+        contentWidth: width - 8 
+      };
+    };
+
+    // Icon helper (simple geometric shapes)
+    const addIcon = (x, y, type, size = 4, color = colors.primary) => {
+      doc.setFillColor(color[0], color[1], color[2]);
+      doc.setDrawColor(color[0], color[1], color[2]);
+      
+      switch (type) {
+        case 'calendar':
+          doc.rect(x, y, size, size, 'F');
+          doc.setFillColor(255, 255, 255);
+          doc.rect(x + 0.5, y + 1, size - 1, 1, 'F');
+          break;
+        case 'location':
+          doc.circle(x + size/2, y + size/2, size/2, 'F');
+          break;
+        case 'users':
+          doc.circle(x + 1, y + 1, 1, 'F');
+          doc.circle(x + size - 1, y + 1, 1, 'F');
+          doc.rect(x, y + 2, size, size - 2, 'F');
+          break;
+        case 'info':
+          doc.circle(x + size/2, y + size/2, size/2, 'F');
+          doc.setFillColor(255, 255, 255);
+          doc.text('i', x + size/2 - 0.5, y + size/2 + 1);
+          break;
+        default:
+          doc.rect(x, y, size, size, 'F');
+      }
+    };
+
+    // Enhanced three-column layout with dynamic card heights
+    const addThreeColumnSection = (leftContent, centerContent, rightContent) => {
+      const colWidth = (contentWidth - 20) / 3;
+      const leftX = margin;
+      const centerX = margin + colWidth + 10;
+      const rightX = margin + (colWidth * 2) + 20;
+      const startY = currentY;
+      
+      // Calculate required heights for each column based on content
+      const calculateContentHeight = (content) => {
+        let totalHeight = 0;
+        content.forEach((item, index) => {
+          if (item.type === 'header') {
+            totalHeight += 14; // Header height (10mm header + 4mm padding)
+          } else if (item.type === 'content' || index > 0) {
+            // Calculate text height
+            doc.setFontSize(9);
+            const safeMaxWidth = Math.max(colWidth - 16, 15);
+            const lines = doc.splitTextToSize(item.text, safeMaxWidth);
+            const textHeight = lines.length * (lineHeight * 0.9);
+            totalHeight += textHeight + 1.5; // Add spacing
+          }
+        });
+        return Math.max(totalHeight + 8, 35); // Minimum height of 35mm
+      };
+      
+      const leftHeight = leftContent.length > 0 ? calculateContentHeight(leftContent) : 35;
+      const centerHeight = centerContent.length > 0 ? calculateContentHeight(centerContent) : 35;
+      const rightHeight = rightContent.length > 0 ? calculateContentHeight(rightContent) : 35;
+      
+      // Use the maximum height for all cards to maintain alignment
+      const maxCardHeight = Math.max(leftHeight, centerHeight, rightHeight);
+      
+      // Left column card
+      if (leftContent.length > 0) {
+        const leftCard = addCard(leftX, startY, colWidth, maxCardHeight, 
+          leftContent[0].type === 'header' ? leftContent[0].text : null, 
+          null, colors.cardBg, colors.primary);
+        
+        let tempY = leftCard.contentY;
+        leftContent.forEach((item, index) => {
+          if (item.type === 'content' || index > 0) {
+            currentY = tempY;
+            addWrappedText(item.text, leftCard.contentX, tempY, leftCard.contentWidth, 9, 'normal', 'left', colors.text);
+            tempY = currentY + 1.5;
+          }
+        });
+      }
+      
+      // Center column card
+      if (centerContent.length > 0) {
+        const centerCard = addCard(centerX, startY, colWidth, maxCardHeight, 
+          centerContent[0].type === 'header' ? centerContent[0].text : null, 
+          null, colors.cardBg, colors.secondary);
+        
+        let tempY = centerCard.contentY;
+        centerContent.forEach((item, index) => {
+          if (item.type === 'content' || index > 0) {
+            currentY = tempY;
+            addWrappedText(item.text, centerCard.contentX, tempY, centerCard.contentWidth, 9, 'normal', 'left', colors.text);
+            tempY = currentY + 1.5;
+          }
+        });
+      }
+      
+      // Right column card
+      if (rightContent.length > 0) {
+        const rightCard = addCard(rightX, startY, colWidth, maxCardHeight, 
+          rightContent[0].type === 'header' ? rightContent[0].text : null, 
+          null, colors.cardBg, colors.success);
+        
+        let tempY = rightCard.contentY;
+        rightContent.forEach((item, index) => {
+          if (item.type === 'content' || index > 0) {
+            currentY = tempY;
+            addWrappedText(item.text, rightCard.contentX, tempY, rightCard.contentWidth, 9, 'normal', 'left', colors.text);
+            tempY = currentY + 1.5;
+          }
+        });
+      }
+      
+      currentY = startY + maxCardHeight + 8;
+    };
+
+    // Enhanced two-column layout with dynamic card heights
+    const addTwoColumnSection = (leftContent, rightContent) => {
+      const colWidth = (contentWidth - 12) / 2;
+      const leftX = margin;
+      const rightX = margin + colWidth + 12;
+      const startY = currentY;
+      
+      // Calculate required heights for each column based on content
+      const calculateContentHeight = (content) => {
+        let totalHeight = 0;
+        content.forEach((item, index) => {
+          if (item.type === 'header') {
+            totalHeight += 14; // Header height (10mm header + 4mm padding)
+          } else if (item.type === 'content' || index > 0) {
+            // Calculate text height
+            doc.setFontSize(9);
+            const safeMaxWidth = Math.max(colWidth - 16, 15);
+            const lines = doc.splitTextToSize(item.text, safeMaxWidth);
+            const textHeight = lines.length * (lineHeight * 0.9);
+            totalHeight += textHeight + 1.5; // Add spacing
+          }
+        });
+        return Math.max(totalHeight + 8, 30); // Minimum height of 30mm
+      };
+      
+      const leftHeight = leftContent.length > 0 ? calculateContentHeight(leftContent) : 30;
+      const rightHeight = rightContent.length > 0 ? calculateContentHeight(rightContent) : 30;
+      
+      // Use the maximum height for both cards to maintain alignment
+      const maxCardHeight = Math.max(leftHeight, rightHeight);
+      
+      // Left column card
+      if (leftContent.length > 0) {
+        const leftCard = addCard(leftX, startY, colWidth, maxCardHeight, 
+          leftContent[0].type === 'header' ? leftContent[0].text : null, 
+          null, colors.cardBg, colors.primary);
+        
+        let tempY = leftCard.contentY;
+        leftContent.forEach((item, index) => {
+          if (item.type === 'content' || index > 0) {
+            currentY = tempY;
+            addWrappedText(item.text, leftCard.contentX, tempY, leftCard.contentWidth, 9, 'normal', 'left', colors.text);
+            tempY = currentY + 1.5;
+          }
+        });
+      }
+      
+      // Right column card
+      if (rightContent.length > 0) {
+        const rightCard = addCard(rightX, startY, colWidth, maxCardHeight, 
+          rightContent[0].type === 'header' ? rightContent[0].text : null, 
+          null, colors.cardBg, colors.secondary);
+        
+        let tempY = rightCard.contentY;
+        rightContent.forEach((item, index) => {
+          if (item.type === 'content' || index > 0) {
+            currentY = tempY;
+            addWrappedText(item.text, rightCard.contentX, tempY, rightCard.contentWidth, 9, 'normal', 'left', colors.text);
+            tempY = currentY + 1.5;
+          }
+        });
+      }
+      
+      currentY = startY + maxCardHeight + 8;
+    };
+
+    // Enhanced section header with modern styling
+    const addSectionHeader = (title, fontSize = 11) => {
+      checkPageBreak(15);
+      
+      // Modern gradient header
+      addGradientBackground(margin - 2, currentY - 2, contentWidth + 4, 10, colors.primary, colors.secondary);
+      
+      // Add icon based on section title
+      let iconType = 'info';
+      if (title.toLowerCase().includes('registration')) iconType = 'users';
+      else if (title.toLowerCase().includes('contact')) iconType = 'location';
+      else if (title.toLowerCase().includes('committee')) iconType = 'users';
+      
+      addIcon(margin + 2, currentY, iconType, 4, colors.white);
+      
+      doc.setFontSize(fontSize);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(title, margin + 3, currentY + 4);
-      currentY += 10;
+      doc.setTextColor(255, 255, 255);
+      doc.text(title, margin + 10, currentY + 4);
+      
+      currentY += 12;
     };
 
     // Generate intelligent duration if not provided
@@ -170,11 +413,11 @@ export const generateEventBrochure = async (event, layoutType = 'standard') => {
       } else {
         // Generic audience based on type
         if (type.includes('workshop')) {
-          audience = ['Students', 'Working Professionals', 'Researchers', 'Industry Practitioners'];
+          audience = ['Faculty', 'Students', 'Working Professionals', 'Researchers', 'Industry Practitioners'];
         } else if (type.includes('training') || type.includes('course')) {
-          audience = ['Graduate Students', 'Working Professionals', 'Faculty Members', 'Industry Professionals', 'Researchers'];
+          audience = ['Faculty', 'Graduate Students', 'Working Professionals', 'Industry Professionals', 'Researchers'];
         } else {
-          audience = ['Students', 'Faculty', 'Industry Professionals', 'Researchers', 'Technology Enthusiasts'];
+          audience = ['Faculty', 'Students', 'Industry Professionals', 'Researchers', 'Technology Enthusiasts'];
         }
       }
       
@@ -206,7 +449,7 @@ export const generateEventBrochure = async (event, layoutType = 'standard') => {
       } else if (title.includes('iot')) {
         return 'IoT Solution Architects, Embedded Systems Engineers, Industrial IoT Experts';
       } else {
-        return 'Industry Experts, Academic Researchers, Senior Practitioners, Technology Leaders';
+        return 'Dr. Smith, Industry Experts, Academic Researchers, Senior Practitioners, Technology Leaders';
       }
     };
 
@@ -315,1180 +558,554 @@ export const generateEventBrochure = async (event, layoutType = 'standard') => {
 • Enhanced problem-solving skills and analytical thinking capabilities
 • Industry-ready knowledge and hands-on experience with real-world projects`;
       
-      // Main description with intelligent context
-      return `${audienceContext} addresses the growing demand for expertise in ${domain}. The course bridges the gap between academic learning and industry requirements, focusing on ${focusArea}.
+      // Main description with intelligent context - Concise version
+      return `${audienceContext} addresses the growing demand for expertise in ${domain}. This ${duration} ${type} bridges academic learning with industry requirements, focusing on ${focusArea}.
 
-In today's rapidly evolving technological landscape, professionals need to stay current with ${industryRelevance}. This ${duration} ${type} provides comprehensive coverage from ${technicalDepth}, ensuring participants gain both theoretical understanding and practical competency.
-
-The curriculum emphasizes ${learningApproach}, enabling participants to immediately apply their learning in professional environments.
+The curriculum emphasizes ${learningApproach}, ensuring participants gain both theoretical understanding and practical competency.
 
 KEY LEARNING OBJECTIVES:
-${smartObjectives}
+• Build strong foundation in ${domain.toLowerCase()} principles
+• Develop practical skills and hands-on experience
+• Master industry-standard tools and technologies
+• Apply knowledge to solve real-world challenges
 
 EXPECTED LEARNING OUTCOMES:
-${smartOutcomes}
+• Proficiency in ${domain.toLowerCase()} concepts and applications
+• Enhanced problem-solving and analytical thinking
+• Industry-ready knowledge with practical experience
+• Certificate of completion from Anna University
 
-WHY CHOOSE THIS PROGRAM:
-• Industry-relevant curriculum designed by academic and industry experts
-• Hands-on learning approach with real-world project implementations
-• Access to latest tools, technologies, and industry best practices
-• Networking opportunities with peers and industry professionals
-• Certificate of completion from Anna University, a premier institution
-• Post-training support and guidance for continued learning
-
-This program is ideal for professionals looking to enhance their career prospects, students seeking to supplement their academic knowledge with practical skills, and organizations aiming to upskill their workforce in emerging technologies.`;
+This program is ideal for professionals seeking to enhance their skills and stay current with industry standards.`;
     };
 
-    // PAGE 1: MAIN INTRO PAGE
-    const createMainPage = () => {
-      // Header with Anna University Logo and Title
-      doc.setFillColor(41, 98, 255); // Blue background
-      doc.rect(0, 0, pageWidth, 40, 'F');
+    // PAGE 1: ENHANCED MODERN LANDSCAPE LAYOUT
+    const createOptimizedLandscapePage = async () => {
+      // Modern gradient header with enhanced styling
+      addGradientBackground(0, 0, pageWidth, 35, colors.gradient1, colors.gradient2);
       
-      // Add Anna University logo if available
+      // Add decorative elements
+      doc.setFillColor(255, 255, 255, 0.1);
+      doc.circle(pageWidth - 30, 10, 15, 'F');
+      doc.circle(30, 25, 10, 'F');
+      
+      // Add Anna University logo with enhanced positioning (top left)
       if (logoBase64) {
         try {
-          doc.addImage(logoBase64, 'JPEG', 20, 5, 30, 30);
+          doc.addImage(logoBase64, 'JPEG', 20, 5, 25, 25);
         } catch (error) {
-          console.log('Error adding logo to PDF:', error);
+          console.log('Error adding Anna University logo to PDF:', error);
         }
       }
       
-      // Anna University Text (centered)
+      // Add CEG logo to top right
+      if (cegLogoBase64) {
+        try {
+          doc.addImage(cegLogoBase64, 'PNG', pageWidth - 45, 5, 25, 25);
+        } catch (error) {
+          console.log('Error adding CEG logo to PDF:', error);
+        }
+      }
+      
+      // Enhanced university header with better typography
       doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ANNA UNIVERSITY', pageWidth / 2, 14, { align: 'center' });
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('College of Engineering, Guindy, Chennai - 600 025', pageWidth / 2, 24, { align: 'center' });
+      
+      // Add a subtle separator line
+      doc.setDrawColor(255, 255, 255, 0.3);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 32, pageWidth - margin, 32);
+      
+      doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+      currentY = 42;
+      
+      // Enhanced event title with modern styling
+      checkPageBreak(15);
+      
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('ANNA UNIVERSITY', pageWidth / 2, 15, { align: 'center' });
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      addWrappedText(event.title.toUpperCase(), margin, currentY, contentWidth, 20, 'bold', 'center', colors.primary);
+      currentY += 3;
       
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'normal');
-      doc.text('College of Engineering, Guindy', pageWidth / 2, 25, { align: 'center' });
-      doc.text('Chennai - 600 025', pageWidth / 2, 32, { align: 'center' });
+      // Organization and Type with enhanced styling
+      let organizingText = "Department of Computer Science and Engineering";
       
-      // Reset text color
-      doc.setTextColor(0, 0, 0);
-      currentY = 50;
+      // Debug logging for organizing departments
+      console.log('=== ORGANIZING DEPARTMENTS DEBUG ===');
+      console.log('Full event.organizingDepartments:', JSON.stringify(event.organizingDepartments, null, 2));
       
-      // Event Title
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      const titleHeight = addWrappedText(event.title.toUpperCase(), margin, currentY, contentWidth, 22, 'bold', 'center');
-      currentY += titleHeight + 8;
-      
-      // Organization text
-      const primaryDept = event.organizingDepartments?.primary || "Department of Computer Science and Engineering";
-      const associativeDepts = event.organizingDepartments?.associative || [];
-      
-      let organizationText = '';
-      if (associativeDepts.length > 0) {
-        organizationText = `Organised jointly by ${primaryDept}`;
-        associativeDepts.forEach(dept => {
-          organizationText += ` and ${dept}`;
-        });
+      if (event.organizingDepartments) {
+        const primary = event.organizingDepartments.primary || "Department of Computer Science and Engineering";
+        console.log('Primary department:', primary);
+        
+        // Check multiple possible field names for associations
+        const associations = event.organizingDepartments.associations || 
+                           event.organizingDepartments.associative || 
+                           event.organizingDepartments.associated || 
+                           event.organizingDepartments.associatedDepartments || 
+                           [];
+        
+        console.log('Found associations:', associations);
+        console.log('Associations length:', associations.length);
+        
+        if (associations && associations.length > 0) {
+          // Show primary department and associations
+          organizingText = `${primary} in association with ${associations.join(', ')}`;
+          console.log('Final organizing text with associations:', organizingText);
+        } else {
+          organizingText = primary;
+          console.log('Final organizing text (primary only):', organizingText);
+        }
       } else {
-        organizationText = `Organised by ${primaryDept}`;
+        console.log('No organizingDepartments found, using default');
       }
       
-      doc.setFontSize(12);
+      console.log('=== END ORGANIZING DEPARTMENTS DEBUG ===');
+      
+      const enhancedDuration = event.duration || generateSmartDuration(event);
+      
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const orgHeight = addWrappedText(organizationText, margin, currentY, contentWidth, 12, 'normal', 'center');
-      currentY += orgHeight + 8;
+      doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]); // Ensure dark text color
+      addWrappedText(`Organised by ${organizingText}`, margin, currentY, contentWidth, 10, 'normal', 'center', colors.text);
+      currentY += 2;
       
-      // Event Type and Duration
-      const enhancedDuration = event.duration || '10 Days (80 Hours)';
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      const typeHeight = addWrappedText(`${event.type} | ${enhancedDuration}`, margin, currentY, contentWidth, 14, 'bold', 'center');
-      currentY += typeHeight + 8;
+      addWrappedText(`${event.type} | ${enhancedDuration}`, margin, currentY, contentWidth, 12, 'bold', 'center');
+      currentY += 1;
       
-      // Dates
+      // Dates and Venue - Compact
       const startDate = new Date(event.startDate).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+        day: 'numeric', month: 'short', year: 'numeric'
       });
       const endDate = new Date(event.endDate).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+        day: 'numeric', month: 'short', year: 'numeric'
       });
       
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      const dateHeight = addWrappedText(`${startDate} - ${endDate}`, margin, currentY, contentWidth, 16, 'bold', 'center');
-      currentY += dateHeight + 10;
+      addWrappedText(`${startDate} - ${endDate}`, margin, currentY, contentWidth, 14, 'bold', 'center');
+      currentY += 4;
       
-      // Venue
-      const venue = event.venue || 'Seminar Hall, Department of CSE, Anna University';
-      doc.setFontSize(12);
+      const venue = generateSmartVenue(event);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      const venueHeight = addWrappedText(`Venue: ${venue}`, margin, currentY, contentWidth, 12, 'normal', 'center');
-      currentY += venueHeight + 15;
-
-      // Registration Form Section (if enabled)
-      if (event.registrationProcedure && event.registrationProcedure.registrationForm && event.registrationProcedure.registrationForm.enabled) {
-        // Registration Form Box
-        doc.setFillColor(245, 245, 245);
-        doc.rect(margin, currentY, contentWidth, 80, 'F');
-        doc.setDrawColor(0, 0, 0);
-        doc.rect(margin, currentY, contentWidth, 80);
-        
-        currentY += 8;
-        
-        // Form title
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        const formTitleHeight = addWrappedText('REGISTRATION FORM', margin + 5, currentY, contentWidth - 10, 14, 'bold', 'center');
-        currentY += formTitleHeight + 5;
-        
-        // Two column form layout
-        const colWidth = (contentWidth - 30) / 2;
-        const leftX = margin + 10;
-        const rightX = margin + colWidth + 20;
-        const formStartY = currentY;
-        
-        // Left column fields
-        currentY = formStartY;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        
-        // Name field
-        doc.text('Name:', leftX, currentY);
-        doc.line(leftX + 25, currentY + 1, leftX + colWidth, currentY + 1);
-        currentY += 12;
-        
-        // Age & DOB field
-        doc.text('Age & DOB:', leftX, currentY);
-        doc.line(leftX + 35, currentY + 1, leftX + colWidth, currentY + 1);
-        currentY += 12;
-        
-        // Qualification field
-        doc.text('Qualification:', leftX, currentY);
-        doc.line(leftX + 40, currentY + 1, leftX + colWidth, currentY + 1);
-        currentY += 12;
-        
-        // Institution field
-        doc.text('Institution:', leftX, currentY);
-        doc.line(leftX + 35, currentY + 1, leftX + colWidth, currentY + 1);
-        
-        // Right column fields
-        currentY = formStartY;
-        
-        // Email field
-        doc.text('Email:', rightX, currentY);
-        doc.line(rightX + 25, currentY + 1, rightX + colWidth, currentY + 1);
-        currentY += 12;
-        
-        // Mobile field
-        doc.text('Mobile No.:', rightX, currentY);
-        doc.line(rightX + 35, currentY + 1, rightX + colWidth, currentY + 1);
-        currentY += 12;
-        
-        // Address field
-        doc.text('Address:', rightX, currentY);
-        doc.line(rightX + 30, currentY + 1, rightX + colWidth, currentY + 1);
-        currentY += 8;
-        doc.line(rightX, currentY + 1, rightX + colWidth, currentY + 1);
-        
-        currentY = formStartY + 80;
+      addWrappedText(`Venue: ${venue}`, margin, currentY, contentWidth, 9, 'normal', 'center');
+      currentY += 8;
+      
+      // Three-column main content layout
+      const aboutContent = [
+        { type: 'header', text: `ABOUT THE ${event.type?.toUpperCase() || 'COURSE'}` },
+        { type: 'content', text: generateAdvancedDescription(event).substring(0, 800) + '...' }
+      ];
+      
+      // Generate registration fee information for event info
+      let registrationFeeInfo = '';
+      const incomeSources = event.incomeSource || event.budgetBreakdown?.income || [];
+      
+      if (incomeSources && incomeSources.length > 0) {
+        registrationFeeInfo = '\n\nREGISTRATION FEE:\n';
+        incomeSources.forEach((source, index) => {
+          if (source.perParticipant || source.perParticipantAmount) {
+            const amount = source.perParticipant || source.perParticipantAmount;
+            const category = source.category || `Category ${index + 1}`;
+            registrationFeeInfo += `${category}:  ${amount}/-\n`;
+          }
+        });
       }
-
-      // Registration Fee and Payment Details (if enabled)
-      if (event.registrationProcedure && event.registrationProcedure.paymentDetails && event.registrationProcedure.paymentDetails.enabled) {
-        currentY += 10;
+      
+      const eventInfoContent = [
+        { type: 'header', text: 'EVENT INFORMATION' },
+        { type: 'content', text: `TARGET AUDIENCE:\n${generateSmartTargetAudience(event)}\n\nRESOURCE PERSONS:\n${generateSmartResourcePersons(event)}\n\nMODE: ${event.mode || 'Offline'}${registrationFeeInfo}` }
+      ];
+      
+      const universityContent = [
+        { type: 'header', text: 'ABOUT ANNA UNIVERSITY' },
+        { type: 'content', text: `Anna University was established on 4th September, 1978, named after Late Dr.C.N.Annadurai, former Chief Minister of Tamil Nadu.\n\nThe University integrates four prestigious institutions:\n• College of Engineering (CEG) - 1794\n• Alagappa College of Technology (ACT) - 1944\n• Madras Institute of Technology (MIT) - 1949\n• School of Architecture & Planning (SAP) - 1957` },
+        { type: 'header', text: 'ABOUT THE DEPARTMENT' },
+        { type: 'content', text: `The Department of Computer Science and Engineering aligns its goals towards providing quality education and improving competence among students, living up to its motto 'Progress Through Knowledge'.\n\nCEG has always taken education beyond the classroom to help students understand the reality of the technical world. The Department provides world-class training, research platforms, and state-of-the-art computing facilities.\n\nStudents are exposed to various opportunities including industrial training, internships, and workshops during their course of study.` }
+      ];
+      
+      addThreeColumnSection(aboutContent, eventInfoContent, universityContent);
+      
+      // Registration and Payment section (if enabled)
+      console.log('=== REGISTRATION & PAYMENT DEBUG ===');
+      console.log('registrationProcedure:', JSON.stringify(event.registrationProcedure, null, 2));
+      console.log('registrationForm enabled:', event.registrationProcedure?.registrationForm?.enabled);
+      console.log('paymentDetails enabled:', event.registrationProcedure?.paymentDetails?.enabled);
+      // Additional debug info
+      console.log('registrationProcedure object:', event.registrationProcedure);
+      console.log('registrationForm object:', event.registrationProcedure?.registrationForm);
+      console.log('paymentDetails object:', event.registrationProcedure?.paymentDetails);
+      console.log('typeof registrationForm.enabled:', typeof event.registrationProcedure?.registrationForm?.enabled);
+      console.log('typeof paymentDetails.enabled:', typeof event.registrationProcedure?.paymentDetails?.enabled);
+      // Check if registration procedure exists and is enabled, AND either form or payment is explicitly enabled
+      const isRegistrationProcedureEnabled = event.registrationProcedure?.enabled === true;
+      const isRegistrationFormEnabled = event.registrationProcedure?.registrationForm?.enabled === true;
+      const isPaymentDetailsEnabled = event.registrationProcedure?.paymentDetails?.enabled === true;
+      
+      console.log('isRegistrationProcedureEnabled:', isRegistrationProcedureEnabled);
+      console.log('isRegistrationFormEnabled:', isRegistrationFormEnabled);
+      console.log('isPaymentDetailsEnabled:', isPaymentDetailsEnabled);
+      
+      if (event.registrationProcedure && isRegistrationProcedureEnabled && (isRegistrationFormEnabled || isPaymentDetailsEnabled)) {
+        console.log('Showing registration/payment section');
+        currentY += 4;
+        addSectionHeader('REGISTRATION & PAYMENT INFORMATION', 9);
         
-        // Payment Details Box
-        doc.setFillColor(250, 250, 250);
-        doc.rect(margin, currentY, contentWidth, 45, 'F');
-        doc.setDrawColor(0, 0, 0);
-        doc.rect(margin, currentY, contentWidth, 45);
+        const regContent = [];
+        const paymentContent = [];
         
-        currentY += 8;
+        // Registration info - only if explicitly enabled
+        if (isRegistrationFormEnabled) {
+          console.log('Adding registration content');
+          regContent.push(
+            { type: 'header', text: 'REGISTRATION PROCEDURE' },
+            { type: 'content', text: `Registration can be done using photocopy of the form. Filled-in form should be sent by email.\n\nParticipant Limit: ${event.registrationProcedure.participantLimit || '60'}\nSelection: First come first served basis\n\nCertificates will be issued to participants who attend the course in full.` }
+          );
+        }
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        const paymentTitleHeight = addWrappedText('REGISTRATION FEE & PAYMENT DETAILS', margin + 5, currentY, contentWidth - 10, 12, 'bold', 'center');
-        currentY += paymentTitleHeight + 5;
-        
-        // Two column payment layout
-        const payLeftX = margin + 10;
-        const payRightX = margin + (contentWidth / 2) + 10;
-        const payStartY = currentY;
-        
-        // Left column - Fee details
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Registration Fee: ₹ 2,500/-', payLeftX, payStartY);
-        doc.text('Account Name: DIRECTOR, CSRC', payLeftX, payStartY + 8);
-        doc.text('Account No: 37614464781', payLeftX, payStartY + 16);
-        
-        // Right column - Bank details
-        doc.text('IFSC Code: SBIN0006463', payRightX, payStartY);
-        doc.text('Bank: State Bank of India', payRightX, payStartY + 8);
-        doc.text('Branch: Anna University', payRightX, payStartY + 16);
-        
-        currentY = payStartY + 30;
-      }
-
-      // Coordinators section
-      if (event.coordinators && event.coordinators.length > 0) {
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        const coordTitleHeight = addWrappedText('COORDINATORS', margin, currentY, contentWidth, 12, 'bold', 'center');
-        currentY += coordTitleHeight + 5;
-        
-        event.coordinators.forEach((coordinator, index) => {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          const coordHeight = addWrappedText(`${index + 1}. ${coordinator.name}`, margin, currentY, contentWidth, 10, 'bold', 'center');
-          currentY += coordHeight;
+        // Payment info - only if explicitly enabled
+        if (isPaymentDetailsEnabled) {
+          console.log('Adding payment content');
+          // Get registration fee from event income sources
+          let registrationFee = '₹ 2,500/-'; // Default fallback
           
-          if (coordinator.designation) {
-            doc.setFont('helvetica', 'normal');
-            const desigHeight = addWrappedText(coordinator.designation, margin, currentY, contentWidth, 10, 'normal', 'center');
-            currentY += desigHeight;
+          // Check both possible field names for income sources
+          const incomeSources = event.incomeSource || event.budgetBreakdown?.income || [];
+          console.log('Income sources:', incomeSources);
+          
+          if (incomeSources && incomeSources.length > 0) {
+            // Find the first income source that has participant fee information
+            const feeSource = incomeSources.find(source => 
+              (source.perParticipant && source.perParticipant > 0) ||
+              (source.perParticipantAmount && source.perParticipantAmount > 0)
+            );
+            
+            if (feeSource) {
+              const amount = feeSource.perParticipant || feeSource.perParticipantAmount;
+              registrationFee = `₹ ${amount}/-`;
+              
+             /* // Add GST information if available
+              const gstPercentage = feeSource.gstPercentage;
+              if (gstPercentage && gstPercentage > 0) {
+                const gstAmount = (amount * gstPercentage) / 100;
+                const totalWithGst = amount + gstAmount;
+                registrationFee = `₹ ${amount}/- + GST (${gstPercentage}%) = ₹ ${totalWithGst.toFixed(0)}/-`;
+              }*/
+            }
           }
           
-          const deptHeight = addWrappedText('CEG, Anna University, Chennai', margin, currentY, contentWidth, 10, 'normal', 'center');
-          currentY += deptHeight + 3;
-        });
+          paymentContent.push(
+            { type: 'header', text: 'PAYMENT DETAILS' },
+            { type: 'content', text: `Registration Fee: ${registrationFee}\n\nAccount Name: DIRECTOR, CSRC\nAccount No: 37614464781\nIFSC Code: SBIN0006463\nBank: State Bank of India\nBranch: Anna University` }
+          );
+        }
+        
+        if (regContent.length > 0 && paymentContent.length > 0) {
+          addTwoColumnSection(regContent, paymentContent);
+        } else if (regContent.length > 0) {
+          addTwoColumnSection(regContent, []);
+        } else if (paymentContent.length > 0) {
+          addTwoColumnSection([], paymentContent);
+        }
       } else {
-        // Default coordinators
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        const coordTitleHeight = addWrappedText('COORDINATORS', margin, currentY, contentWidth, 12, 'bold', 'center');
-        currentY += coordTitleHeight + 5;
-        
-        const defaultCoordinators = [
-          { name: 'Dr. Dejey', designation: 'Associate Professor/CSE' },
-          { name: 'Dr. P. Mohamed Fathimal', designation: 'Assistant Professor/CSE' }
-        ];
-        
-        defaultCoordinators.forEach((coordinator, index) => {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          const coordHeight = addWrappedText(`${index + 1}. ${coordinator.name}`, margin, currentY, contentWidth, 10, 'bold', 'center');
-          currentY += coordHeight;
-          
-          doc.setFont('helvetica', 'normal');
-          const desigHeight = addWrappedText(coordinator.designation, margin, currentY, contentWidth, 10, 'normal', 'center');
-          currentY += desigHeight;
-          
-          const deptHeight = addWrappedText('CEG, Anna University, Chennai', margin, currentY, contentWidth, 10, 'normal', 'center');
-          currentY += deptHeight + 3;
-        });
+        console.log('NOT showing registration/payment section - conditions not met');
       }
-    };
-
-    // PAGE 2: PERMANENT CONTENT PAGE
-    const createPermanentPage = () => {
-      doc.addPage();
-      currentY = margin;
+      console.log('=== END REGISTRATION & PAYMENT DEBUG ===');
       
-      // Header
-      doc.setFillColor(41, 98, 255);
-      doc.rect(0, 0, pageWidth, 25, 'F');
+      // Organizing Committee - Compact Three-Column Layout
+      currentY += 4;
+      addSectionHeader('ORGANIZING COMMITTEE', 9);
       
-      if (logoBase64) {
-        try {
-          doc.addImage(logoBase64, 'JPEG', 15, 3, 19, 19);
-        } catch (error) {
-          console.log('Error adding logo to PDF:', error);
+      // Get HOD information from User model via API
+      let hodInfo = 'Dr. V. Mary Anita Rajam\nProfessor and Head, Department of CSE'; // Default fallback
+      
+      // Debug logging to see what data is available
+      console.log('Event data for HOD lookup:', {
+        organizingDepartments: event.organizingDepartments,
+        coordinators: event.coordinators,
+        eventKeys: Object.keys(event)
+      });
+      
+      // Try to fetch HOD from User model first
+      try {
+        console.log('Fetching HOD from User model...');
+        const hodResponse = await usersAPI.getActiveHOD();
+        if (hodResponse && hodResponse.name) {
+          console.log('Found HOD in User model:', hodResponse);
+          hodInfo = `${hodResponse.name}\n${hodResponse.designation || 'Professor and Head, Department of CSE'}`;
+        } else {
+          console.log('No active HOD found in User model');
+        }
+      } catch (error) {
+        console.log('Error fetching HOD from User model:', error);
+        
+        // Fallback to event data if API call fails
+        // Try to get HOD from organizing departments
+        if (event.organizingDepartments?.hod) {
+          console.log('Found HOD in organizingDepartments:', event.organizingDepartments.hod);
+          const hod = event.organizingDepartments.hod;
+          hodInfo = `${hod.name}\n${hod.designation || 'Professor and Head, Department of CSE'}`;
+        } 
+        // Try to get HOD from coordinators (look for someone with HOD designation)
+        else if (event.coordinators && event.coordinators.length > 0) {
+          console.log('Searching coordinators for HOD:', event.coordinators);
+          const hodCoordinator = event.coordinators.find(coord => 
+            coord.designation && (
+              coord.designation.toLowerCase().includes('head') || 
+              coord.designation.toLowerCase().includes('hod') ||
+              coord.designation.toLowerCase().includes('professor and head')
+            )
+          );
+          
+          if (hodCoordinator) {
+            console.log('Found HOD in coordinators:', hodCoordinator);
+            hodInfo = `${hodCoordinator.name}\n${hodCoordinator.designation}`;
+          } else {
+            console.log('No HOD found in coordinators');
+          }
         }
       }
       
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ANNA UNIVERSITY - CERTIFICATE COURSE INFORMATION', pageWidth / 2, 15, { align: 'center' });
+      console.log('Final HOD info:', hodInfo);
       
-      doc.setTextColor(0, 0, 0);
-      currentY = 35;
+      // Split committee information into three columns for better space utilization
+      const committeeLeft = [
+        { type: 'header', text: 'UNIVERSITY HIERARCHY' },
+        { type: 'content', text: `Chief Patron:\nDr. R. Velraj\nVice-Chancellor, Anna University\n\nPatron:\nDr. J. Kumar\nRegistrar, Anna University` }
+      ];
       
-      // Three column layout with vertical separators
-      const col1Width = (contentWidth - 20) / 3;
-      const col2Width = (contentWidth - 20) / 3;
-      const col3Width = (contentWidth - 20) / 3;
+      const committeeCenter = [
+        { type: 'header', text: 'LEADERSHIP' },
+        { type: 'content', text: `Dean:\nDr. S. Raghavan\nDean, College of Engineering, Guindy\n\nConvenor:\n${hodInfo}` }
+      ];
       
-      const col1X = margin;
-      const col2X = margin + col1Width + 10;
-      const col3X = margin + col1Width + col2Width + 20;
+      const coordinatorsText = event.coordinators && event.coordinators.length > 0 
+        ? event.coordinators.map((coord, index) => `${index + 1}. ${coord.name}\n   ${coord.designation || 'Associate Professor/CSE'}`).join('\n\n')
+        : `1. Dr. Dejey\n   Associate Professor/CSE\n\n2. Dr. P. Mohamed Fathimal\n   Assistant Professor/CSE`;
       
-      // Draw vertical separators
-      doc.setDrawColor(0, 0, 0);
-      doc.line(col2X - 5, currentY, col2X - 5, pageHeight - 30);
-      doc.line(col3X - 5, currentY, col3X - 5, pageHeight - 30);
+      const committeeRight = [
+        { type: 'header', text: 'COORDINATORS' },
+        { type: 'content', text: coordinatorsText + '\n\nCEG, Anna University, Chennai' }
+      ];
       
-      // COLUMN 1: ABOUT THE CERTIFICATE COURSE
-      let col1Y = currentY;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ABOUT THE CERTIFICATE COURSE', col1X, col1Y);
-      col1Y += 8;
+      addThreeColumnSection(committeeLeft, committeeCenter, committeeRight);
       
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      // Contact Information - Compact Three-Column Layout
+      currentY += 4;
+      addSectionHeader('CONTACT INFORMATION', 9);
       
-      const aboutCourseText = `The objective is to build a strong foundation in Python programming and logical thinking as it is used in modern computing, data science, AI/ML, and web development, while also enabling learners to apply their knowledge to real-world problems.
-
-The topics to be covered with two modules per day are:
-
-1. Introduction to Python, Variables, Datatypes and I/O
-2. Operators, Expressions and Type Conversion
-3. Control Statements
-4. Looping Statements
-5. Functions: Built-in, User-defined & Recursion
-6. Strings and Lists
-7. Tuples, Dictionaries and Sets
-8. File Handling and Exception Handling
-9. Modules, Packages and Regular Expressions
-10. Introduction to Libraries (NumPy / Pandas / Matplotlib) and Sample Projects
-
-ABOUT THE UNIVERSITY
-
-Anna University was established on 4th September, 1978 as a unitary type of University. This University was named after Late Dr.C.N.Annadurai, former Chief Minister of Tamil Nadu. It offers higher education in Engineering, Technology, Architecture and Applied Sciences relevant to the current and projected needs of the society.
-
-The University was formed by bringing together and integrating four well known technical institutions in the city of Madras (now Chennai) namely:
-
-College of Engineering (CEG) (Established in 1794)
-Alagappa College of Technology (ACT) (Established in 1944)
-Madras Institute of Technology (MIT) (Established in 1949)
-School of Architecture & Planning (SAP) (Established in 1957)`;
+      const contactLeft = [
+        { type: 'header', text: 'UNIVERSITY ADDRESS' },
+        { type: 'content', text: `Anna University\nSardar Patel Road, Guindy\nChennai - 600 025\nTamil Nadu, India\n\nPhone: +91-44-2235 8661\nEmail: info@annauniv.edu\nWebsite: www.annauniv.edu` }
+      ];
       
-      const lines1 = doc.splitTextToSize(aboutCourseText, col1Width);
-      lines1.forEach((line, index) => {
-        if (col1Y + (index * 3.5) > pageHeight - 40) return; // Stop if reaching bottom
-        doc.text(line, col1X, col1Y + (index * 3.5));
-      });
+      const contactCenter = [
+        { type: 'header', text: 'DEPARTMENT CONTACT' },
+        { type: 'content', text: `Department of Computer Science and Engineering\nCollege of Engineering, Guindy\nAnna University\nChennai – 600 025\n\nPhone: 044-22358802\nFax: 044-22350397` }
+      ];
       
-      // COLUMN 2: REGISTRATION PROCEDURE
-      let col2Y = currentY;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('REGISTRATION PROCEDURE', col2X, col2Y);
-      col2Y += 8;
+      const contactRight = [
+        { type: 'header', text: 'COURSE COORDINATORS' },
+        { type: 'content', text: `Mobile: 9442063892\nMobile: 9943897935\n\nE-mail:\n${event.coordinatorEmail || 'eventsindcseau@gmail.com'}\n\nFor queries contact:\nDepartment Office` }
+      ];
       
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      addThreeColumnSection(contactLeft, contactCenter, contactRight);
       
-      const registrationText = `Registration can be done using photo copy of the form. Filled-in form and the proof of payment should be sent by email on or before 28.06.2025.
-
-Total number of participants is limited to Sixty only and will be selected on first come first served basis.
-
-Selected candidates will be intimated by e-mail only on 29.06.2025.
-
-Certificates will be issued to the participants who attend the Course in full and evaluation will be based on Quiz / Assignments (20%), Lab Work (30%) and Final Test (50%).
-
-ABOUT THE DEPARTMENT
-
-The Department of Computer Science and Engineering aligns its goals towards providing quality education and improving competence among students thereby living up to its motto, 'Progress Through Knowledge'. Expert engineers produced by the department stand testimony to it.
-
-The Department imparts world class training and platform for research to the students. The department provides state-of-the-art computing facilities to the students enabling them to stay a step ahead. They are exposed to various opportunities such as inplant training, internships, and workshops during their course of study.
-
-College of Engineering, Guindy has always asserted to take education beyond the four walls so that students understand the reality of the technical world.
-
-PAYMENT
-
-Account Name: DIRECTOR, CSRC
-Account Number: 37614464781
-Account Type: SAVINGS
-IFSC Code: SBIN0006463
-Bank & Branch: State Bank of India, Anna University`;
-      
-      const lines2 = doc.splitTextToSize(registrationText, col2Width);
-      lines2.forEach((line, index) => {
-        if (col2Y + (index * 3.5) > pageHeight - 40) return; // Stop if reaching bottom
-        doc.text(line, col2X, col2Y + (index * 3.5));
-      });
-      
-      // COLUMN 3: ORGANIZING COMMITTEE
-      let col3Y = currentY;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ORGANIZING COMMITTEE', col3X, col3Y);
-      col3Y += 8;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      
-      const organizingCommitteeText = `Chief Patron
-The Vice-Chancellor
-Anna University, Chennai
-
-Patron
-Dr. J Prakash
-Registrar, Anna University, Chennai
-
-Chair
-Dr. K. Easwarakumar
-Dean, CEG, Anna University, Chennai
-
-Convenor
-Dr. V. Mary Anita Rajam
-Professor and Head, Department of CSE,
-CEG, Anna University, Chennai
-
-Co-ordinators:
-1. Dr. Dejey
-Associate Professor/CSE
-
-2. Dr. P. Mohamed Fathimal
-Assistant Professor/CSE
-CEG, Anna University, Chennai
-
-CONTACT INFORMATION
-
-Address:
-Anna University
-Sardar Patel Road, Guindy
-Chennai - 600 025
-Tamil Nadu, India
-
-Phone: +91-44-2235 8661
-Email: info@annauniv.edu
-Website: www.annauniv.edu
-
-The Coordinator(s),
-Certificate Course in Python Programming
-Department of Computer Science and Engineering,
-College of Engineering, Guindy
-Anna University
-Chennai – 600 025
-
-Phone: 044-22358802
-Mobile: 9442063892 / 9943897935
-E-mail ID: eventsindcseau@gmail.com`;
-      
-      const lines3 = doc.splitTextToSize(organizingCommitteeText, col3Width);
-      lines3.forEach((line, index) => {
-        if (col3Y + (index * 3.5) > pageHeight - 40) return; // Stop if reaching bottom
-        doc.text(line, col3X, col3Y + (index * 3.5));
-      });
+      // Add registration form on second page if enabled
+      if (event.registrationProcedure && event.registrationProcedure.enabled === true && event.registrationProcedure.registrationForm && event.registrationProcedure.registrationForm.enabled === true) {
+        doc.addPage();
+        currentY = margin;
+        
+        // Compact header for registration form page
+        doc.setFillColor(41, 98, 255);
+        doc.rect(0, 0, pageWidth, 25, 'F');
+        
+        if (logoBase64) {
+          try {
+            doc.addImage(logoBase64, 'JPEG', 15, 3, 19, 19);
+          } catch (error) {
+            console.log('Error adding logo to PDF:', error);
+          }
+        }
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('REGISTRATION FORM', pageWidth / 2, 15, { align: 'center' });
+        
+        doc.setTextColor(0, 0, 0);
+        currentY = 35;
+        
+        // Form title
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        addWrappedText(`REGISTRATION FORM FOR ${event.type.toUpperCase()}`, margin, currentY, contentWidth, 16, 'bold', 'center');
+        currentY += 4;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        addWrappedText(`"${event.title}"`, margin, currentY, contentWidth, 14, 'normal', 'center');
+        currentY += 8;
+        
+        // Two-column form layout for landscape
+        const formColWidth = (contentWidth - 16) / 2;
+        const formLeftX = margin;
+        const formRightX = margin + formColWidth + 16;
+        
+        // Form fields in two columns
+        const fieldHeight = 12;
+        let leftY = currentY;
+        let rightY = currentY;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        // Left column fields
+        doc.text('Name:', formLeftX, leftY);
+        doc.line(formLeftX + 25, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += fieldHeight;
+        
+        doc.text('Age & DOB:', formLeftX, leftY);
+        doc.line(formLeftX + 35, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += fieldHeight;
+        
+        doc.text('Qualification:', formLeftX, leftY);
+        doc.line(formLeftX + 40, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += fieldHeight;
+        
+        doc.text('Institution:', formLeftX, leftY);
+        doc.line(formLeftX + 35, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += fieldHeight;
+        
+        doc.text('Address:', formLeftX, leftY);
+        doc.line(formLeftX + 30, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += 8;
+        doc.line(formLeftX, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += 8;
+        doc.line(formLeftX, leftY + 1, formLeftX + formColWidth, leftY + 1);
+        leftY += fieldHeight;
+        
+        // Right column fields
+        doc.text('Email:', formRightX, rightY);
+        doc.line(formRightX + 25, rightY + 1, formRightX + formColWidth, rightY + 1);
+        rightY += fieldHeight;
+        
+        doc.text('Mobile No.:', formRightX, rightY);
+        doc.line(formRightX + 35, rightY + 1, formRightX + formColWidth, rightY + 1);
+        rightY += fieldHeight;
+        
+        doc.text('Organization:', formRightX, rightY);
+        doc.line(formRightX + 40, rightY + 1, formRightX + formColWidth, rightY + 1);
+        rightY += fieldHeight;
+        
+        doc.text('Designation:', formRightX, rightY);
+        doc.line(formRightX + 40, rightY + 1, formRightX + formColWidth, rightY + 1);
+        rightY += fieldHeight;
+        
+        doc.text('Experience:', formRightX, rightY);
+        doc.line(formRightX + 35, rightY + 1, formRightX + formColWidth, rightY + 1);
+        rightY += fieldHeight;
+        
+        currentY = Math.max(leftY, rightY) + 8;
+        
+        // Declaration section
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        addWrappedText('DECLARATION', margin, currentY, contentWidth, 11, 'bold');
+        currentY += 4;
+        
+        const declarationText = `The information provided by me is true to the best of my knowledge. I agree to abide by the rules and regulations governing the ${event.type}. If selected, I shall attend the course for the entire duration. I also undertake the responsibility to inform the coordinators in advance if in case I am unable to attend the course.`;
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        addWrappedText(declarationText, margin, currentY, contentWidth, 9);
+        currentY += 8;
+        
+        // Signature section in two columns
+        const sigLeftX = margin;
+        const sigRightX = margin + (contentWidth / 2) + 8;
+        
+        doc.setFontSize(10);
+        doc.text('Date:', sigLeftX, currentY);
+        doc.line(sigLeftX + 25, currentY + 1, sigLeftX + 100, currentY + 1);
+        
+        doc.text('Place:', sigLeftX, currentY + 15);
+        doc.line(sigLeftX + 25, currentY + 16, sigLeftX + 100, currentY + 16);
+        
+        doc.text('Signature of the Applicant:', sigRightX, currentY);
+        doc.line(sigRightX, currentY + 15, sigRightX + 120, currentY + 15);
+        
+        currentY += 25;
+        
+        // Note
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        addWrappedText('Note: Applicant may use printout or photocopy of the above format/page', margin, currentY, contentWidth, 8, 'italic', 'center');
+      }
     };
 
-    // Footer function
+    // Enhanced footer with modern design
     const addFooter = (pageNum) => {
-      const footerY = pageHeight - 20;
-      doc.setFillColor(41, 98, 255);
-      doc.rect(0, footerY - 5, pageWidth, 25, 'F');
+      const footerY = pageHeight - 25;
       
+      // Modern gradient footer
+      addGradientBackground(0, footerY, pageWidth, 25, colors.gradient2, colors.gradient1);
+      
+      // Add decorative elements
+      doc.setFillColor(255, 255, 255, 0.1);
+      doc.circle(20, footerY + 12, 8, 'F');
+      doc.circle(pageWidth - 20, footerY + 12, 6, 'F');
+      
+      // Add logo in footer
       if (logoBase64) {
         try {
-          doc.addImage(logoBase64, 'JPEG', 15, footerY - 2, 15, 15);
+          doc.addImage(logoBase64, 'JPEG', 15, footerY + 3, 18, 18);
         } catch (error) {
           console.log('Error adding footer logo:', error);
         }
       }
       
+      // Footer content with better typography
       doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ANNA UNIVERSITY', pageWidth / 2, footerY + 8, { align: 'center' });
+      
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text('For more information, visit: www.annauniv.edu', pageWidth / 2, footerY + 3, { align: 'center' });
+      doc.text('For more information, visit: www.annauniv.edu', pageWidth / 2, footerY + 14, { align: 'center' });
       
       doc.setFontSize(7);
-      doc.text('Email: info@annauniv.edu | Phone: +91-44-2235-7120', pageWidth / 2, footerY + 10, { align: 'center' });
-      doc.text(`E-mail ID: ${event.coordinatorEmail || 'eventsindcseau@gmail.com'}`, pageWidth / 2, footerY + 15, { align: 'center' });
+      doc.text('Email: info@annauniv.edu | Phone: +91-44-2235-7120', pageWidth / 2, footerY + 18, { align: 'center' });
+      doc.text(`Event Contact: ${event.coordinatorEmail || 'eventsindcseau@gmail.com'}`, pageWidth / 2, footerY + 22, { align: 'center' });
+      
+      // Add page number with modern styling
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Page ${pageNum}`, pageWidth - 25, footerY + 12);
     };
 
-    // Choose layout based on layoutType parameter
-    if (layoutType === 'landscape') {
-      // Generate landscape layout with permanent content
-      createMainPage();
-      createPermanentPage();
-    } else {
-      // Generate standard portrait layout with all original features
-      generateStandardBrochure();
-    }
+    // Generate optimized landscape layout - single page with all content
+    await createOptimizedLandscapePage();
 
-    // Add footers to all pages
+    // Add footers to all pages except the first page
     const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
+    for (let i = 2; i <= pageCount; i++) {
       doc.setPage(i);
       addFooter(i);
     }
 
     return doc;
 
-    // STANDARD BROCHURE GENERATION FUNCTION
-    function generateStandardBrochure() {
-      // Header with Anna University Logo and Title
-      const addHeader = () => {
-        // Anna University Header
-        doc.setFillColor(41, 98, 255); // Blue background
-        doc.rect(0, 0, pageWidth, 35, 'F');
-        
-        // Add Anna University logo if available
-        if (logoBase64) {
-          try {
-            doc.addImage(logoBase64, 'JPEG', 15, 5, 25, 25);
-          } catch (error) {
-            console.log('Error adding logo to PDF:', error);
-          }
-        }
-        
-        // Anna University Text (centered)
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('ANNA UNIVERSITY', pageWidth / 2, 12, { align: 'center' });
-        
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text('College of Engineering, Guindy', pageWidth / 2, 20, { align: 'center' });
-        doc.text('Chennai - 600 025', pageWidth / 2, 28, { align: 'center' });
-        
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
-        currentY = 45;
-        
-        // Event Title
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        const titleLines = doc.splitTextToSize(event.title.toUpperCase(), contentWidth);
-        doc.text(titleLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += titleLines.length * 8 + sectionSpacing;
-        
-        // Dynamic organization text
-        const primaryDept = event.organizingDepartments?.primary || "Department of Computer Science and Engineering";
-        const associativeDepts = event.organizingDepartments?.associative || [];
-        
-        let organizationText = '';
-        if (associativeDepts.length > 0) {
-          organizationText = `Organised jointly by ${primaryDept}`;
-          associativeDepts.forEach(dept => {
-            organizationText += ` and ${dept}`;
-          });
-        } else {
-          organizationText = `Organised by ${primaryDept}`;
-        }
-        
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(organizationText, pageWidth / 2, currentY, { align: 'center' });
-        currentY += lineHeight + sectionSpacing;
-        
-        // Event Type and Duration
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        
-        // Enhance duration display with intelligent formatting
-        const enhancedDuration = event.duration || generateSmartDuration(event);
-        doc.text(`${event.type} | ${enhancedDuration}`, pageWidth / 2, currentY, { align: 'center' });
-        currentY += lineHeight + sectionSpacing;
-        
-        // Dates
-        const startDate = new Date(event.startDate).toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-        const endDate = new Date(event.endDate).toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${startDate} - ${endDate}`, pageWidth / 2, currentY, { align: 'center' });
-        currentY += lineHeight + sectionSpacing * 2;
-        
-        // Add a line separator
-        doc.setDrawColor(0, 0, 0);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += sectionSpacing;
-      };
-
-      // Parse and format the enhanced description
-      const formatEnhancedText = (text) => {
-        const paragraphs = text.split('\n\n');
-        
-        paragraphs.forEach(paragraph => {
-          if (paragraph.trim() === '') return;
-          
-          // Check if this is a header line (all caps or starts with specific keywords)
-          if (paragraph.match(/^[A-Z\s:]+$/) || paragraph.startsWith('KEY LEARNING') || paragraph.startsWith('EXPECTED LEARNING') || paragraph.startsWith('WHY CHOOSE')) {
-            addWrappedText(paragraph, margin, currentY, contentWidth, 10, 'bold');
-            currentY += 2;
-          } else {
-            addWrappedText(paragraph, margin, currentY, contentWidth, 9);
-            currentY += 3;
-          }
-        });
-      };
-
-      // Helper function to add committee member with proper formatting
-      const addCommitteeMember = (title, member, isDefault = false) => {
-        checkPageBreak(25);
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(title, margin, currentY);
-        currentY += 5;
-        
-        if (member) {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text(member.name || member, margin + 5, currentY);
-          currentY += 4;
-          
-          if (member.designation) {
-            doc.setFont('helvetica', 'normal');
-            doc.text(member.designation, margin + 5, currentY);
-            currentY += 4;
-          }
-          
-          if (member.department) {
-            doc.text(member.department, margin + 5, currentY);
-            currentY += 4;
-          }
-          
-          if (member.institution) {
-            doc.text(member.institution, margin + 5, currentY);
-            currentY += 4;
-          }
-        } else if (isDefault) {
-          // Add default hierarchy when no specific data is available
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.text('To be announced', margin + 5, currentY);
-          currentY += 4;
-        }
-        
-        currentY += 3;
-      };
-
-      // Start generating the standard brochure
-      addHeader();
-
-      // Enhanced Event Details Section with AI-generated content
-      addSectionHeader(`ABOUT THE ${event.type?.toUpperCase() || 'COURSE'}`);
-      
-      const enhancedDescription = generateAdvancedDescription(event);
-      formatEnhancedText(enhancedDescription);
-      currentY += 4;
-
-      // Event Information
-      addSectionHeader('EVENT INFORMATION');
-      
-      const eventInfoLeft = [
-        { type: 'header', text: 'VENUE:' },
-        { type: 'content', text: generateSmartVenue(event) },
-        { type: 'header', text: 'MODE:' },
-        { type: 'content', text: event.mode || 'Offline' }
-      ];
-      
-      const eventInfoRight = [
-        { type: 'header', text: 'TARGET AUDIENCE:' },
-        { type: 'content', text: generateSmartTargetAudience(event) },
-        { type: 'header', text: 'RESOURCE PERSONS:' },
-        { type: 'content', text: generateSmartResourcePersons(event) }
-      ];
-      
-      addTwoColumnSection(eventInfoLeft, eventInfoRight);
-
-      // About Anna University Section
-      addSectionHeader('ABOUT THE UNIVERSITY');
-      
-      const aboutAnnaUnivText = `Anna University was established on 4th September, 1978 as a unitary type of University named after Late Dr.C.N.Annadurai, former Chief Minister of Tamil Nadu. It offers higher education in Engineering, Technology, Architecture and Applied Sciences relevant to current and projected societal needs.
-
-The University integrates four well-known technical institutions in Chennai:
-• College of Engineering (CEG) (Established in 1794)
-• Alagappa College of Technology (ACT) (Established in 1944)
-• Madras Institute of Technology (MIT) (Established in 1949)
-• School of Architecture & Planning (SAP) (Established in 1957)`;
-      
-      addWrappedText(aboutAnnaUnivText, margin, currentY, contentWidth, 9);
-      currentY += 4;
-
-      // About Department Section
-      addSectionHeader('ABOUT THE DEPARTMENT');
-      
-      const aboutDeptText = `The Department of Computer Science and Engineering aligns its goals towards providing quality education and improving competence among students, living up to its motto, 'Progress Through Knowledge'. 
-
-The Department imparts world-class training and research platforms to students with state-of-the-art computing facilities. Students are exposed to various opportunities such as in-plant training, internships, and workshops during their course of study, preparing them for the technical world beyond academics.`;
-      
-      addWrappedText(aboutDeptText, margin, currentY, contentWidth, 9);
-      currentY += 4;
-
-      // Registration Procedure (if enabled)
-      if (event.registrationProcedure && event.registrationProcedure.enabled) {
-        addSectionHeader('REGISTRATION INFORMATION');
-        
-        // Registration Instructions
-        if (event.registrationProcedure.instructions) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Registration Instructions:', margin, currentY);
-          currentY += lineHeight;
-          
-          addWrappedText(event.registrationProcedure.instructions, margin, currentY, contentWidth, 9);
-          currentY += sectionSpacing;
-        }
-        
-        // Registration Details in two columns
-        const regInfoLeft = [];
-        const regInfoRight = [];
-        
-        // Registration Method
-        if (event.registrationProcedure.submissionMethod) {
-          regInfoLeft.push(
-            { type: 'header', text: 'REGISTRATION METHOD:' },
-            { type: 'content', text: event.registrationProcedure.submissionMethod.toUpperCase() }
-          );
-        }
-        
-        // Registration Deadline
-        if (event.registrationProcedure.deadline) {
-          regInfoLeft.push(
-            { type: 'header', text: 'REGISTRATION DEADLINE:' },
-            { type: 'content', text: new Date(event.registrationProcedure.deadline).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            }) }
-          );
-        }
-        
-        // Participant Limit
-        if (event.registrationProcedure.participantLimit) {
-          regInfoLeft.push(
-            { type: 'header', text: 'PARTICIPANT LIMIT:' },
-            { type: 'content', text: event.registrationProcedure.participantLimit.toString() }
-          );
-        }
-        
-        // Selection Criteria
-        if (event.registrationProcedure.selectionCriteria) {
-          regInfoRight.push(
-            { type: 'header', text: 'SELECTION CRITERIA:' },
-            { type: 'content', text: event.registrationProcedure.selectionCriteria }
-          );
-        }
-        
-        // Confirmation Date
-        if (event.registrationProcedure.confirmationDate) {
-          regInfoRight.push(
-            { type: 'header', text: 'CONFIRMATION DATE:' },
-            { type: 'content', text: new Date(event.registrationProcedure.confirmationDate).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            }) }
-          );
-        }
-        
-        // Confirmation Method
-        if (event.registrationProcedure.confirmationMethod) {
-          regInfoRight.push(
-            { type: 'header', text: 'CONFIRMATION METHOD:' },
-            { type: 'content', text: event.registrationProcedure.confirmationMethod.toUpperCase() }
-          );
-        }
-        
-        if (regInfoLeft.length > 0 || regInfoRight.length > 0) {
-          addTwoColumnSection(regInfoLeft, regInfoRight);
-        }
-        
-        // Additional Notes
-        if (event.registrationProcedure.additionalNotes) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Additional Instructions:', margin, currentY);
-          currentY += lineHeight;
-          
-          addWrappedText(event.registrationProcedure.additionalNotes, margin, currentY, contentWidth, 9);
-          currentY += sectionSpacing;
-        }
-
-        // Certificate Requirements (if enabled)
-        if (event.registrationProcedure.certificateRequirements && event.registrationProcedure.certificateRequirements.enabled) {
-          addSectionHeader('CERTIFICATE REQUIREMENTS');
-          
-          if (event.registrationProcedure.certificateRequirements.attendanceRequired) {
-            addWrappedText('• Minimum attendance required for certificate eligibility', margin, currentY, contentWidth, 9);
-            currentY += lineHeight;
-          }
-          
-          const evaluation = event.registrationProcedure.certificateRequirements.evaluation;
-          if (evaluation) {
-            let evalText = 'Evaluation Criteria:\n';
-            
-            if (evaluation.quiz && evaluation.quiz.enabled) {
-              evalText += `�� Quiz: ${evaluation.quiz.percentage}%\n`;
-            }
-            if (evaluation.assignment && evaluation.assignment.enabled) {
-              evalText += `• Assignment: ${evaluation.assignment.percentage}%\n`;
-            }
-            if (evaluation.labWork && evaluation.labWork.enabled) {
-              evalText += `• Lab Work: ${evaluation.labWork.percentage}%\n`;
-            }
-            if (evaluation.finalTest && evaluation.finalTest.enabled) {
-              evalText += `• Final Test: ${evaluation.finalTest.percentage}%\n`;
-            }
-            
-            if (evalText !== 'Evaluation Criteria:\n') {
-              addWrappedText(evalText, margin, currentY, contentWidth, 9);
-              currentY += sectionSpacing;
-            }
-          }
-        }
-
-        // Payment Details (if enabled)
-        if (event.registrationProcedure.paymentDetails && event.registrationProcedure.paymentDetails.enabled) {
-          addSectionHeader('PAYMENT DETAILS');
-          
-          const paymentLeft = [
-            { type: 'header', text: 'ACCOUNT NAME:' },
-            { type: 'content', text: event.registrationProcedure.paymentDetails.accountName || 'DIRECTOR, CSRC' },
-            { type: 'header', text: 'ACCOUNT NUMBER:' },
-            { type: 'content', text: event.registrationProcedure.paymentDetails.accountNumber || '37614464781' },
-            { type: 'header', text: 'ACCOUNT TYPE:' },
-            { type: 'content', text: event.registrationProcedure.paymentDetails.accountType || 'SAVINGS' }
-          ];
-          
-          const paymentRight = [
-            { type: 'header', text: 'IFSC CODE:' },
-            { type: 'content', text: event.registrationProcedure.paymentDetails.ifscCode || 'SBIN0006463' },
-            { type: 'header', text: 'BANK & BRANCH:' },
-            { type: 'content', text: event.registrationProcedure.paymentDetails.bankBranch || 'State Bank of India, Anna University' }
-          ];
-          
-          addTwoColumnSection(paymentLeft, paymentRight);
-          
-          // Additional Payment Information
-          if (event.registrationProcedure.paymentDetails.additionalPaymentInfo) {
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Additional Payment Information:', margin, currentY);
-            currentY += lineHeight;
-            
-            addWrappedText(event.registrationProcedure.paymentDetails.additionalPaymentInfo, margin, currentY, contentWidth, 9);
-            currentY += sectionSpacing;
-          }
-        }
-
-        // Registration Form (if enabled)
-        if (event.registrationProcedure.registrationForm && event.registrationProcedure.registrationForm.enabled) {
-          // Check if we need a new page for the registration form
-          checkPageBreak(200);
-          
-          addSectionHeader('REGISTRATION FORM');
-          
-          // Form title
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`REGISTRATION FORM FOR ${event.type.toUpperCase()}`, pageWidth / 2, currentY, { align: 'center' });
-          currentY += lineHeight * 1.5;
-          
-          doc.setFontSize(11);
-          doc.text(`"${event.title}"`, pageWidth / 2, currentY, { align: 'center' });
-          currentY += lineHeight * 1.5;
-          
-          // Dynamic form fields based on event configuration
-          const fields = event.registrationProcedure.registrationForm.fields;
-          const fieldHeight = 15;
-          
-          if (fields) {
-            // Name field
-            if (fields.name) {
-              doc.setFontSize(10);
-              doc.setFont('helvetica', 'normal');
-              doc.text('Name:', margin, currentY);
-              doc.line(margin + 25, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Age & DOB field
-            if (fields.ageAndDob) {
-              doc.text('Age & DOB:', margin, currentY);
-              doc.line(margin + 45, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Qualification field
-            if (fields.qualification) {
-              doc.text('Qualification:', margin, currentY);
-              doc.line(margin + 50, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Institution field
-            if (fields.institution) {
-              doc.text('Institution:', margin, currentY);
-              doc.line(margin + 45, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Category selection (if enabled)
-            if (fields.category && fields.category.enabled) {
-              doc.text('Pick the one that best describes you:', margin, currentY);
-              currentY += lineHeight + 3;
-              
-              // Get category options from event configuration or use defaults
-              const categoryOptions = fields.category.options || [
-                'Student from a Non-Government School',
-                'Student of / who has just passed Class XII from a Government School*',
-                'A programming enthusiast'
-              ];
-              
-              categoryOptions.forEach((option) => {
-                // Checkbox
-                doc.rect(margin + 5, currentY - 2, 3, 3);
-                doc.text(option, margin + 15, currentY);
-                currentY += lineHeight;
-              });
-              currentY += 5;
-            }
-            
-            // Address field
-            if (fields.address) {
-              doc.text('Address for Communication:', margin, currentY);
-              currentY += lineHeight;
-              // Multiple lines for address
-              for (let i = 0; i < 3; i++) {
-                doc.line(margin, currentY + 1, pageWidth - margin, currentY + 1);
-                currentY += fieldHeight - 3;
-              }
-              currentY += 5;
-            }
-            
-            // Email field
-            if (fields.email) {
-              doc.text('Email:', margin, currentY);
-              doc.line(margin + 25, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Mobile field
-            if (fields.mobile) {
-              doc.text('Mobile No.:', margin, currentY);
-              doc.line(margin + 45, currentY + 1, pageWidth - margin, currentY + 1);
-              currentY += fieldHeight;
-            }
-            
-            // Custom fields (if any)
-            if (event.registrationProcedure.registrationForm.customFields) {
-              event.registrationProcedure.registrationForm.customFields.forEach(field => {
-                doc.text(`${field.fieldName}:`, margin, currentY);
-                doc.line(margin + 60, currentY + 1, pageWidth - margin, currentY + 1);
-                currentY += fieldHeight;
-              });
-            }
-          }
-          
-          currentY += sectionSpacing;
-          
-          // Additional Requirements (dynamic)
-          if (event.registrationProcedure.registrationForm.additionalRequirements) {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'italic');
-            addWrappedText(event.registrationProcedure.registrationForm.additionalRequirements, margin, currentY, contentWidth, 9);
-            currentY += sectionSpacing;
-          }
-          
-          // Declaration section
-          checkPageBreak(80);
-          
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('DECLARATION', margin, currentY);
-          currentY += lineHeight + 3;
-          
-          // Dynamic declaration text based on event type
-          const declarationText = `The information provided by me is true to the best of my knowledge. I agree to abide by the rules and regulations governing the ${event.type}. If selected, I shall attend the course for the entire duration. I also undertake the responsibility to inform the coordinators in advance if in case I am unable to attend the course.`;
-          
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          addWrappedText(declarationText, margin, currentY, contentWidth, 10);
-          currentY += sectionSpacing + 10;
-          
-          // Signature section
-          const sigY = currentY;
-          doc.setFontSize(10);
-          
-          // Date and Place on same line
-          doc.text('Date:', margin, sigY);
-          doc.line(margin + 25, sigY + 1, margin + 100, sigY + 1);
-          
-          doc.text('Place:', margin + 120, sigY);
-          doc.line(margin + 145, sigY + 1, pageWidth - margin, sigY + 1);
-          
-          // Signature
-          doc.text('Signature of the Applicant:', margin, sigY + 20);
-          doc.line(margin + 80, sigY + 21, pageWidth - margin, sigY + 21);
-          
-          currentY = sigY + 35;
-          
-          // Note for printout/photocopy (dynamic based on submission method)
-          if (event.registrationProcedure.submissionMethod === 'physical' || 
-              event.registrationProcedure.submissionMethod === 'email') {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'italic');
-            doc.text('Note: Applicant may use printout or photocopy of the above format/page', margin, currentY);
-            currentY += lineHeight;
-          }
-        }
-      }
-
-      // Enhanced Organizing Committee section with proper university hierarchy
-      addSectionHeader('ORGANIZING COMMITTEE');
-      
-      // Check if we have organizing committee data from database
-      if (event.organizingCommittee && event.organizingCommittee.length > 0) {
-        // Find members by role from database
-        const chiefPatron = event.organizingCommittee.find(member => member.role === 'Chief Patron');
-        const patron = event.organizingCommittee.find(member => member.role === 'Patron');
-        const chair = event.organizingCommittee.find(member => member.role === 'Chair' || member.role === 'Chairman');
-        const convenor = event.organizingCommittee.find(member => member.role === 'Convenor' || member.role === 'Head of Department');
-        const members = event.organizingCommittee.filter(member => member.role === 'Member');
-        
-        // Display in proper hierarchy order
-        if (chiefPatron) {
-          addCommitteeMember('Chief Patron', chiefPatron);
-        }
-        
-        if (patron) {
-          addCommitteeMember('Patron', patron);
-        }
-        
-        if (chair) {
-          addCommitteeMember('Chair', chair);
-        }
-        
-        if (convenor) {
-          addCommitteeMember('Convenor', convenor);
-        }
-        
-        // Add other members
-        members.forEach((member, index) => {
-          addCommitteeMember(`Member ${index + 1}`, member);
-        });
-        
-      } else {
-        // Default Anna University hierarchy structure using current database values
-        addCommitteeMember('Chief Patron', {
-          name: 'Dr. R. Velraj',
-          designation: 'Vice-Chancellor',
-          department: 'Anna University, Chennai',
-          institution: ''
-        });
-        
-        addCommitteeMember('Patron', {
-          name: 'Dr. J. Kumar',
-          designation: 'Registrar',
-          department: 'Anna University, Chennai',
-          institution: ''
-        });
-        
-        addCommitteeMember('Chair', {
-          name: 'Dr. S. Raghavan',
-          designation: 'Dean',
-          department: 'College of Engineering, Guindy',
-          institution: 'Anna University, Chennai'
-        });
-        
-        addCommitteeMember('Convenor', {
-          name: 'Dr. V. Mary Anita Rajam',
-          designation: 'Professor and Head',
-          department: 'Department of Computer Science and Engineering',
-          institution: 'CEG, Anna University, Chennai'
-        });
-      }
-      
-      // Co-ordinators section
-      if (event.coordinators && event.coordinators.length > 0) {
-        checkPageBreak(30);
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Co-ordinators:', margin, currentY);
-        currentY += 6;
-        
-        event.coordinators.forEach((coordinator, index) => {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${index + 1}. ${coordinator.name}`, margin + 5, currentY);
-          currentY += 4;
-          
-          if (coordinator.designation) {
-            doc.setFont('helvetica', 'normal');
-            doc.text(`   ${coordinator.designation}`, margin + 5, currentY);
-            currentY += 4;
-          }
-          
-          if (coordinator.department) {
-            doc.text(`   ${coordinator.department}`, margin + 5, currentY);
-            currentY += 4;
-          } else {
-            doc.text('   Department of Computer Science and Engineering', margin + 5, currentY);
-            currentY += 4;
-          }
-          
-          doc.text('   CEG, Anna University, Chennai', margin + 5, currentY);
-          currentY += 6;
-        });
-      } else {
-        // Default coordinators when none are specified
-        checkPageBreak(30);
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Co-ordinators:', margin, currentY);
-        currentY += 6;
-        
-        // Default coordinator structure
-        const defaultCoordinators = [
-          {
-            name: 'Dr. Dejey',
-            designation: 'Associate Professor/CSE'
-          },
-          {
-            name: 'Dr. P. Mohamed Fathimal',
-            designation: 'Assistant Professor/CSE'
-          }
-        ];
-        
-        defaultCoordinators.forEach((coordinator, index) => {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${index + 1}. ${coordinator.name}`, margin + 5, currentY);
-          currentY += 4;
-          
-          doc.setFont('helvetica', 'normal');
-          doc.text(`   ${coordinator.designation}`, margin + 5, currentY);
-          currentY += 4;
-          
-          doc.text('   CEG, Anna University, Chennai', margin + 5, currentY);
-          currentY += 6;
-        });
-      }
-      
-      currentY += 4;
-
-      // Contact Information Section
-      addSectionHeader('CONTACT INFORMATION');
-      
-      const contactLeft = [
-        { type: 'header', text: 'ADDRESS:' },
-        { type: 'content', text: 'Anna University\nSardar Patel Road, Guindy\nChennai - 600 025\nTamil Nadu, India' },
-        { type: 'header', text: 'PHONE:' },
-        { type: 'content', text: '+91-44-2235 8661' }
-      ];
-      
-      const contactRight = [
-        { type: 'header', text: 'EMAIL:' },
-        { type: 'content', text: 'info@annauniv.edu' },
-        { type: 'header', text: 'WEBSITE:' },
-        { type: 'content', text: 'www.annauniv.edu' }
-      ];
-      
-      addTwoColumnSection(contactLeft, contactRight);
-    }
   } catch (error) {
     console.error('Error generating brochure:', error);
     throw error;
