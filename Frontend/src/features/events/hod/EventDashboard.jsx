@@ -100,7 +100,7 @@ const HODEventDashboard = () => {
 
   const fetchParticipants = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}/participants`, {
+      const response = await axios.get(`http://localhost:4000/api/hod/events/${eventId}/participants`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       

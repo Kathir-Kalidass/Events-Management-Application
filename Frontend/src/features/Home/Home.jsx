@@ -199,6 +199,17 @@ const Home = () => {
       >
         Team
       </Button>
+      <Button 
+        color="inherit" 
+        onClick={() => scrollToSection('login')}
+        sx={{ 
+          mx: 1, 
+          '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+          borderRadius: 2
+        }}
+      >
+        Login
+      </Button>
     </>
   );
 
@@ -219,6 +230,10 @@ const Home = () => {
       <ListItem button onClick={() => scrollToSection('team')}>
         <ListItemIcon><Group /></ListItemIcon>
         <ListItemText primary="Team" />
+      </ListItem>
+      <ListItem button onClick={() => scrollToSection('login')}>
+        <ListItemIcon><Group /></ListItemIcon>
+        <ListItemText primary="Login" />
       </ListItem>
     </List>
   );
@@ -736,7 +751,7 @@ const Home = () => {
                   borderRadius: 2
                 }}
               >
-                <Box display="flex" alignItems="center" mb={2}>
+                <Box Box id="login" display="flex" alignItems="center" mb={2}>
                   <Info sx={{ color: '#856404', mr: 1 }} />
                   <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#856404' }}>
                     First Time Login Information

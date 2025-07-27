@@ -106,3 +106,18 @@ export const eventsAPI = {
     return response.json();
   }
 };
+
+// Users API calls
+export const usersAPI = {
+  // Get active HOD details
+  getActiveHOD: async () => {
+    const response = await fetch(`${API_BASE}/coordinator/getHOD`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch HOD details');
+    }
+    return response.json();
+  }
+};
