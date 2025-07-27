@@ -160,14 +160,14 @@ const AdminLogin = () => {
           </Button>
         </Box>
 
-        <Box textAlign="center" mt={2}>
-          <Typography variant="body2" color="text.secondary">
-            Default credentials: admin@university.edu / admin123
-          </Typography>
-        </Box>
+        <!-- Optional: Add a link to the user login page if needed -->
       </Paper>
     </Container>
   );
 };
-
+/*<Box textAlign="center" mt={2}>
+          <Typography variant="body2" color="text.secondary">
+            Default credentials: admin@university.edu / admin123
+          </Typography>
+        </Box>*/
 export default AdminLogin;

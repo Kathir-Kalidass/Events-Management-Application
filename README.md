@@ -1,5 +1,9 @@
 # 🎓 Events Management Application
-
+----------------------------------------------
+## ADMIN LOGIN                            
+- [User ID] : admin@university.edu        
+- [PASSWORD] : admin123
+----------------------------------------------
 <div align="center">
 
 ![Events Management](https://img.shields.io/badge/Events-Management-blue?style=for-the-badge)
