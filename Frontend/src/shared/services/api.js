@@ -1,6 +1,6 @@
 // API service for making backend requests
 
-const API_BASE = "http://10.5.12.1:4000/api";
+const API_BASE = "http://localhost:4000/api";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

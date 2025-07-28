@@ -46,6 +46,9 @@ import {
   toggleHODStatus
 } from '../../../shared/middleware/hodManagementMiddleware.js';
 
+// Import profile controller
+import { getProfileStats, updateProfile, getProfile, changePassword } from '../controllers/profileController.js';
+
 const hodRoutes = express.Router();
 
 // Apply authentication middleware to all HOD routes
@@ -53,6 +56,12 @@ hodRoutes.use(authMiddleware);
 
 // Apply HOD role authorization to all routes
 hodRoutes.use(authorizeRoles('hod', 'admin'));
+
+// Profile management routes
+hodRoutes.get('/profile/stats', getProfileStats);
+hodRoutes.get('/profile', getProfile);
+hodRoutes.put('/profile', updateProfile);
+hodRoutes.put('/change-password', changePassword);
 
 hodRoutes.get('/allEvents/', allEvents);
 hodRoutes.get('/events/:id', getProgrammeById); // Individual event details

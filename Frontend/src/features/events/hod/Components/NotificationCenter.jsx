@@ -60,7 +60,7 @@ const NotificationCenter = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://10.5.12.1:4000/api/hod/notifications',
+        'http://localhost:4000/api/hod/notifications',
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNotifications(response.data.notifications || []);
@@ -134,7 +134,7 @@ const NotificationCenter = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://10.5.12.1:4000/api/hod/notifications/${notificationId}/read`,
+        `http://localhost:4000/api/hod/notifications/${notificationId}/read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -158,7 +158,7 @@ const NotificationCenter = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://10.5.12.1:4000/api/hod/notifications/${notificationId}`,
+        `http://localhost:4000/api/hod/notifications/${notificationId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -175,7 +175,7 @@ const NotificationCenter = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        'http://10.5.12.1:4000/api/hod/notifications/mark-all-read',
+        'http://localhost:4000/api/hod/notifications/mark-all-read',
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

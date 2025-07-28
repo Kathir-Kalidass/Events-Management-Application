@@ -219,7 +219,7 @@ const SignatureDrawingPad = ({ onSignatureSaved, existingSignature = null }) => 
       
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/hod/signature/upload`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/signature/upload`,
         {
           imageData: signatureDataURL,
           fileName: `signature-${Date.now()}.png`,

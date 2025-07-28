@@ -1,5 +1,6 @@
 import User from '../../../shared/models/userModel.js';
 import event from '../../../shared/models/eventModel.js';
+import bcrypt from 'bcryptjs';
 
 // Get profile statistics
 export const getProfileStats = async (req, res) => {
@@ -198,6 +199,87 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Failed to fetch profile', 
+      error: error.message 
+    });
+  }
+};
+
+// Change password
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { currentPassword, newPassword } = req.body;
+    
+    console.log('🔐 Password change request for user:', userId);
+    
+    // Validate required fields
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required'
+      });
+    }
+
+    // Validate new password length
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+
+    // Get user with password
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Check if new password is different from current password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from current password'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { password: hashedNewPassword } },
+      { new: true }
+    );
+    
+    console.log('✅ Password changed successfully for user:', user.name);
+    
+    res.json({ 
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('❌ Password change error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to change password', 
       error: error.message 
     });
   }

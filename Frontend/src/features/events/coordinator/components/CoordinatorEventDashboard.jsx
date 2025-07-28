@@ -94,7 +94,7 @@ const CoordinatorEventDashboard = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/programmes/${eventId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setEvent(response.data);
@@ -117,7 +117,7 @@ const CoordinatorEventDashboard = () => {
 
   const fetchParticipants = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/events/${eventId}/participants`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/events/${eventId}/participants`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       
@@ -143,7 +143,7 @@ const CoordinatorEventDashboard = () => {
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/programmes/${eventId}`, {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         enqueueSnackbar("Event deleted successfully", { variant: "success" });
@@ -168,7 +168,7 @@ const CoordinatorEventDashboard = () => {
       };
 
       await axios.post(
-        `http://10.5.12.1:4000/api/coordinator/programmes/${eventId}/claim`,
+        `http://localhost:4000/api/coordinator/programmes/${eventId}/claim`,
         claimPayload,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -256,7 +256,7 @@ const CoordinatorEventDashboard = () => {
 
   const viewProposalPDF = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/programmes/${eventId}/pdf`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/programmes/${eventId}/pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,

@@ -99,12 +99,13 @@ coordinatorRoutes.use((req, res, next) => {
 coordinatorRoutes.get('/getHOD', getHod);
 
 // Import profile controller
-import { getProfileStats, updateProfile, getProfile } from '../controllers/profileController.js';
+import { getProfileStats, updateProfile, getProfile, changePassword } from '../controllers/profileController.js';
 
 // Profile management routes
 coordinatorRoutes.get('/profile/stats', getProfileStats);
 coordinatorRoutes.get('/profile', getProfile);
 coordinatorRoutes.put('/profile', updateProfile);
+coordinatorRoutes.put('/change-password', changePassword);
 
 coordinatorRoutes.route('/programmes')
   .get(getProgrammes)

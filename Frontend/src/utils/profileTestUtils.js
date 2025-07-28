@@ -23,7 +23,7 @@ export const testProfileUpdate = async () => {
     console.log('Testing profile update with data:', testData);
 
     const response = await axios.put(
-      'http://10.5.12.1:4000/api/coordinator/profile',
+      'http://localhost:4000/api/coordinator/profile',
       testData,
       {
         headers: { 
@@ -56,7 +56,7 @@ export const testProfileFetch = async () => {
     console.log('Testing profile fetch...');
 
     const response = await axios.get(
-      'http://10.5.12.1:4000/api/coordinator/profile',
+      'http://localhost:4000/api/coordinator/profile',
       {
         headers: { Authorization: `Bearer ${token}` }
       }
@@ -85,7 +85,7 @@ export const testProfileStats = async () => {
     console.log('Testing profile stats fetch...');
 
     const response = await axios.get(
-      'http://10.5.12.1:4000/api/coordinator/profile/stats',
+      'http://localhost:4000/api/coordinator/profile/stats',
       {
         headers: { Authorization: `Bearer ${token}` }
       }

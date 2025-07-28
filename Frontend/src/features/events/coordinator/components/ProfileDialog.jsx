@@ -27,7 +27,10 @@ import {
   Work,
   LocationOn,
   CalendarToday,
-  Badge
+  Badge,
+  Lock,
+  Visibility,
+  VisibilityOff
 } from '@mui/icons-material';
 import { eventState } from '../../../../shared/context/eventProvider';
 import { useSnackbar } from 'notistack';
@@ -71,6 +74,11 @@ const ProfileDialog = ({ open, onClose }) => {
   
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [changePasswordMode, setChangePasswordMode] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -83,6 +91,11 @@ const ProfileDialog = ({ open, onClose }) => {
     bio: '',
     specializations: [],
     qualifications: []
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
   // Initialize profile data when dialog opens
@@ -113,6 +126,84 @@ const ProfileDialog = ({ open, onClose }) => {
     }));
   }, []);
 
+  // Password change handlers
+  const handlePasswordInputChange = useCallback((event) => {
+    const { name, value } = event.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }, []);
+
+  const handleChangePassword = useCallback(async () => {
+    try {
+      setPasswordLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        enqueueSnackbar('All password fields are required', { variant: 'error' });
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        enqueueSnackbar('New password and confirm password do not match', { variant: 'error' });
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        enqueueSnackbar('New password must be at least 6 characters long', { variant: 'error' });
+        return;
+      }
+
+      const response = await axios.put(
+        'http://localhost:4000/api/coordinator/change-password',
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        },
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setChangePasswordMode(false);
+        enqueueSnackbar('Password changed successfully!', { variant: 'success' });
+      } else {
+        throw new Error(response.data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      let errorMessage = 'Failed to change password';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    } finally {
+      setPasswordLoading(false);
+    }
+  }, [passwordData, enqueueSnackbar]);
+
+  const toggleChangePasswordMode = useCallback(() => {
+    setChangePasswordMode(prev => !prev);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+  }, []);
+
   // Memoized save profile handler
   const handleSaveProfile = useCallback(async () => {
     try {
@@ -133,7 +224,7 @@ const ProfileDialog = ({ open, onClose }) => {
       }
 
       const response = await axios.put(
-        'http://10.5.12.1:4000/api/coordinator/profile',
+        'http://localhost:4000/api/coordinator/profile',
         profileData,
         {
           headers: { 
@@ -353,6 +444,132 @@ const ProfileDialog = ({ open, onClose }) => {
                 Professional Information
               </Typography>
               {professionalInfoFields}
+            </Paper>
+          </Grid>
+
+          {/* Change Password Section */}
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Lock color="primary" />
+                  Security Settings
+                </Typography>
+                <Button
+                  onClick={toggleChangePasswordMode}
+                  variant={changePasswordMode ? "outlined" : "contained"}
+                  startIcon={changePasswordMode ? <Cancel /> : <Lock />}
+                  sx={{ 
+                    borderRadius: 2,
+                    textTransform: 'none'
+                  }}
+                >
+                  {changePasswordMode ? 'Cancel' : 'Change Password'}
+                </Button>
+              </Box>
+
+              {changePasswordMode && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      name="currentPassword"
+                      label="Current Password"
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordInputChange}
+                      InputProps={{
+                        startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
+                        endAdornment: (
+                          <IconButton
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            edge="end"
+                          >
+                            {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        )
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      name="newPassword"
+                      label="New Password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordInputChange}
+                      InputProps={{
+                        startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
+                        endAdornment: (
+                          <IconButton
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            edge="end"
+                          >
+                            {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        )
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      name="confirmPassword"
+                      label="Confirm New Password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordInputChange}
+                      InputProps={{
+                        startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
+                        endAdornment: (
+                          <IconButton
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            edge="end"
+                          >
+                            {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        )
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                      <Button
+                        onClick={toggleChangePasswordMode}
+                        variant="outlined"
+                        sx={{ 
+                          borderRadius: 2,
+                          px: 3,
+                          textTransform: 'none'
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleChangePassword}
+                        variant="contained"
+                        disabled={passwordLoading}
+                        startIcon={passwordLoading ? <LinearProgress size={20} /> : <Save />}
+                        sx={{ 
+                          borderRadius: 2,
+                          px: 4,
+                          textTransform: 'none',
+                          fontWeight: 600
+                        }}
+                      >
+                        {passwordLoading ? 'Changing...' : 'Change Password'}
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              )}
+
+              {!changePasswordMode && (
+                <Typography variant="body2" color="text.secondary">
+                  Keep your account secure by regularly updating your password.
+                </Typography>
+              )}
             </Paper>
           </Grid>
         </Grid>

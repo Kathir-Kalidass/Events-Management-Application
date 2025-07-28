@@ -500,52 +500,8 @@ export default function TemporaryDrawer({
         </Typography>
 
         <List sx={{ px: 3 }}>
-          <ListItem
-            component="button"
-            onClick={handleBrochureManagement}
-            sx={{
-              mb: 1.5,
-              borderRadius: 3,
-              p: 2,
-              border: `2px solid transparent`,
-              '&:hover': {
-                background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.03)} 100%)`,
-                transform: 'translateX(8px) scale(1.02)',
-                boxShadow: `0 8px 25px ${alpha(theme.palette.info.main, 0.12)}`,
-                borderColor: alpha(theme.palette.info.main, 0.2)
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              cursor: 'pointer'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mr: 2,
-                  color: theme.palette.info.main
-                }}
-              >
-                <BrochureIcon />
-              </Box>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  color: theme.palette.text.primary,
-                  flex: 1
-                }}
-              >
-                📄 Brochure Management
-              </Typography>
-            </Box>
-          </ListItem>
+          
+            
 
           <ListItem
             component="button"

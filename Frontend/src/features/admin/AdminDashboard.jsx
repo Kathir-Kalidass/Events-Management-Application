@@ -96,13 +96,13 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const [statsRes, usersRes, eventsRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/dashboard/stats`, {
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, {
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/events`, {
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/events`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
   const handleAddUser = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/users`,
         newUser,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -158,7 +158,7 @@ const AdminDashboard = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/bulk`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/users/bulk`,
         formData,
         {
           headers: {
@@ -221,7 +221,7 @@ admin.head@gmail.com,hod,CSE`;
   const handleUpdateUser = async () => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${editingUser._id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/users/${editingUser._id}`,
         {
           name: editingUser.name,
           email: editingUser.email,
@@ -252,7 +252,7 @@ admin.head@gmail.com,hod,CSE`;
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/admin/users/${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
