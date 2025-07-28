@@ -216,7 +216,7 @@ PORT=4000
 NODE_ENV=production
 
 # Database Configuration
-MONGODB_URI=mongodb://localhost:27017/events_management
+MONGO_URI=mongodb://localhost:27017/events_management
 
 # Security Configuration
 JWT_SECRET=dcse_events_super_secret_key_2024_anna_university
@@ -378,7 +378,7 @@ nano .env
 
 **Update MongoDB URI in .env:**
 ```env
-MONGODB_URI=mongodb://events_app:events_app_password_2024@localhost:27017/events_management
+MONGO_URI=mongodb://events_app:events_app_password_2024@localhost:27017/events_management
 ```
 
 ### **Step 3: Database Initialization**

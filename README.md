@@ -311,7 +311,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
    Create a `.env` file in the `Backend` directory:
    ```env
    PORT=4000
-   MONGODB_URI=mongodb://localhost:27017/events-management
+   MONGO_URI=mongodb://localhost:27017/events-management
    JWT_SECRET=your-super-secret-jwt-key
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASS=your-app-password
@@ -621,7 +621,7 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
    ```bash
    # Backend/.env
    PORT=4000
-   MONGODB_URI=mongodb://localhost:27017/events_management
+   MONGO_URI=mongodb://localhost:27017/events_management
    JWT_SECRET=your-super-secret-key
    NODE_ENV=development
    
@@ -720,7 +720,7 @@ npm test
 ```env
 # Backend Production Environment
 PORT=4000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/events_management
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/events_management
 JWT_SECRET=your-production-jwt-secret
 NODE_ENV=production
 EMAIL_USER=your-production-email@gmail.com

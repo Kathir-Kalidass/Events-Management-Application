@@ -717,7 +717,7 @@ Phase 5 (Month 9): Testing & Deployment
 ```bash
 # .env file for complete system
 # Database
-MONGODB_URI=mongodb://localhost:27017/events_management
+MONGO_URI=mongodb://localhost:27017/events_management
 
 # Module 4 (Current)
 MODULE4_PORT=4000
@@ -798,7 +798,7 @@ services:
       - "4000:4000"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodb:27017/events_management
+      - MONGO_URI=mongodb://localhost:27017/events_management
     depends_on:
       - mongodb
     volumes:

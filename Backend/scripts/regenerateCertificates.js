@@ -37,7 +37,7 @@ function log(message, color = 'reset') {
 
 async function connectToDatabase() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/events-management');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/events-management');
     log('✅ Connected to MongoDB', 'green');
   } catch (error) {
     log(`❌ Failed to connect to MongoDB: ${error.message}`, 'red');

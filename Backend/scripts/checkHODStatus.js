@@ -38,7 +38,7 @@ function log(message, color = 'reset') {
 
 async function connectToDatabase() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/events-management');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/events-management');
     log('✅ Connected to MongoDB', 'green');
   } catch (error) {
     log(`❌ Failed to connect to MongoDB: ${error.message}`, 'red');
@@ -112,7 +112,7 @@ async function checkHODUsers() {
 async function checkEnvironmentVariables() {
   log('\n🔧 Environment Variables:', 'blue');
   log(`   DEPARTMENT_HEAD: ${process.env.DEPARTMENT_HEAD || 'Not set'}`, 'white');
-  log(`   MONGODB_URI: ${process.env.MONGODB_URI ? 'Set' : 'Not set'}`, 'white');
+  log(`   MONGO_URI: ${process.env.MONGO_URI ? 'Set' : 'Not set'}`, 'white');
   log(`   FRONTEND_URL: ${process.env.FRONTEND_URL || 'Not set'}`, 'white');
 }
 
