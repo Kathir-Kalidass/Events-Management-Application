@@ -39,7 +39,7 @@ function CommentModal({ event, open, handleClose }) {
     const token = localStorage.getItem("token");
     setLoading(true);
 
-    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/event/comment`, {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/hod/event/comment`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,

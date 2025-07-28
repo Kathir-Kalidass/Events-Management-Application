@@ -104,7 +104,7 @@ const EnhancedProfile = ({ onDataChange }) => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/profile/${userInfo._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/profile/${userInfo._id}`, {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +147,7 @@ const EnhancedProfile = ({ onDataChange }) => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/change-password`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/change-password`, {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",
@@ -181,7 +181,7 @@ const EnhancedProfile = ({ onDataChange }) => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/preferences/${userInfo._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/preferences/${userInfo._id}`, {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",

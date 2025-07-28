@@ -63,7 +63,7 @@ const EnhancedDashboardHome = ({ userStats, onRefresh, onNavigate }) => {
       const token = localStorage.getItem("token");
 
       // Fetch recent activity
-      const activityResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/recent-activity/${participantId}`, {
+      const activityResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/recent-activity/${participantId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -76,7 +76,7 @@ const EnhancedDashboardHome = ({ userStats, onRefresh, onNavigate }) => {
       }
 
       // Fetch upcoming events
-      const eventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/events`, {
+      const eventsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/events`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",

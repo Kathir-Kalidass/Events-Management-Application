@@ -145,7 +145,7 @@ const EnhancedHODProfile = () => {
       }
 
       const response = await axios.put(
-        'http://localhost:4000/api/hod/profile',
+        'http://10.5.12.1:4000/api/hod/profile',
         profileData,
         {
           headers: { 
@@ -207,7 +207,7 @@ const EnhancedHODProfile = () => {
       }
 
       const response = await axios.put(
-        'http://localhost:4000/api/hod/change-password',
+        'http://10.5.12.1:4000/api/hod/change-password',
         {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
