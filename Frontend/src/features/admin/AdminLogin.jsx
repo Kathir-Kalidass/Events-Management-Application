@@ -160,7 +160,6 @@ const AdminLogin = () => {
           </Button>
         </Box>
 
-        <!-- Optional: Add a link to the user login page if needed -->
       </Paper>
     </Container>
   );
