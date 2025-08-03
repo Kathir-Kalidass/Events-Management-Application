@@ -246,31 +246,41 @@ const Home = () => {
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
         <Toolbar>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              backgroundColor: 'white',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mr: 2,
-              overflow: 'hidden'
-            }}
-          >
-            <img 
-              src="/anna-university-logo.jpg" 
-              alt="Anna University Logo"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
+          <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 1,
+                overflow: 'hidden'
               }}
-            />
+            >
+              <img 
+                src="/anna-university-logo.jpg" 
+                alt="Anna University Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </Box>
+            <Event sx={{ 
+              fontSize: 28, 
+              color: '#fff', 
+              backgroundColor: 'rgba(255,255,255,0.2)', 
+              borderRadius: '50%', 
+              p: 0.5,
+              mr: 1
+            }} />
           </Box>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Events Management System
+            Anna University Events Management System
           </Typography>
           
           {isMobile ? (
@@ -461,41 +471,7 @@ const Home = () => {
               </Box>
             </Fade>
 
-            {/* Enhanced Features Grid */}
-            <Grid container spacing={4} mb={8}>
-              {features.map((feature, index) => (
-                <Zoom in={animateCards} timeout={500 + index * 200} key={index}>
-                  <Grid item xs={12} md={6}>
-                    <Card 
-                      sx={{ 
-                        height: '100%', 
-                        transition: 'all 0.3s ease-in-out',
-                        backgroundColor: feature.color,
-                        border: '2px solid transparent',
-                        '&:hover': { 
-                          transform: 'translateY(-8px) scale(1.02)',
-                          boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-                          border: '2px solid #1976d2'
-                        }
-                      }}
-                    >
-                      <CardContent sx={{ textAlign: 'center', p: 4 }}>
-                        <Box mb={3}>
-                          {feature.icon}
-                        </Box>
-                        <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-                          {feature.title}
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                          {feature.description}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </Zoom>
-              ))}
-            </Grid>
-
+            
             {/* Role Guides Section */}
             <Paper 
               elevation={8} 
@@ -766,6 +742,46 @@ const Home = () => {
                 </Typography>
               </Paper>
 
+              {/* Password Reset Information */}
+              <Paper 
+                elevation={2} 
+                sx={{ 
+                  p: 3, 
+                  mb: 4, 
+                  backgroundColor: '#e8f5e9',
+                  border: '1px solid #c8e6c9',
+                  borderRadius: 2
+                }}
+              >
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Security sx={{ color: '#2e7d32', mr: 1 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                    Forgot Your Password?
+                  </Typography>
+                </Box>
+                <Typography variant="body1" sx={{ color: '#2e7d32', lineHeight: 1.6, mb: 2 }}>
+                  <strong>Password Reset Process:</strong>
+                </Typography>
+                <Box component="ol" sx={{ color: '#2e7d32', pl: 3, mb: 2 }}>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Click "Forgot Password" on your role's login page
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Enter your registered email address
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Your request will be sent to admin for approval
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Once approved, your password will be reset to your email address
+                  </Typography>
+                  
+                </Box>
+                <Typography variant="body2" sx={{ color: '#2e7d32', fontStyle: 'italic' }}>
+                  <strong>Note:</strong> This process requires admin approval for security purposes. Please be patient while your request is processed.
+                </Typography>
+              </Paper>
+
               <Grid container spacing={3} justifyContent="center">
                 <Grid item xs={12} sm={6} md={3}>
                   <Button
@@ -885,51 +901,6 @@ const Home = () => {
               </Typography>
             </Box>
 
-            {/* Tech Stack Section */}
-            <Box mt={8}>
-              <Typography 
-                variant="h4" 
-                textAlign="center" 
-                gutterBottom 
-                sx={{ 
-                  mb: 4,
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-                }}
-              >
-                Built With Modern Technologies
-              </Typography>
-              <Grid container spacing={3} justifyContent="center">
-                {techStack.map((tech, index) => (
-                  <Grid item key={index}>
-                    <Tooltip title={tech.name} arrow>
-                      <Paper
-                        elevation={4}
-                        sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          backgroundColor: 'rgba(255,255,255,0.9)',
-                          transition: 'all 0.3s ease',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'translateY(-5px)',
-                            backgroundColor: tech.color,
-                            color: 'white'
-                          }
-                        }}
-                      >
-                        <Box display="flex" alignItems="center" gap={1}>
-                          {tech.icon}
-                          <Typography variant="body2" fontWeight="bold">
-                            {tech.name}
-                          </Typography>
-                        </Box>
-                      </Paper>
-                    </Tooltip>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
           </Container>
         </Box>
 
@@ -1094,48 +1065,7 @@ const Home = () => {
                   </Button>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <Paper elevation={3} sx={{ p: 3, backgroundColor: '#fff' }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                    Programs Offered
-                  </Typography>
-                  <Box component="ul" sx={{ pl: 2, mb: 3 }}>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      B.E. Computer Science and Engineering
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      M.E. Computer Science and Engineering
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      M.Tech. Information Technology
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      Ph.D. Computer Science and Engineering
-                    </Typography>
-                  </Box>
-                  
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                    Research Areas
-                  </Typography>
-                  <Box component="ul" sx={{ pl: 2 }}>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      Artificial Intelligence & Machine Learning
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      Data Science & Analytics
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      Cybersecurity & Information Security
-                    </Typography>
-                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                      Cloud Computing & Distributed Systems
-                    </Typography>
-                    <Typography component="li" variant="body2">
-                      Software Engineering & Web Technologies
-                    </Typography>
-                  </Box>
-                </Paper>
-              </Grid>
+              
             </Grid>
           </Container>
         </Box>
@@ -1229,50 +1159,7 @@ const Home = () => {
               ))}
             </Grid>
 
-            <Box textAlign="center" sx={{ mt: 8 }}>
-              <Paper elevation={4} sx={{ 
-                p: 6, 
-                backgroundColor: '#f8f9fa', 
-                display: 'inline-block',
-                borderRadius: 4,
-                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
-              }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                  Project Information
-                </Typography>
-                <Typography variant="h6" sx={{ mb: 3, color: '#333' }}>
-                  Events Management System - Academic Project
-                </Typography>
-                <Grid container spacing={2} justifyContent="center">
-                  <Grid item>
-                    <Chip 
-                      label="Batch 2023-27" 
-                      sx={{ 
-                        backgroundColor: '#1976d2', 
-                        color: 'white',
-                        fontWeight: 'bold'
-                      }} 
-                    />
-                  </Grid>
-                  <Grid item>
-                    <Chip 
-                      label="Academic Year 2023-2024" 
-                      sx={{ 
-                        backgroundColor: '#4caf50', 
-                        color: 'white',
-                        fontWeight: 'bold'
-                      }} 
-                    />
-                  </Grid>
-                </Grid>
-                <Typography variant="body1" sx={{ mt: 3, color: '#666' }}>
-                  Department of Computer Science and Engineering
-                </Typography>
-                <Typography variant="body1" sx={{ color: '#666' }}>
-                  College of Engineering Guindy, Anna University, Chennai
-                </Typography>
-              </Paper>
-            </Box>
+            
           </Container>
         </Box>
 
@@ -1320,11 +1207,8 @@ const Home = () => {
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6} textAlign={{ xs: 'center', md: 'right' }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-                  Academic Project 2023-24
-                </Typography>
                 <Typography variant="body1" sx={{ mb: 1, opacity: 0.9 }}>
-                  © 2024 Anna University. All rights reserved.
+                  © 2025 Anna University. All rights reserved.
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
                   Developed by Batch 2023-27 DCSE Students

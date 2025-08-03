@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import "../../styles/AuthForm.css";
 
-const ForgotPassword = () => {
+const ForgotPasswordDummy = () => {
   const { role } = useParams();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -13,7 +13,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://10.5.12.1:4000/api/auth/forgot-password", { email, role });
+      const res = await axios.post("http://localhost:4000/api/auth/forgot-password-dummy", { email, role });
       setMessage(res.data.message);
     } catch (err) {
       setMessage(err.response?.data?.message || "Email not registered or server error.");
@@ -89,4 +89,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ForgotPasswordDummy;

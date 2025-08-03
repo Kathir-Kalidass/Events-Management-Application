@@ -32,7 +32,9 @@ import {
   CircularProgress,
   Alert,
   Fab,
-  Tooltip
+  Tooltip,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import {
   Dashboard,
@@ -46,17 +48,21 @@ import {
   Download,
   Search,
   FilterList,
-  Refresh
+  Refresh,
+  DeleteSweep,
+  Security
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
+import PasswordResetRequestsAdmin from './PasswordResetRequestsAdmin.jsx';
 
 const AdminDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [stats, setStats] = useState({});
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
+  const [passwordResetCount, setPasswordResetCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [openAddUser, setOpenAddUser] = useState(false);
@@ -76,8 +82,10 @@ const AdminDashboard = () => {
     email: '',
     role: '',
     department: '',
-    isActive: true
+    isActive: true,
+    password: ''
   });
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
     role: 'all',
@@ -95,7 +103,7 @@ const AdminDashboard = () => {
     
     try {
       setLoading(true);
-      const [statsRes, usersRes, eventsRes] = await Promise.all([
+      const [statsRes, usersRes, eventsRes, passwordResetRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -104,18 +112,42 @@ const AdminDashboard = () => {
         }),
         axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/events`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/password-reset-requests`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: { requests: [] } })) // Fallback if endpoint doesn't exist
       ]);
 
       setStats(statsRes.data);
       setUsers(usersRes.data.users);
       setEvents(eventsRes.data.events);
+      
+      // Count pending password reset requests
+      const pendingRequests = passwordResetRes.data.requests.filter(req => req.status === 'pending');
+      setPasswordResetCount(pendingRequests.length);
     } catch (error) {
       enqueueSnackbar('Error fetching dashboard data', { variant: 'error' });
     } finally {
       setLoading(false);
     }
   }, [token, enqueueSnackbar]);
+
+  // Function to refresh just the password reset count
+  const refreshPasswordResetCount = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      const passwordResetRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/password-reset-requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const pendingRequests = passwordResetRes.data.requests.filter(req => req.status === 'pending');
+      setPasswordResetCount(pendingRequests.length);
+    } catch (error) {
+      console.log('Error fetching password reset count:', error);
+      // Don't show error message as this is a background refresh
+    }
+  }, [token]);
 
   useEffect(() => {
     if (!token) {
@@ -124,6 +156,13 @@ const AdminDashboard = () => {
     }
     fetchDashboardData();
   }, [token, navigate, fetchDashboardData]);
+
+  // Refresh password reset count when switching tabs
+  useEffect(() => {
+    if (activeTab === 'password-reset' || activeTab === 'dashboard') {
+      refreshPasswordResetCount();
+    }
+  }, [activeTab, refreshPasswordResetCount]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -188,7 +227,7 @@ const AdminDashboard = () => {
   const downloadTemplate = () => {
     // Create CSV template content
     const csvContent = `email,role,department
-john.doe@gmail.com,student,CSE
+john.doe@gmail.com,participant,CSE
 jane.smith@gmail.com,coordinator,ECE
 admin.head@gmail.com,hod,CSE`;
 
@@ -213,22 +252,30 @@ admin.head@gmail.com,hod,CSE`;
       email: user.email,
       role: user.role,
       department: user.department,
-      isActive: user.isActive
+      isActive: user.isActive,
+      password: ''
     });
     setOpenEditUser(true);
   };
 
   const handleUpdateUser = async () => {
     try {
+      const updatePayload = {
+        name: editingUser.name,
+        email: editingUser.email,
+        role: editingUser.role,
+        department: editingUser.department,
+        isActive: editingUser.isActive
+      };
+
+      // Only include password if it's provided
+      if (editingUser.password && editingUser.password.trim() !== '') {
+        updatePayload.password = editingUser.password;
+      }
+
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/users/${editingUser._id}`,
-        {
-          name: editingUser.name,
-          email: editingUser.email,
-          role: editingUser.role,
-          department: editingUser.department,
-          isActive: editingUser.isActive
-        },
+        updatePayload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -240,7 +287,8 @@ admin.head@gmail.com,hod,CSE`;
         email: '',
         role: '',
         department: '',
-        isActive: true
+        isActive: true,
+        password: ''
       });
       fetchDashboardData();
     } catch (error) {
@@ -264,8 +312,59 @@ admin.head@gmail.com,hod,CSE`;
     }
   };
 
-  const StatCard = ({ title, value, icon, color = 'primary' }) => (
-    <Card>
+  const handleBulkDeleteUsers = async () => {
+    if (selectedUsers.length === 0) {
+      enqueueSnackbar('Please select users to delete', { variant: 'warning' });
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} selected user(s)? This action cannot be undone.`)) {
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/users/bulk-delete`,
+          { userIds: selectedUsers },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        enqueueSnackbar(`${selectedUsers.length} users deleted successfully`, { variant: 'success' });
+        setSelectedUsers([]);
+        fetchDashboardData();
+      } catch (error) {
+        enqueueSnackbar(error.response?.data?.message || 'Error deleting users', { variant: 'error' });
+      }
+    }
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAllUsers = (checked) => {
+    if (checked) {
+      setSelectedUsers(users.map(user => user._id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const StatCard = ({ title, value, icon, color = 'primary', onClick, clickable = false }) => (
+    <Card 
+      sx={{ 
+        ...(clickable && {
+          cursor: 'pointer',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: 4,
+            transition: 'all 0.2s ease-in-out'
+          }
+        })
+      }}
+      onClick={onClick}
+    >
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box>
@@ -286,7 +385,7 @@ admin.head@gmail.com,hod,CSE`;
 
   const renderDashboard = () => (
     <Grid container spacing={3}>
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={2.4}>
         <StatCard
           title="Total Users"
           value={stats.totalUsers || 0}
@@ -294,7 +393,7 @@ admin.head@gmail.com,hod,CSE`;
           color="primary"
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={2.4}>
         <StatCard
           title="Total Events"
           value={stats.totalEvents || 0}
@@ -302,7 +401,7 @@ admin.head@gmail.com,hod,CSE`;
           color="secondary"
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={2.4}>
         <StatCard
           title="Active Events"
           value={stats.activeEvents || 0}
@@ -310,12 +409,22 @@ admin.head@gmail.com,hod,CSE`;
           color="success"
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={2.4}>
         <StatCard
           title="HODs"
           value={stats.usersByRole?.hod || 0}
           icon={<People />}
           color="warning"
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={2.4}>
+        <StatCard
+          title="Password Reset Requests"
+          value={passwordResetCount}
+          icon={<Security />}
+          color="error"
+          onClick={() => setActiveTab('password-reset')}
+          clickable={true}
         />
       </Grid>
 
@@ -392,6 +501,17 @@ admin.head@gmail.com,hod,CSE`;
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">User Management</Typography>
         <Box>
+          {selectedUsers.length > 0 && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteSweep />}
+              onClick={handleBulkDeleteUsers}
+              sx={{ mr: 1 }}
+            >
+              Delete Selected ({selectedUsers.length})
+            </Button>
+          )}
           <Button
             variant="outlined"
             startIcon={<Upload />}
@@ -415,6 +535,13 @@ admin.head@gmail.com,hod,CSE`;
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedUsers.length > 0 && selectedUsers.length < users.length}
+                    checked={users.length > 0 && selectedUsers.length === users.length}
+                    onChange={(e) => handleSelectAllUsers(e.target.checked)}
+                  />
+                </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
@@ -426,6 +553,12 @@ admin.head@gmail.com,hod,CSE`;
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user._id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedUsers.includes(user._id)}
+                      onChange={() => handleSelectUser(user._id)}
+                    />
+                  </TableCell>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
@@ -542,9 +675,17 @@ admin.head@gmail.com,hod,CSE`;
           <Button
             color="inherit"
             onClick={() => setActiveTab('events')}
-            sx={{ mr: 2 }}
+            sx={{ mr: 1 }}
           >
             Events
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => setActiveTab('password-reset')}
+            sx={{ mr: 2 }}
+            startIcon={<Security />}
+          >
+            Password Reset
           </Button>
           <IconButton
             color="inherit"
@@ -572,6 +713,7 @@ admin.head@gmail.com,hod,CSE`;
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'events' && renderEvents()}
+        {activeTab === 'password-reset' && <PasswordResetRequestsAdmin />}
       </Container>
 
       {/* Add User Dialog */}
@@ -593,7 +735,7 @@ admin.head@gmail.com,hod,CSE`;
               value={newUser.role}
               onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
             >
-              <MenuItem value="student">Student</MenuItem>
+              <MenuItem value="participant">Participant</MenuItem>
               <MenuItem value="coordinator">Coordinator</MenuItem>
               <MenuItem value="hod">HOD</MenuItem>
             </Select>
@@ -632,13 +774,22 @@ admin.head@gmail.com,hod,CSE`;
             margin="normal"
             helperText="Enter a valid email address"
           />
+          <TextField
+            fullWidth
+            label="New Password"
+            type="password"
+            value={editingUser.password}
+            onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+            margin="normal"
+            helperText="Leave blank to keep current password"
+          />
           <FormControl fullWidth margin="normal">
             <InputLabel>Role</InputLabel>
             <Select
               value={editingUser.role}
               onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
             >
-              <MenuItem value="student">Student</MenuItem>
+              <MenuItem value="participant">Participant</MenuItem>
               <MenuItem value="coordinator">Coordinator</MenuItem>
               <MenuItem value="hod">HOD</MenuItem>
             </Select>
@@ -701,7 +852,7 @@ admin.head@gmail.com,hod,CSE`;
             </Typography>
             <Typography variant="body2" component="div">
               • Only email addresses are allowed<br/>
-              • Valid roles: student, coordinator, hod<br/>
+              • Valid roles: participant, coordinator, hod<br/>
               • If uploading a new HOD, the existing HOD will be deactivated<br/>
               • Duplicate emails will be skipped<br/>
               • Names will be auto-generated from email addresses
@@ -715,7 +866,7 @@ admin.head@gmail.com,hod,CSE`;
             <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
               <Typography variant="body2" component="div" sx={{ fontFamily: 'monospace' }}>
                 <strong>email</strong> - Email address (e.g., john.doe@domain.com)<br/>
-                <strong>role</strong> - User role (student/coordinator/hod)<br/>
+                <strong>role</strong> - User role (participant/coordinator/hod)<br/>
                 <strong>department</strong> - Department name (e.g., CSE, ECE, MECH)
               </Typography>
             </Paper>

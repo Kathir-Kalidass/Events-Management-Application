@@ -292,7 +292,7 @@ export const bulkAddUsers = async (req, res) => {
     };
 
     let existingHod = null;
-    const validRoles = ['student', 'coordinator', 'hod'];
+    const validRoles = ['participant', 'coordinator', 'hod'];
 
     for (let i = 0; i < users.length; i++) {
       const userData = users[i];
@@ -448,7 +448,7 @@ export const bulkAddUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, email, role, department, isActive } = req.body;
+    const { name, email, role, department, isActive, password } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -475,6 +475,11 @@ export const updateUser = async (req, res) => {
     if (role) user.role = role.toLowerCase();
     if (department) user.department = department;
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    
+    // Update password if provided
+    if (password && password.trim() !== '') {
+      user.password = password;
+    }
 
     await user.save();
 
@@ -526,6 +531,55 @@ export const deleteUser = async (req, res) => {
     console.error('Delete user error:', error);
     res.status(500).json({ 
       message: "Error deleting user", 
+      error: error.message 
+    });
+  }
+};
+
+// Bulk delete users
+export const bulkDeleteUsers = async (req, res) => {
+  try {
+    const { userIds } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ 
+        message: "User IDs array is required and cannot be empty" 
+      });
+    }
+
+    // Find users to be deleted
+    const usersToDelete = await User.find({ 
+      _id: { $in: userIds } 
+    }).select('_id role email name');
+
+    if (usersToDelete.length === 0) {
+      return res.status(404).json({ message: "No users found to delete" });
+    }
+
+    // Check for admin users that cannot be deleted
+    const adminUsers = usersToDelete.filter(user => user.role === 'admin');
+    if (adminUsers.length > 0) {
+      return res.status(403).json({ 
+        message: `Cannot delete admin users: ${adminUsers.map(u => u.email).join(', ')}` 
+      });
+    }
+
+    // Perform bulk deletion
+    const deleteResult = await User.deleteMany({ 
+      _id: { $in: userIds },
+      role: { $ne: 'admin' } // Extra safety check
+    });
+
+    res.status(200).json({
+      message: `Successfully deleted ${deleteResult.deletedCount} users`,
+      deletedCount: deleteResult.deletedCount,
+      requestedCount: userIds.length
+    });
+
+  } catch (error) {
+    console.error('Bulk delete users error:', error);
+    res.status(500).json({ 
+      message: "Error deleting users", 
       error: error.message 
     });
   }
