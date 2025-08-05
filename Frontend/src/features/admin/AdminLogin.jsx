@@ -1,3 +1,4 @@
+import api from '../utils/api'
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -41,18 +42,18 @@ const AdminLogin = () => {
     setError('');
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/admin/login`,
-        formData
-      );
+      const response = await api.post('/admin/login', formData);
 
       const { token, role, name, email, _id } = response.data;
+	
+	console.log(token);
 
       // Store admin data in localStorage in the format expected by ProtectedRoute
       const userData = { token, role, name, email, _id };
@@ -70,6 +71,7 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
+
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

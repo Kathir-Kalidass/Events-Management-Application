@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 // Admin login controller
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
+  console.log("admin trying to login");
 
   try {
     // Check if user exists and is admin
@@ -18,6 +19,8 @@ export const adminLogin = async (req, res) => {
         message: "Invalid admin credentials" 
       });
     }
+
+	console.log("before checking password!");
 
     // Check password
     const isMatch = await admin.matchPassword(password);
@@ -37,6 +40,8 @@ export const adminLogin = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+	console.log("admin token: ", token);
 
     res.status(200).json({
       message: "Admin login successful",
