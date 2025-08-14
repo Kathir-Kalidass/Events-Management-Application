@@ -28,7 +28,7 @@ import {
   Assessment as AssessmentIcon
 } from "@mui/icons-material";
 import { eventState } from "../../../../../shared/context/eventProvider";
-import DashboardCharts from "./eventstatistics";
+import DashboardCharts from "./eventStatistics";
 
 const Overview = ({ activePage, setActivePage }) => {
   const theme = useTheme();

@@ -3,7 +3,7 @@ import User from "../models/userModel.js";
 
 const authMiddleware = async (req, res, next) => {
   let token;
-
+  console.log("checking in authmiddleware");
   // Log request details for debugging
 
   // Check if token is present in Authorization header
