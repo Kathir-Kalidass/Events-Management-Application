@@ -13,7 +13,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://10.5.12.1:4000/api/auth/forgot-password", { email, role });
+      const res = await axios.post("http://localhost:4000/api/auth/forgot-password", { email, role });
       setMessage(res.data.message);
     } catch (err) {
       setMessage(err.response?.data?.message || "Email not registered or server error.");

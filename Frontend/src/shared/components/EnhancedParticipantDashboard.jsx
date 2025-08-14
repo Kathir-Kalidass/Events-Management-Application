@@ -160,7 +160,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
       if (userRole === 'hod') {
         // For HOD, fetch only approved participants using the HOD API
         try {
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/hod/events/${eventId}/participants`, {
+          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}/participants`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           });
           
@@ -183,7 +183,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
       } else {
         // For coordinator, use the existing API
         try {
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/events/${eventId}/participants`, {
+          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/events/${eventId}/participants`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           });
           
@@ -214,7 +214,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleApproveParticipant = async (participantId) => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/approve`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/approve`,
         { participantId, eventId },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -229,7 +229,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleRejectParticipant = async (participantId) => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/reject`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/reject`,
         { participantId, eventId, rejectionReason },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -246,7 +246,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleMarkAttendance = async (participantId, attended) => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/attendance`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/attendance`,
         { participantId, eventId, attended },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -261,7 +261,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleBulkApprove = async () => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/bulk-approve`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/bulk-approve`,
         { participantIds: selectedParticipants, eventId },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -277,7 +277,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleBulkAttendance = async (attended) => {
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/bulk-attendance`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/bulk-attendance`,
         { participantIds: selectedParticipants, eventId, attended },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -293,7 +293,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleAddParticipant = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/add`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/add`,
         { ...newParticipant, eventId },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -318,8 +318,8 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleExport = async () => {
     try {
       const endpoint = userRole === 'hod'
-        ? `http://10.5.12.1:4000/api/hod/events/${eventId}/participants/export`
-        : `http://10.5.12.1:4000/api/coordinator/participants/export/${eventId}`;
+        ? `http://localhost:4000/api/hod/events/${eventId}/participants/export`
+        : `http://localhost:4000/api/coordinator/participants/export/${eventId}`;
         
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -343,7 +343,7 @@ const EnhancedParticipantDashboard = ({ eventId, eventTitle, userRole = 'coordin
   const handleSendNotification = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/participants/notify`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/coordinator/participants/notify`,
         { participantIds: selectedParticipants, eventId, message: 'Event update notification' },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
