@@ -82,3 +82,13 @@ temp/
 # Backup files
 *.bak
 *.backup
+*_backup.*
+
+# Development and cleanup scripts
+*cleanup*.js
+*cleanup*.cjs
+*fix*.js
+*fix*.cjs
+*validation*.js
+*validation*.cjs
+validate-*.js
