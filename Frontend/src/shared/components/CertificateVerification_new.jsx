@@ -14,7 +14,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Grid,
+  Grid2 as Grid,
   Chip,
   List,
   ListItem,
@@ -37,7 +37,7 @@ import {
 // Icons
 import {
   Verified as VerifiedIcon,
-  Article as CertificateIcon,
+  Certificate as CertificateIcon,
   Search as SearchIcon,
   QrCodeScanner as QrCodeScannerIcon,
   DateRange as DateRangeIcon,
@@ -70,7 +70,15 @@ const CertificateVerification = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+
+  const verificationSteps = [
+    'Validating Input',
+    'Connecting to Database',
+    'Checking Certificate Status',
+    'Verifying Authenticity',
+    'Loading Certificate Details'
+  ];
 
   const verifyCertificate = async (certId = certificateId) => {
     if (!certId.trim()) {
@@ -306,7 +314,7 @@ const CertificateVerification = () => {
                       
                       <Grid container spacing={3} sx={{ mb: 4 }}>
                         {/* Certificate Information */}
-                        <Grid item xs={12} md={6}>
+                        <Grid xs={12} md={6}>
                           <Card sx={{ height: '100%' }}>
                             <CardHeader 
                               title="Certificate Information"
@@ -336,13 +344,14 @@ const CertificateVerification = () => {
                                   <ListItemIcon><SecurityIcon /></ListItemIcon>
                                   <ListItemText 
                                     primary="Status" 
-                                    secondary={certificate.status || 'Active'}
-                                  />
-                                  <Chip 
-                                    label={certificate.status || 'Active'} 
-                                    color="success" 
-                                    size="small"
-                                    icon={<VerifiedIcon />}
+                                    secondary={
+                                      <Chip 
+                                        label={certificate.status || 'Active'} 
+                                        color="success" 
+                                        size="small"
+                                        icon={<VerifiedIcon />}
+                                      />
+                                    }
                                   />
                                 </ListItem>
 
@@ -369,7 +378,7 @@ const CertificateVerification = () => {
                         </Grid>
 
                         {/* Participant and Event Information */}
-                        <Grid item xs={12} md={6}>
+                        <Grid xs={12} md={6}>
                           <Card sx={{ height: '100%' }}>
                             <CardHeader 
                               title="Participant & Event Details"
@@ -450,7 +459,7 @@ const CertificateVerification = () => {
                         />
                         <CardContent>
                           <Grid container spacing={3}>
-                            <Grid item xs={12} md={4}>
+                            <Grid xs={12} md={4}>
                               <Box sx={{ textAlign: 'center', p: 2 }}>
                                 <SecurityIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                                 <Typography variant="h6" gutterBottom>
@@ -463,7 +472,7 @@ const CertificateVerification = () => {
                               </Box>
                             </Grid>
                             
-                            <Grid item xs={12} md={4}>
+                            <Grid xs={12} md={4}>
                               <Box sx={{ textAlign: 'center', p: 2 }}>
                                 <LockIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                                 <Typography variant="h6" gutterBottom>
@@ -476,7 +485,7 @@ const CertificateVerification = () => {
                               </Box>
                             </Grid>
                             
-                            <Grid item xs={12} md={4}>
+                            <Grid xs={12} md={4}>
                               <Box sx={{ textAlign: 'center', p: 2 }}>
                                 <CloudDoneIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                                 <Typography variant="h6" gutterBottom>
@@ -544,7 +553,7 @@ const CertificateVerification = () => {
                           />
                           <CardContent>
                             <Grid container spacing={2}>
-                              <Grid item xs={12} md={6}>
+                              <Grid xs={12} md={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
                                   Verification Timestamp
                                 </Typography>
@@ -552,7 +561,7 @@ const CertificateVerification = () => {
                                   {new Date().toISOString()}
                                 </Typography>
                               </Grid>
-                              <Grid item xs={12} md={6}>
+                              <Grid xs={12} md={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
                                   Certificate Hash
                                 </Typography>

@@ -18,7 +18,7 @@ const ForgotPassword = () => {
     console.log('Sending forgot password request:', { email, role });
     
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/forgot-password", { email, role });
+      const res = await axios.post("http://10.5.12.1:4000/api/auth/forgot-password", { email, role });
       setMessage(res.data.message);
     } catch (err) {
       console.error('Forgot password error:', err.response?.data);
