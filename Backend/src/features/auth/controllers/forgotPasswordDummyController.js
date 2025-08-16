@@ -75,6 +75,7 @@ export const getPasswordResetRequests = async (req, res) => {
     }));
 
     // Add some dummy data for demonstration if no actual requests exist
+    const dummyRequests = [];
    
     const allRequests = actualRequests.length > 0 ? actualRequests : dummyRequests;
 

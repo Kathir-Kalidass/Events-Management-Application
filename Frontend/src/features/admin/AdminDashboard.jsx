@@ -50,7 +50,8 @@ import {
   FilterList,
   Refresh,
   DeleteSweep,
-  Security
+  Security,
+  VpnKey
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -86,6 +87,10 @@ const AdminDashboard = () => {
     password: ''
   });
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [openRolePasswordReset, setOpenRolePasswordReset] = useState(false);
+  const [passwordResetRole, setPasswordResetRole] = useState('');
+  const [passwordResetType, setPasswordResetType] = useState('email');
+  const [rolePasswordResetLoading, setRolePasswordResetLoading] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     role: 'all',
@@ -335,6 +340,64 @@ admin.head@gmail.com,hod,CSE`;
     }
   };
 
+  const handleRolePasswordReset = async () => {
+    if (!passwordResetRole) {
+      enqueueSnackbar('Please select a role', { variant: 'warning' });
+      return;
+    }
+
+    const roleNames = {
+      'participant': 'participants',
+      'coordinator': 'coordinators',
+      'hod': 'HODs'
+    };
+
+    const resetTypeText = passwordResetType === 'email' 
+      ? 'their email address' 
+      : 'default password (password123)';
+
+    if (window.confirm(
+      `Are you sure you want to reset passwords for all ${roleNames[passwordResetRole]} to ${resetTypeText}? This action cannot be undone.`
+    )) {
+      setRolePasswordResetLoading(true);
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/users/reset-password-by-role`,
+          { 
+            role: passwordResetRole,
+            resetType: passwordResetType
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const { summary, updatedUsers, errors } = response.data;
+        
+        let message = `Password reset completed for ${summary.successfulResets} ${roleNames[passwordResetRole]}`;
+        if (errors.length > 0) {
+          message += `. ${errors.length} failed.`;
+        }
+        
+        enqueueSnackbar(message, { variant: 'success' });
+        
+        // Show detailed results in console for admin reference
+        console.log('Password Reset Results:', {
+          summary,
+          updatedUsers,
+          errors
+        });
+        
+        setOpenRolePasswordReset(false);
+        setPasswordResetRole('');
+        setPasswordResetType('email');
+        fetchDashboardData();
+      } catch (error) {
+        enqueueSnackbar(error.response?.data?.message || 'Error resetting passwords', { variant: 'error' });
+      } finally {
+        setRolePasswordResetLoading(false);
+      }
+    }
+  };
+
   const handleSelectUser = (userId) => {
     setSelectedUsers(prev => 
       prev.includes(userId) 
@@ -512,6 +575,15 @@ admin.head@gmail.com,hod,CSE`;
               Delete Selected ({selectedUsers.length})
             </Button>
           )}
+          <Button
+            variant="outlined"
+            color="warning"
+            startIcon={<VpnKey />}
+            onClick={() => setOpenRolePasswordReset(true)}
+            sx={{ mr: 1 }}
+          >
+            Reset Passwords by Role
+          </Button>
           <Button
             variant="outlined"
             startIcon={<Upload />}
@@ -1018,6 +1090,62 @@ admin.head@gmail.com,hod,CSE`;
         <DialogActions>
           <Button onClick={() => setShowResults(false)} variant="contained">
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Role-wise Password Reset Dialog */}
+      <Dialog open={openRolePasswordReset} onClose={() => setOpenRolePasswordReset(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reset Passwords by Role</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              This will reset passwords for all users with the selected role.
+            </Typography>
+            
+            <FormControl fullWidth sx={{ mb: 2, mt: 2 }}>
+              <InputLabel>Select Role</InputLabel>
+              <Select
+                value={passwordResetRole}
+                onChange={(e) => setPasswordResetRole(e.target.value)}
+                label="Select Role"
+              >
+                <MenuItem value="participant">Participants</MenuItem>
+                <MenuItem value="coordinator">Coordinators</MenuItem>
+                <MenuItem value="hod">HODs</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Reset Password To</InputLabel>
+              <Select
+                value={passwordResetType}
+                onChange={(e) => setPasswordResetType(e.target.value)}
+                label="Reset Password To"
+              >
+                <MenuItem value="email">User's Email Address</MenuItem>
+                <MenuItem value="default">Default Password (password123)</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>Warning:</strong> This action cannot be undone. All users with the selected role will have their passwords reset.
+                {passwordResetType === 'email' ? ' Their new password will be their email address.' : ' Their new password will be "password123".'}
+              </Typography>
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenRolePasswordReset(false)}>Cancel</Button>
+          <Button 
+            onClick={handleRolePasswordReset} 
+            variant="contained" 
+            color="warning"
+            disabled={!passwordResetRole || rolePasswordResetLoading}
+            startIcon={rolePasswordResetLoading ? <CircularProgress size={20} /> : <VpnKey />}
+          >
+            {rolePasswordResetLoading ? 'Resetting...' : 'Reset Passwords'}
           </Button>
         </DialogActions>
       </Dialog>

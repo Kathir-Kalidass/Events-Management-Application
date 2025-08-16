@@ -1,5 +1,6 @@
 import User from "../../../shared/models/userModel.js";
 import Event from "../../../shared/models/eventModel.js";
+import encrypt from "../../../../passwordManager/encryption.js";
 import multer from 'multer';
 import csv from 'csv-parser';
 import xlsx from 'xlsx';
@@ -646,6 +647,106 @@ export const getDashboardStats = async (req, res) => {
     console.error('Get dashboard stats error:', error);
     res.status(500).json({ 
       message: "Error fetching dashboard statistics", 
+      error: error.message 
+    });
+  }
+};
+
+// Role-wise password reset
+export const resetPasswordByRole = async (req, res) => {
+  try {
+    const { role, resetType } = req.body;
+
+    // Validate input
+    if (!role) {
+      return res.status(400).json({ message: "Role is required" });
+    }
+
+    const validRoles = ['participant', 'coordinator', 'hod'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Must be participant, coordinator, or hod" });
+    }
+
+    const validResetTypes = ['email', 'default'];
+    if (!validResetTypes.includes(resetType)) {
+      return res.status(400).json({ message: "Invalid reset type. Must be 'email' or 'default'" });
+    }
+
+    // Find all users with the specified role
+    const users = await User.find({ role });
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: `No users found with role: ${role}` });
+    }
+
+    const updatedUsers = [];
+    const errors = [];
+
+    // Process each user
+    for (const user of users) {
+      try {
+        let newPassword;
+        
+        if (resetType === 'email') {
+          newPassword = user.email; // Set password to user's email
+        } else {
+          newPassword = 'password123'; // Set default password
+        }
+
+        // Encrypt the new password
+        const encryptedPassword = await encrypt(newPassword);
+
+        // Update user's password
+        await User.findByIdAndUpdate(user._id, { 
+          password: encryptedPassword 
+        });
+
+        updatedUsers.push({
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          newPassword: resetType === 'email' ? user.email : 'password123'
+        });
+
+        // Log the password reset
+        console.log(`[ROLE-WISE PASSWORD RESET] ${new Date().toISOString()}`);
+        console.log(`User: ${user.name} (${user.email})`);
+        console.log(`Role: ${role}`);
+        console.log(`New Password: ${newPassword}`);
+        console.log('---');
+
+      } catch (userError) {
+        console.error(`Error resetting password for user ${user.email}:`, userError);
+        errors.push({
+          email: user.email,
+          error: userError.message
+        });
+      }
+    }
+
+    // Prepare response
+    const response = {
+      message: `Password reset completed for role: ${role}`,
+      summary: {
+        totalUsers: users.length,
+        successfulResets: updatedUsers.length,
+        failedResets: errors.length,
+        resetType: resetType === 'email' ? 'Reset to email address' : 'Reset to default (password123)'
+      },
+      updatedUsers,
+      errors
+    };
+
+    if (errors.length > 0) {
+      console.warn(`Some password resets failed for role ${role}:`, errors);
+    }
+
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error('Role-wise password reset error:', error);
+    res.status(500).json({ 
+      message: "Error during role-wise password reset", 
       error: error.message 
     });
   }
