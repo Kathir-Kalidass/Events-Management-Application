@@ -1,6 +1,8 @@
 // Centralized API utility for consistent authorization headers and error handling
 
-const API_BASE = "http://10.5.12.1:4000/api";
+// Centralized API utility for consistent authorization headers and error handling
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

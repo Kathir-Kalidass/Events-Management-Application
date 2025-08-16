@@ -48,7 +48,7 @@ const AdminLogin = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/admin/login`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/admin/login`,
         formData
       );
 

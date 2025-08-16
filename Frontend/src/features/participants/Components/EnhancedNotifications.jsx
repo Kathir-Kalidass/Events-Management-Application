@@ -131,7 +131,7 @@ const EnhancedNotifications = ({ notifications = [], onDataChange }) => {
     try {
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/notifications/${notificationId}/read`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -153,7 +153,7 @@ const EnhancedNotifications = ({ notifications = [], onDataChange }) => {
       const token = localStorage.getItem("token");
       const userInfo = JSON.parse(localStorage.getItem("userInfo") || '{}');
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/notifications/${userInfo._id}/mark-all-read`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/notifications/${userInfo._id}/mark-all-read`, {
         method: 'PUT',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -176,7 +176,7 @@ const EnhancedNotifications = ({ notifications = [], onDataChange }) => {
     try {
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/participant/notifications/${notificationId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/participant/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           "Authorization": `Bearer ${token}`,

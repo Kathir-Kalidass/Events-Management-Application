@@ -13,7 +13,7 @@ const ForgotPasswordDummy = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/forgot-password-dummy", { email, role });
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/auth/forgot-password-dummy`, { email, role });
       setMessage(res.data.message);
     } catch (err) {
       setMessage(err.response?.data?.message || "Email not registered or server error.");

@@ -9,13 +9,19 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  console.log('ForgotPassword component - role from URL:', role);
+
   const handleSend = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    console.log('Sending forgot password request:', { email, role });
+    
     try {
-      const res = await axios.post("http://10.5.12.1:4000/api/auth/forgot-password", { email, role });
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, { email, role });
       setMessage(res.data.message);
     } catch (err) {
+      console.error('Forgot password error:', err.response?.data);
       setMessage(err.response?.data?.message || "Email not registered or server error.");
     } finally {
       setLoading(false);

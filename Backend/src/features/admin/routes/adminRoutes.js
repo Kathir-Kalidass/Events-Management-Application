@@ -12,6 +12,7 @@ import {
   deleteUser,
   bulkDeleteUsers,
   getDashboardStats,
+  resetPasswordByRole,
   upload 
 } from '../controllers/userController.js';
 import { 
@@ -35,6 +36,7 @@ router.get('/users', authMiddleware, getAllUsers);
 router.post('/users', authMiddleware, addUser);
 router.post('/users/bulk', authMiddleware, upload.single('file'), bulkAddUsers);
 router.post('/users/bulk-delete', authMiddleware, bulkDeleteUsers);
+router.post('/users/reset-password-by-role', authMiddleware, resetPasswordByRole);
 router.put('/users/:userId', authMiddleware, updateUser);
 router.delete('/users/:userId', authMiddleware, deleteUser);
 

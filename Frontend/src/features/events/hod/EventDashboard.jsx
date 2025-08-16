@@ -86,7 +86,7 @@ const HODEventDashboard = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/hod/events/${eventId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setEvent(response.data);
@@ -100,7 +100,7 @@ const HODEventDashboard = () => {
 
   const fetchParticipants = async () => {
     try {
-      const response = await axios.get(`http://10.5.12.1:4000/api/hod/events/${eventId}/participants`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}/participants`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       
@@ -118,7 +118,7 @@ const HODEventDashboard = () => {
   const handleStatusUpdate = async () => {
     try {
       await axios.put(
-        `http://10.5.12.1:4000/api/hod/events/${eventId}/status`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}/status`,
         { 
           status: newStatus,
           reviewComments: comments 
@@ -140,7 +140,7 @@ const HODEventDashboard = () => {
   const downloadProposalLetter = async () => {
     try {
       const response = await axios.get(
-        `http://10.5.12.1:4000/api/hod/events/${eventId}/proposal-pdf`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/hod/events/${eventId}/proposal-pdf`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           responseType: "blob",

@@ -41,7 +41,7 @@ const PasswordResetRequestsAdmin = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:4000/api/admin/password-reset-requests', {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/admin/password-reset-requests`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRequests(response.data.requests || []);
@@ -58,7 +58,7 @@ const PasswordResetRequestsAdmin = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `http://localhost:4000/api/admin/password-reset-requests/${requestId}/approve`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/admin/password-reset-requests/${requestId}/approve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -91,7 +91,7 @@ const PasswordResetRequestsAdmin = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `http://localhost:4000/api/admin/password-reset-requests/${rejectDialog.requestId}/reject`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'}/admin/password-reset-requests/${rejectDialog.requestId}/reject`,
         { reason: rejectReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -138,7 +138,7 @@ const PasswordResetRequestsAdmin = () => {
           Password Reset Requests
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Manage user password reset requests. This is a dummy implementation for demonstration.
+          Manage user password reset requests. 
         </Typography>
       </Box>
 
