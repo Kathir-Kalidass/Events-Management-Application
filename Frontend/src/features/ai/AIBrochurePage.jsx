@@ -3,9 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Button, Card, CardContent, TextField,
   Select, MenuItem, FormControl, InputLabel, CircularProgress, Grid,
-  Alert, Snackbar, Chip, Divider, Paper, IconButton,
+  Alert, Chip, Divider, Paper, IconButton, Tooltip, Tab, Tabs,
 } from "@mui/material";
-import { AutoAwesome, Download, Preview, Refresh } from "@mui/icons-material";
+import {
+  AutoAwesome, Download, Refresh, Edit, Visibility, Save,
+  Add, Delete, Preview,
+} from "@mui/icons-material";
 import api from "../../utils/api";
 
 const TONES = [
@@ -23,10 +26,18 @@ const AIBrochurePage = () => {
   const [tone, setTone] = useState("standard");
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [content, setContent] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [events, setEvents] = useState([]);
   const [fetchingEvents, setFetchingEvents] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const [editedOverview, setEditedOverview] = useState("");
+  const [editedObjectives, setEditedObjectives] = useState([]);
+  const [editedAudience, setEditedAudience] = useState("");
 
   useEffect(() => {
     api.get("/coordinator/events")
@@ -39,10 +50,16 @@ const AIBrochurePage = () => {
     if (!eventId) { setError("Please select an event"); return; }
     setLoading(true);
     setError("");
-    setContent(null);
+    setSuccess("");
     try {
       const res = await api.post("/ai/smart-brochure", { eventId, tone });
-      setContent(res.data.content);
+      const c = res.data.content;
+      setContent(c);
+      setEditedOverview(c.overview || "");
+      setEditedObjectives(c.learningObjectives?.map((o) => (typeof o === "string" ? o : o)) || [""]);
+      setEditedAudience(c.targetAudience || "");
+      setEditMode(false);
+      setTabIndex(0);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to generate content");
     }
@@ -62,10 +79,60 @@ const AIBrochurePage = () => {
       a.download = `brochure-${eventId}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
+      setSuccess("PDF downloaded successfully");
     } catch (err) {
       setError("Failed to download PDF");
     }
     setPdfLoading(false);
+  };
+
+  const handleObjectiveChange = (index, value) => {
+    const updated = [...editedObjectives];
+    updated[index] = value;
+    setEditedObjectives(updated);
+  };
+
+  const addObjective = () => {
+    setEditedObjectives([...editedObjectives, ""]);
+  };
+
+  const removeObjective = (index) => {
+    if (editedObjectives.length <= 1) return;
+    setEditedObjectives(editedObjectives.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEdits = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        eventId,
+        tone,
+        overview: editedOverview,
+        learningObjectives: editedObjectives.filter(Boolean),
+        targetAudience: editedAudience,
+      };
+      await api.post("/ai/smart-brochure", payload);
+      setContent({
+        overview: editedOverview,
+        learningObjectives: editedObjectives.filter(Boolean),
+        targetAudience: editedAudience,
+        tone,
+      });
+      setEditMode(false);
+      setSuccess("Changes saved");
+    } catch (err) {
+      setError("Failed to save edits");
+    }
+    setSaving(false);
+  };
+
+  const toggleEdit = () => {
+    if (editMode) {
+      setEditedOverview(content.overview);
+      setEditedObjectives(content.learningObjectives?.map((o) => (typeof o === "string" ? o : o)) || [""]);
+      setEditedAudience(content.targetAudience);
+    }
+    setEditMode(!editMode);
   };
 
   return (
@@ -74,9 +141,6 @@ const AIBrochurePage = () => {
         <AutoAwesome color="primary" sx={{ fontSize: 32 }} />
         <Typography variant="h4" fontWeight={700}>AI Brochure Generator</Typography>
       </Box>
-      <Typography variant="body1" color="text.secondary" mb={3}>
-        Generate professional event brochures with AI-powered content. Choose a tone and customize.
-      </Typography>
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -87,7 +151,7 @@ const AIBrochurePage = () => {
                 <Select
                   value={eventId}
                   label="Select Event"
-                  onChange={(e) => setEventId(e.target.value)}
+                  onChange={(e) => { setEventId(e.target.value); setContent(null); }}
                 >
                   {fetchingEvents ? (
                     <MenuItem disabled>Loading...</MenuItem>
@@ -101,7 +165,7 @@ const AIBrochurePage = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tone</InputLabel>
                 <Select value={tone} label="Tone" onChange={(e) => setTone(e.target.value)}>
@@ -111,21 +175,27 @@ const AIBrochurePage = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={4}>
               <Button
                 variant="contained"
                 fullWidth
                 onClick={generateContent}
                 disabled={loading || !eventId}
                 startIcon={loading ? <CircularProgress size={18} /> : <AutoAwesome />}
+                sx={{ py: 1.5 }}
               >
-                {loading ? "Generating..." : "Generate"}
+                {loading ? "Generating..." : "Generate AI Content"}
               </Button>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess("")}>
+          {success}
+        </Alert>
+      )}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
           {error}
@@ -134,15 +204,30 @@ const AIBrochurePage = () => {
 
       {content && (
         <>
-          <Box display="flex" gap={1} mb={2}>
+          <Box display="flex" gap={1} mb={2} flexWrap="wrap">
             <Button
               variant="contained"
-              startIcon={<Download />}
+              color="primary"
+              startIcon={pdfLoading ? <CircularProgress size={18} color="inherit" /> : <Download />}
               onClick={downloadPDF}
               disabled={pdfLoading}
             >
               {pdfLoading ? "Generating PDF..." : "Download PDF"}
             </Button>
+            <Button
+              variant={editMode ? "contained" : "outlined"}
+              color={editMode ? "success" : "primary"}
+              startIcon={editMode ? <Save /> : <Edit />}
+              onClick={editMode ? handleSaveEdits : toggleEdit}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : editMode ? "Save Edits" : "Edit Content"}
+            </Button>
+            {editMode && (
+              <Button variant="text" onClick={toggleEdit} startIcon={<Visibility />}>
+                Cancel
+              </Button>
+            )}
             <Button
               variant="outlined"
               startIcon={<Refresh />}
@@ -154,40 +239,105 @@ const AIBrochurePage = () => {
 
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Generated Content</Typography>
-              <Chip label={`Tone: ${tone}`} size="small" sx={{ mb: 2 }} />
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Generated Content</Typography>
+                <Chip label={`Tone: ${tone}`} size="small" />
+              </Box>
 
-              <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: "grey.50" }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Overview
-                </Typography>
-                <Typography variant="body1">{content.overview}</Typography>
-              </Paper>
+              <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)} sx={{ mb: 2 }}>
+                <Tab label="Overview" />
+                <Tab label="Learning Objectives" />
+                <Tab label="Target Audience" />
+              </Tabs>
 
-              {content.learningObjectives?.length > 0 && (
-                <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: "grey.50" }}>
+              {tabIndex === 0 && (
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Learning Objectives
+                    Event Overview
                   </Typography>
-                  {content.learningObjectives.map((obj, i) => (
-                    <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>
-                      {i + 1}. {obj}
-                    </Typography>
-                  ))}
+                  {editMode ? (
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={4}
+                      value={editedOverview}
+                      onChange={(e) => setEditedOverview(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body1">{content.overview}</Typography>
+                  )}
                 </Paper>
               )}
 
-              {content.targetAudience && (
+              {tabIndex === 1 && (
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Learning Objectives
+                  </Typography>
+                  {editMode ? (
+                    <Box>
+                      {editedObjectives.map((obj, i) => (
+                        <Box key={i} display="flex" gap={1} mb={1} alignItems="center">
+                          <Typography variant="body2" sx={{ minWidth: 24 }}>{i + 1}.</Typography>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={obj}
+                            onChange={(e) => handleObjectiveChange(i, e.target.value)}
+                          />
+                          <IconButton size="small" color="error" onClick={() => removeObjective(i)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                      <Button size="small" startIcon={<Add />} onClick={addObjective} sx={{ mt: 1 }}>
+                        Add Objective
+                      </Button>
+                    </Box>
+                  ) : (
+                    content.learningObjectives?.map((obj, i) => (
+                      <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>
+                        {i + 1}. {obj}
+                      </Typography>
+                    ))
+                  )}
+                </Paper>
+              )}
+
+              {tabIndex === 2 && (
                 <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Target Audience
                   </Typography>
-                  <Typography variant="body1">{content.targetAudience}</Typography>
+                  {editMode ? (
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={editedAudience}
+                      onChange={(e) => setEditedAudience(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body1">{content.targetAudience}</Typography>
+                  )}
                 </Paper>
               )}
             </CardContent>
           </Card>
         </>
+      )}
+
+      {!content && !loading && eventId && (
+        <Paper sx={{ p: 4, textAlign: "center", bgcolor: "grey.50" }}>
+          <AutoAwesome sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
+          <Typography variant="h6" color="text.secondary">
+            Click "Generate AI Content" to create your brochure
+          </Typography>
+        </Paper>
       )}
     </Container>
   );
