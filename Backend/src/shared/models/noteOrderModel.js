@@ -32,6 +32,18 @@ const noteOrderSchema = mongoose.Schema(
     totalExpenditure: Number,
     universityOverhead: Number, // 30% of totalIncome
 
+    // Internal instructions/decisions log
+    entries: [
+      {
+        type: { type: String, enum: ['instruction', 'decision', 'deviation', 'task'], default: 'instruction' },
+        message: { type: String, required: true },
+        author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        createdAt: { type: Date, default: Date.now },
+      }
+    ],
+
+    locked: { type: Boolean, default: false },
+
     // Metadata
     createdAt: {
       type: Date,

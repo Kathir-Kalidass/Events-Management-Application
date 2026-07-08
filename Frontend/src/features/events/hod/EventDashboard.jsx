@@ -944,6 +944,56 @@ const HODEventDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
+
+              {/* Note Order Summary */}
+              <Grid xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Note Order Summary</Typography>
+                    <Grid container spacing={1} sx={{ mb: 2 }}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Total Income</Typography>
+                        <Typography variant="subtitle1">₹{Number(event.noteOrder?.totalIncome || 0).toLocaleString()}</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Total Expenditure</Typography>
+                        <Typography variant="subtitle1">₹{Number(event.noteOrder?.totalExpenditure || 0).toLocaleString()}</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">University Overhead</Typography>
+                        <Typography variant="subtitle1">₹{Number(event.noteOrder?.universityOverhead || 0).toLocaleString()}</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Locked</Typography>
+                        <Typography variant="subtitle1">{event.noteOrder?.locked ? 'Yes' : 'No'}</Typography>
+                      </Grid>
+                    </Grid>
+                    <Typography variant="subtitle2" gutterBottom>Entries</Typography>
+                    <List dense sx={{ maxHeight: 220, overflow: 'auto' }}>
+                      {event.noteOrder?.entries?.length ? event.noteOrder.entries.map((e, idx) => (
+                        <ListItem key={idx} alignItems="flex-start">
+                          <ListItemText 
+                            primary={`${(e.type || 'instruction').toUpperCase()} • ${new Date(e.createdAt).toLocaleString('en-IN')}`}
+                            secondary={
+                              <>
+                                {e.author?.name && <Typography variant="caption">By: {e.author.name}</Typography>}
+                                <Typography variant="body2">{e.message}</Typography>
+                              </>
+                            }
+                          />
+                        </ListItem>
+                      )) : (
+                        <Typography variant="body2" color="text.secondary">No entries</Typography>
+                      )}
+                    </List>
+                    <Box sx={{ mt: 2 }}>
+                      <Button variant="contained" size="small" onClick={downloadProposalLetter}>
+                        Download Note Order PDF
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
           )}
         </Box>

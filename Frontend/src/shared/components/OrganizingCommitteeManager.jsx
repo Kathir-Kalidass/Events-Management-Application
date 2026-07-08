@@ -101,8 +101,9 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
 
   const fetchAvailableMembers = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/committee-members`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/coordinator/committee-members', {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setAvailableMembers(response.data.members || []);
       setGroupedMembers(response.data.groupedMembers || {});
@@ -115,8 +116,12 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
   const handleAddMember = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/committee-members`, newMember, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const token = localStorage.getItem('token');
+      const response = await axios.post('/coordinator/committee-members', newMember, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
       });
       
       enqueueSnackbar('Committee member added successfully', { variant: 'success' });
@@ -190,8 +195,12 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
         committeeDisplaySettings: displaySettings
       };
 
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/events/${eventId}/organizing-committee`, payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const token = localStorage.getItem('token');
+      await axios.put(`/coordinator/events/${eventId}/organizing-committee`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
       });
 
       enqueueSnackbar('Organizing committee updated successfully', { variant: 'success' });
@@ -292,6 +301,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
                     />
                     
                     <TextField
+                      id="committee-custom-title"
+                      name="committeeCustomTitle"
                       label="Custom Title"
                       value={displaySettings.customTitle}
                       onChange={(e) => setDisplaySettings({
@@ -396,6 +407,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
                                       </TableCell>
                                       <TableCell>
                                         <TextField
+                                          id={`custom-name-${index}`}
+                                          name={`customName[${index}]`}
                                           size="small"
                                           placeholder={member.name}
                                           value={item.customName || ''}
@@ -404,6 +417,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
                                       </TableCell>
                                       <TableCell>
                                         <TextField
+                                          id={`custom-designation-${index}`}
+                                          name={`customDesignation[${index}]`}
                                           size="small"
                                           placeholder={member.designation}
                                           value={item.customDesignation || ''}
@@ -412,6 +427,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
                                       </TableCell>
                                       <TableCell>
                                         <TextField
+                                          id={`custom-department-${index}`}
+                                          name={`customDepartment[${index}]`}
                                           size="small"
                                           placeholder={member.department}
                                           value={item.customDepartment || ''}
@@ -454,6 +471,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} md={6}>
               <TextField
+                id="new-member-name"
+                name="name"
                 label="Name"
                 value={newMember.name}
                 onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
@@ -463,6 +482,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
+                id="new-member-designation"
+                name="designation"
                 label="Designation"
                 value={newMember.designation}
                 onChange={(e) => setNewMember({ ...newMember, designation: e.target.value })}
@@ -471,6 +492,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
+                id="new-member-department"
+                name="department"
                 label="Department"
                 value={newMember.department}
                 onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
@@ -501,6 +524,8 @@ const OrganizingCommitteeManager = ({ eventId, event, onUpdate }) => {
                 freeSolo
                 renderInput={(params) => (
                   <TextField
+                    id="new-member-role"
+                    name="role"
                     {...params}
                     label="Role"
                     required

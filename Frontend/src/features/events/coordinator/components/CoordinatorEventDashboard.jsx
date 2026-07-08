@@ -86,10 +86,16 @@ const CoordinatorEventDashboard = () => {
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [claimData, setClaimData] = useState([]);
   const [showProgressDetails, setShowProgressDetails] = useState(false);
+  const [noteOrder, setNoteOrder] = useState(null);
+  const [entryType, setEntryType] = useState('instruction');
+  const [entryMessage, setEntryMessage] = useState('');
+  const [entryLoading, setEntryLoading] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
     fetchParticipants();
+    fetchNoteOrder();
   }, [eventId]);
 
   const fetchEventDetails = async () => {
@@ -128,6 +134,18 @@ const CoordinatorEventDashboard = () => {
       }
     } catch (error) {
       setParticipants([]);
+    }
+  };
+
+  const fetchNoteOrder = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/note-order/${eventId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setNoteOrder(response.data);
+    } catch (error) {
+      // note order might not exist yet
+      setNoteOrder(null);
     }
   };
 
@@ -256,7 +274,7 @@ const CoordinatorEventDashboard = () => {
 
   const viewProposalPDF = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/programmes/${eventId}/pdf`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/note-order/${eventId}/pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,
@@ -267,7 +285,7 @@ const CoordinatorEventDashboard = () => {
         throw new Error(`Failed to generate programme PDF: ${response.status} ${response.statusText}`);
       }
       
-      const pdfBlob = await response.blob();
+  const pdfBlob = await response.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const newWindow = window.open(pdfUrl, '_blank');
       
@@ -279,9 +297,9 @@ const CoordinatorEventDashboard = () => {
         link.click();
         document.body.removeChild(link);
         
-        enqueueSnackbar('Programme PDF downloaded (popup blocked)', { variant: 'info' });
+        enqueueSnackbar('Note Order PDF downloaded (popup blocked)', { variant: 'info' });
       } else {
-        enqueueSnackbar('Programme PDF opened in new tab', { variant: 'success' });
+        enqueueSnackbar('Note Order PDF opened in new tab', { variant: 'success' });
       }
 
       setTimeout(() => {
@@ -289,8 +307,44 @@ const CoordinatorEventDashboard = () => {
       }, 10000);
       
     } catch (error) {
-      console.error("Error opening programme PDF:", error.message);
-      enqueueSnackbar(`Failed to open programme PDF: ${error.message}`, { variant: "error" });
+      console.error("Error opening Note Order PDF:", error.message);
+      enqueueSnackbar(`Failed to open Note Order PDF: ${error.message}`, { variant: "error" });
+    }
+  };
+
+  const addNoteOrderEntry = async () => {
+    if (!entryMessage.trim()) {
+      enqueueSnackbar('Please enter a message', { variant: 'warning' });
+      return;
+    }
+    try {
+      setEntryLoading(true);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/note-order/${eventId}/entries`,
+        { type: entryType, message: entryMessage },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      setEntryMessage('');
+      enqueueSnackbar('Entry added to Note Order', { variant: 'success' });
+      fetchNoteOrder();
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to add entry', { variant: 'error' });
+    } finally {
+      setEntryLoading(false);
+    }
+  };
+
+  const lockNoteOrder = async () => {
+    try {
+      setLockLoading(true);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/note-order/${eventId}/lock`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      enqueueSnackbar('Note Order locked', { variant: 'success' });
+      fetchNoteOrder();
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to lock Note Order', { variant: 'error' });
+    } finally {
+      setLockLoading(false);
     }
   };
 
@@ -891,10 +945,72 @@ const CoordinatorEventDashboard = () => {
                       variant="contained" 
                       startIcon={<Visibility />}
                       onClick={viewProposalPDF}
-                      sx={{ borderRadius: 2, fontWeight: 600 }}
+                      sx={{ borderRadius: 2, fontWeight: 600, mb: 2 }}
                       fullWidth
                     >
-                      View Proposal PDF
+                      View Note Order PDF
+                    </Button>
+
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                      Internal Entries {noteOrder?.locked && <Chip label="Locked" size="small" color="warning" sx={{ ml: 1 }} />}
+                    </Typography>
+                    <List dense sx={{ maxHeight: 220, overflow: 'auto', mb: 2 }}>
+                      {noteOrder?.entries?.length ? noteOrder.entries.map((e, idx) => (
+                        <ListItem key={idx} alignItems="flex-start">
+                          <ListItemText 
+                            primary={`${(e.type || 'instruction').toUpperCase()} • ${new Date(e.createdAt).toLocaleString('en-IN')}`}
+                            secondary={
+                              <>
+                                {e.author?.name && <Typography variant="caption">By: {e.author.name}</Typography>}
+                                <Typography variant="body2">{e.message}</Typography>
+                              </>
+                            }
+                          />
+                        </ListItem>
+                      )) : (
+                        <Typography variant="body2" color="text.secondary">No entries yet</Typography>
+                      )}
+                    </List>
+
+                    <Box display="flex" gap={1} alignItems="center" sx={{ mb: 2 }}>
+                      <TextField 
+                        label="Add entry message" 
+                        size="small" 
+                        value={entryMessage} 
+                        onChange={(e) => setEntryMessage(e.target.value)}
+                        fullWidth
+                        disabled={noteOrder?.locked}
+                      />
+                      <TextField 
+                        label="Type" 
+                        size="small" 
+                        value={entryType}
+                        onChange={(e) => setEntryType(e.target.value)}
+                        select
+                        sx={{ minWidth: 160 }}
+                        disabled={noteOrder?.locked}
+                      >
+                        {['instruction','decision','deviation','task'].map(t => (
+                          <MenuItem key={t} value={t}>{t}</MenuItem>
+                        ))}
+                      </TextField>
+                      <Button 
+                        variant="outlined" 
+                        onClick={addNoteOrderEntry}
+                        disabled={entryLoading || noteOrder?.locked}
+                      >
+                        {entryLoading ? 'Adding...' : 'Add'}
+                      </Button>
+                    </Box>
+                    <Button 
+                      color="warning"
+                      variant="contained"
+                      onClick={lockNoteOrder}
+                      disabled={noteOrder?.locked || lockLoading}
+                      fullWidth
+                    >
+                      {lockLoading ? 'Locking...' : 'Lock Note Order'}
                     </Button>
                   </Card>
                 </Grid>

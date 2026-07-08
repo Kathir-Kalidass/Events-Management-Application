@@ -56,6 +56,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
+import api from '../../utils/api';
 import PasswordResetRequestsAdmin from './PasswordResetRequestsAdmin.jsx';
 
 const AdminDashboard = () => {
@@ -109,18 +110,10 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const [statsRes, usersRes, eventsRes, passwordResetRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/events`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/password-reset-requests`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: { requests: [] } })) // Fallback if endpoint doesn't exist
+        api.get('/admin/dashboard/stats'),
+        api.get('/admin/users'),
+        api.get('/admin/events'),
+        api.get('/admin/password-reset-requests').catch(() => ({ data: { requests: [] } }))
       ]);
 
       setStats(statsRes.data);
@@ -176,11 +169,7 @@ const AdminDashboard = () => {
 
   const handleAddUser = async () => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/users`,
-        newUser,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/admin/users', newUser);
       
       enqueueSnackbar('User added successfully', { variant: 'success' });
       setOpenAddUser(false);
@@ -201,16 +190,9 @@ const AdminDashboard = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/users/bulk`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
+      const response = await api.post('/admin/users/bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
       const { results, summary } = response.data;
       setUploadResults({ results, summary });

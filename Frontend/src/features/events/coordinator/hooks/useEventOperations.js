@@ -137,14 +137,15 @@ export const useEventOperations = (setEvents, setLoading, setError, enqueueSnack
       try {
         const formData = new FormData();
         formData.append('brochurePDF', pdfBlob, `Advanced_Brochure_${event.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'event'}.pdf`);
-        
+
         const token = localStorage.getItem("token");
-        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api'}/coordinator/programmes/${event._id}/brochure/save`, {
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://10.5.12.1:4000/api';
+        await fetch(`${API_BASE}/coordinator/brochures/${event._id}/save`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          body: formData
+          body: formData,
         });
       } catch (saveError) {
         console.warn("Failed to save advanced brochure to backend:", saveError.message);

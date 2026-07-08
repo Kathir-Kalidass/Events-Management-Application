@@ -554,10 +554,10 @@ const EnhancedEventsList = ({ onDataChange }) => {
                             <ListItemIcon sx={{ minWidth: 32 }}>
                               <GroupIcon fontSize="small" color="primary" />
                             </ListItemIcon>
-                            <ListItemText 
+                           {/* <ListItemText 
                               primary={`${event.registeredCount || 0}/${event.maxParticipants} participants`}
                               primaryTypographyProps={{ variant: 'body2' }}
-                            />
+                            /> */}
                           </ListItem>
                         )}
                       </List>

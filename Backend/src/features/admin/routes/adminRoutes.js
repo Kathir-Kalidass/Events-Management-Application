@@ -19,7 +19,7 @@ import {
   getPasswordResetRequests,
   approvePasswordReset,
   rejectPasswordReset
-} from '../../auth/controllers/forgotPasswordDummyController.js';
+} from '../controllers/passwordResetRequestsController.js';
 import authMiddleware from '../../../shared/middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -43,7 +43,7 @@ router.delete('/users/:userId', authMiddleware, deleteUser);
 // Event management routes
 router.get('/events', authMiddleware, getAllEvents);
 
-// Password reset management routes
+// Password reset requests management
 router.get('/password-reset-requests', authMiddleware, getPasswordResetRequests);
 router.post('/password-reset-requests/:requestId/approve', authMiddleware, approvePasswordReset);
 router.post('/password-reset-requests/:requestId/reject', authMiddleware, rejectPasswordReset);

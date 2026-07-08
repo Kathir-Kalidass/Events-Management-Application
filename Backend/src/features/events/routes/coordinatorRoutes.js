@@ -73,6 +73,8 @@ import {
 import event from '../../../shared/models/eventModel.js';
 import multer from 'multer';
 import { migrateEmbeddedNoteOrder } from '../controllers/budgetSyncController.js';
+import noteOrderRoutes from './noteOrderRoutes.js';
+import { generateNoteOrderPDF } from '../../documents/controllers/noteOrderPdfController.js';
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -120,6 +122,7 @@ coordinatorRoutes.route('/programmes/:id')
 // Add the PDF routes with proper authorization
 // PDF routes are accessible to coordinators, HODs, and admins
 coordinatorRoutes.get('/programmes/:id/pdf', generateProgrammePDF);
+coordinatorRoutes.get('/note-order/:eventId/pdf', generateNoteOrderPDF);
 coordinatorRoutes.get('/event/claimPdf/:eventId', downloadClaimPDF);
 coordinatorRoutes.post('/claims/:id', authorizeResourceOwnership('event', 'id'), handleClaimBillSubmission);
 coordinatorRoutes.post('/programmes/:id/claim', authorizeResourceOwnership('event', 'id'), handleClaimBillSubmission);
@@ -243,5 +246,8 @@ coordinatorRoutes.get('/claim-pdf/:id', async (req, res) => {
 
 // Maintenance/Migration route (admin only)
 coordinatorRoutes.post('/maintenance/migrate-noteorder', authorizeRoles('admin'), migrateEmbeddedNoteOrder);
+
+// Note Order management routes
+coordinatorRoutes.use('/note-order', noteOrderRoutes);
 
 export default coordinatorRoutes;

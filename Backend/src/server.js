@@ -30,7 +30,23 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+	origin : (origin, callback) => {
+		if(!origin || allowedOrigins.includes(origin)){
+			callback(null, true);
+		}
+		else{
+			callback(new Error("Not Allowed by CORS."));
+		}
+	},
+	credentials: true
+}));
+const allowedOrigins = [
+	"http://localhost:5173",
+	"http://10.5.12.1:5173",
+	"http://10.5.12.1:84"
+];
+
 db.connectDb();
 
 // Register API routes
