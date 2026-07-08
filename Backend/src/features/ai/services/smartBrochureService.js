@@ -1,0 +1,133 @@
+import llm from '../../../shared/services/llm/index.js';
+import Event from '../../../shared/models/eventModel.js';
+import ConvenorCommittee from '../../../shared/models/convenorCommitteeModel.js';
+import PDFDocument from 'pdfkit';
+import logger from '../../../shared/utils/logger.js';
+
+const TONES = ['formal', 'warm', 'enthusiastic', 'brief', 'detailed'];
+
+export async function generateSmartContent(eventId, tone = 'standard') {
+  const event = await Event.findById(eventId).lean();
+  if (!event) throw new Error('Event not found');
+
+  const overview = await llm.generateContent('brochureOverview', event);
+  const learningObjectives = overview?.learningObjectives
+    || await llm.generateContent('learningObjectives', event);
+
+  let description = event.description || '';
+  if (tone !== 'standard' && TONES.includes(tone)) {
+    const rewritten = await llm.generateText('dynamicTone', { ...event, description, tone });
+    if (rewritten) description = rewritten;
+  }
+
+  return {
+    overview: overview?.overview || description,
+    learningObjectives: learningObjectives || [],
+    targetAudience: overview?.targetAudience || event.targetAudience || event.eligibility || 'Students and Faculty',
+    tone,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+export async function generateSmartBrochurePDF(eventId, tone = 'standard') {
+  const event = await Event.findById(eventId).lean();
+  if (!event) throw new Error('Event not found');
+
+  const content = await generateSmartContent(eventId, tone);
+  const committee = await ConvenorCommittee.find({ isActive: true })
+    .sort({ roleCategory: 1, role: 1, createdAt: -1 })
+    .lean();
+
+  const doc = new PDFDocument({ size: 'A4', margins: { top: 40, bottom: 40, left: 50, right: 50 } });
+  const buffers = [];
+  doc.on('data', (chunk) => buffers.push(chunk));
+
+  const addHeader = () => {
+    doc.fontSize(10).font('Helvetica-Bold')
+      .text('ANNA UNIVERSITY', { align: 'center' })
+      .fontSize(8).font('Helvetica')
+      .text('Chennai - 600 025', { align: 'center' })
+      .moveDown(0.5);
+  };
+
+  return new Promise((resolve, reject) => {
+    doc.on('end', () => resolve({ buffer: Buffer.concat(buffers), content }));
+
+    addHeader();
+
+    doc.moveDown(0.5);
+    doc.fontSize(18).font('Helvetica-Bold')
+      .text(event.title || event.name, { align: 'center' })
+      .moveDown(0.3);
+
+    doc.fontSize(11).font('Helvetica')
+      .text(event.department || event.departmentName || 'University Department', { align: 'center' })
+      .moveDown(1);
+
+    const lineY = doc.y;
+    doc.moveTo(50, lineY).lineTo(545, lineY).stroke();
+    doc.moveDown(1);
+
+    doc.fontSize(13).font('Helvetica-Bold').text('About the Program', { underline: true }).moveDown(0.3);
+    doc.fontSize(11).font('Helvetica').text(content.overview, { align: 'justify' }).moveDown(0.8);
+
+    if (content.learningObjectives?.length > 0) {
+      doc.fontSize(13).font('Helvetica-Bold').text('Learning Objectives', { underline: true }).moveDown(0.3);
+      doc.fontSize(11).font('Helvetica');
+      content.learningObjectives.forEach((obj, i) => {
+        doc.text(`${i + 1}. ${obj}`, { indent: 10 });
+      });
+      doc.moveDown(0.8);
+    }
+
+    doc.fontSize(13).font('Helvetica-Bold').text('Target Audience', { underline: true }).moveDown(0.3);
+    doc.fontSize(11).font('Helvetica').text(content.targetAudience).moveDown(0.8);
+
+    if (event.startDate) {
+      doc.fontSize(13).font('Helvetica-Bold').text('Schedule', { underline: true }).moveDown(0.3);
+      doc.fontSize(11).font('Helvetica');
+      if (event.startDate) doc.text(`Start: ${new Date(event.startDate).toLocaleDateString()}`);
+      if (event.endDate) doc.text(`End: ${new Date(event.endDate).toLocaleDateString()}`);
+      doc.moveDown(0.8);
+    }
+
+    if (event.venue || event.location) {
+      doc.fontSize(13).font('Helvetica-Bold').text('Venue', { underline: true }).moveDown(0.3);
+      doc.fontSize(11).font('Helvetica').text(event.venue || event.location).moveDown(0.8);
+    }
+
+    if (committee.length > 0) {
+      doc.addPage();
+      addHeader();
+      doc.moveDown(0.5);
+      doc.fontSize(14).font('Helvetica-Bold').text('Organizing Committee', { align: 'center' }).moveDown(0.8);
+
+      const grouped = {};
+      for (const m of committee) {
+        const cat = m.roleCategory || 'Other';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(m);
+      }
+
+      for (const [category, members] of Object.entries(grouped)) {
+        doc.fontSize(12).font('Helvetica-Bold').text(category.replace(/_/g, ' ')).moveDown(0.2);
+        doc.fontSize(10).font('Helvetica');
+        for (const m of members) {
+          doc.text(`  ${m.role}: ${m.name}${m.designation ? `, ${m.designation}` : ''}${m.department ? ` — ${m.department}` : ''}`);
+        }
+        doc.moveDown(0.5);
+      }
+    }
+
+    doc.fontSize(8).font('Helvetica').fillColor('#666')
+      .text(`Brochure generated by AI • ${new Date().toLocaleDateString()} • Tone: ${tone}`, { align: 'center' });
+
+    doc.end();
+  });
+}
+
+export async function listTones() {
+  return TONES;
+}
+
+export default { generateSmartContent, generateSmartBrochurePDF, listTones };

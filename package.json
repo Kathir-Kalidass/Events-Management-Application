@@ -14,7 +14,8 @@
     "clean": "rm -rf node_modules Backend/node_modules Frontend/node_modules",
     "setup": "npm run install-all",
     "lint": "cd Frontend && npm run lint",
-    "format": "cd Frontend && npm run format"
+    "format": "cd Frontend && npm run format",
+    "prepare": "husky"
   },
   "keywords": [
     "events-management",
@@ -60,8 +61,11 @@
     "sharp": "^0.34.3"
   },
   "devDependencies": {
-    "jest": "^27.5.1"
+    "husky": "^9.1.7",
+    "jest": "^27.5.1",
+    "lint-staged": "^17.0.8"
   },
+,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kathir-Kalidass/Events-Management-Application.git"

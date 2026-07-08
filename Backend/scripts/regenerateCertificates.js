@@ -37,7 +37,7 @@ function log(message, color = 'reset') {
 
 async function connectToDatabase() {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'MONGO_URI_PLACEHOLDER');
+    await mongoose.connect(process.env.MONGO_URI);
     log('✅ Connected to MongoDB', 'green');
   } catch (error) {
     log(`❌ Failed to connect to MongoDB: ${error.message}`, 'red');

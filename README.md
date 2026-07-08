@@ -311,7 +311,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
    Create a `.env` file in the `Backend` directory:
    ```env
    PORT=4000
-   MONGO_URI=MONGO_URI_PLACEHOLDER
+   MONGO_URI=mongodb://localhost:27017/events-management
    JWT_SECRET=your-super-secret-jwt-key
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASS=your-app-password

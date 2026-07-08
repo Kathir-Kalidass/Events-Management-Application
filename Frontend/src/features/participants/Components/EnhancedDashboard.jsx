@@ -62,6 +62,7 @@ import EnhancedCertificates from './EnhancedCertificates';
 import EnhancedProfile from './EnhancedProfile';
 import EnhancedDashboardHome from './EnhancedDashboardHome';
 import EnhancedNotifications from './EnhancedNotifications';
+import AIRecommendations from '../../ai/AIRecommendations';
 
 const drawerWidth = 280;
 
@@ -181,6 +182,12 @@ const EnhancedParticipantDashboard = () => {
       view: 'notifications',
       description: 'View updates and alerts',
       badge: notifications.length
+    },
+    { 
+      label: 'AI Recommendations', 
+      icon: <TrendingUpIcon />, 
+      view: 'recommendations',
+      description: 'Personalized event suggestions'
     },
   ];
 
@@ -339,6 +346,16 @@ const EnhancedParticipantDashboard = () => {
       key={`notifications-${refreshKey}`}
       notifications={notifications}
       onDataChange={refreshData}
+    />,
+    recommendations: <AIRecommendations
+      key={`recommendations-${refreshKey}`}
+      participant={{
+        name: userName,
+        email: userEmail,
+        department: userInfo.department || '',
+        interests: userInfo.interests || [],
+        pastEvents: userStats?.attendedEvents ? [`${userStats.attendedEvents} past events`] : [],
+      }}
     />,
   };
 
