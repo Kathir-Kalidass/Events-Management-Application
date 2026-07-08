@@ -21,6 +21,8 @@ import brochureRoutes from './features/documents/routes/brochureRoutes.js';
 import adminRoutes from './features/admin/routes/adminRoutes.js';
 import debugRoutes from './features/debug/routes/debugRoutes.js';
 import monitoringRoutes from './features/monitoring/routes/monitoringRoutes.js';
+import aiRoutes from './features/ai/routes/aiRoutes.js';
+import { initLLM } from './shared/services/llm/index.js';
 import { createDefaultAdmin } from './features/admin/controllers/adminAuthController.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -71,6 +73,7 @@ app.use("/api/brochures", brochureRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/debug", debugRoutes);
 app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.use((err, req, res, next) => {
   captureError(err, req);
@@ -83,6 +86,8 @@ app.use(errorHandler);
 
 app.listen(process.env.PORT, "0.0.0.0", async () => {
   logger.info(`Server running on port ${process.env.PORT}`);
+
+  initLLM();
 
   try {
     await createDefaultAdmin();

@@ -22,6 +22,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "canvas": "^2.11.2",
@@ -41,6 +42,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.4",
     "number-to-words": "^1.2.4",
+    "openai": "^6.45.0",
     "pdfkit": "^0.17.1",
     "puppeteer": "^24.12.1",
     "qrcode": "^1.5.3",
