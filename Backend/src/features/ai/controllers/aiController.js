@@ -1,4 +1,5 @@
 import llm from '../../../shared/services/llm/index.js';
+import { generateSmartContent, generateSmartBrochurePDF, listTones } from '../services/smartBrochureService.js';
 import logger from '../../../shared/utils/logger.js';
 
 export const getStatus = async (req, res) => {
@@ -65,6 +66,37 @@ export const getRecommendations = async (req, res) => {
     logger.error('AI recommendations failed:', err);
     res.status(500).json({ message: 'Failed to generate recommendations', error: err.message });
   }
+};
+
+export const smartBrochure = async (req, res) => {
+  try {
+    const { eventId, tone } = req.body;
+    if (!eventId) return res.status(400).json({ message: 'Event ID required' });
+
+    const content = await generateSmartContent(eventId, tone || 'standard');
+    res.json({ success: true, content });
+  } catch (err) {
+    logger.error('Smart brochure generation failed:', err);
+    res.status(500).json({ message: 'Failed to generate smart brochure', error: err.message });
+  }
+};
+
+export const smartBrochurePDF = async (req, res) => {
+  try {
+    const { tone } = req.query;
+    const result = await generateSmartBrochurePDF(req.params.eventId, tone || 'standard');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="brochure-${req.params.eventId}.pdf"`);
+    res.send(result.buffer);
+  } catch (err) {
+    logger.error('Smart brochure PDF generation failed:', err);
+    res.status(500).json({ message: 'Failed to generate brochure PDF', error: err.message });
+  }
+};
+
+export const getTones = async (req, res) => {
+  const tones = await listTones();
+  res.json({ tones });
 };
 
 export const getBudgetSuggestions = async (req, res) => {
