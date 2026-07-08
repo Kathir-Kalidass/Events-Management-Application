@@ -1,37 +1,59 @@
-// src/utils/api.js
 import axios from 'axios';
 
-// Create axios instance
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
+  || import.meta.env.VITE_BACKEND_URL
+  || `${window.location.origin}/api`
+  || 'http://localhost:4000/api';
+
 const api = axios.create({
-  baseURL: 'http://10.5.12.1:4000/api', // Your backend URL
+  baseURL: BASE_URL,
+  timeout: 30000,
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Add request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add response interceptor for handling token expiration
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, clear storage and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
-      window.location.href = '/admin/login';
+      const path = window.location.pathname;
+      if (!path.includes('/login') && !path.includes('/admin/login')) {
+        window.location.href = '/login/participant';
+      }
     }
     return Promise.reject(error);
   }
 );
+
+export const apiFetch = async (path, options = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+  if (token) headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
+
+  const url = path.startsWith('http') ? path : `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || res.statusText);
+  }
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) return res.json();
+  return res;
+};
 
 export default api;
