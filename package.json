@@ -30,7 +30,7 @@
     "pdf-generation",
     "role-based-access"
   ],
-  "author": "Dhanush T <dhanush@annauniv.edu>",
+  "author": "Kathir Kalidass B <kathirkalidass.b2023cse@smail.ssn.edu.in>",
   "license": "ISC",
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -64,11 +64,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DhanushT7/Events-Management-Application.git"
+    "url": "git+https://github.com/Kathir-Kalidass/Events-Management-Application.git"
   },
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/DhanushT7/Events-Management-Application/issues"
+    "url": "https://github.com/Kathir-Kalidass/Events-Management-Application/issues"
   },
-  "homepage": "https://github.com/DhanushT7/Events-Management-Application#readme"
+  "homepage": "https://github.com/Kathir-Kalidass/Events-Management-Application#readme"
 }
