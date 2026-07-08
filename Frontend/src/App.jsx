@@ -17,6 +17,8 @@ import HODEventDashboard from "./features/events/hod/EventDashboard";
 import CertificateVerification from "./shared/components/CertificateVerification";
 import CertificateManagement from "./features/events/CertificateManagement";
 import { AdminLogin, AdminDashboard } from "./features/admin";
+import AIBrochurePage from "./features/ai/AIBrochurePage";
+import FeedbackSentimentDashboard from "./features/ai/FeedbackSentimentDashboard";
 
 function App() {
   return (
@@ -72,6 +74,16 @@ function App() {
           <Route path="/verify-certificate" element={<CertificateVerification />} />
           <Route path="/verify-certificate/:certificateId" element={<CertificateVerification />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/coordinator/ai/brochure" element={
+            <ProtectedRoute allowedRole="coordinator">
+              <AIBrochurePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/coordinator/ai/sentiment" element={
+            <ProtectedRoute allowedRole="coordinator">
+              <FeedbackSentimentDashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/dashboard" element={
             <ProtectedRoute allowedRole="admin">
               <AdminDashboard />

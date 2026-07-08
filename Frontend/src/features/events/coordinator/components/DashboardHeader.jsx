@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -26,13 +27,16 @@ import {
   Settings as SettingsIcon,
   EventNote,
   Assessment,
-  MoreVert
+  MoreVert,
+  AutoAwesome,
+  SentimentSatisfied
 } from '@mui/icons-material';
 import { eventState } from '../../../../shared/context/eventProvider';
 import ProfileDialog from './ProfileDialog';
 
 const DashboardHeader = ({ onLogout, onCreateNew }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { user } = eventState();
   const [profileOpen, setProfileOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -47,7 +51,8 @@ const DashboardHeader = ({ onLogout, onCreateNew }) => {
 
   const quickActions = [
     { label: 'View Events', icon: <EventNote />, action: () => console.log('View Events') },
-    { label: 'Analytics', icon: <Assessment />, action: () => console.log('Analytics') },
+    { label: 'AI Brochure', icon: <AutoAwesome />, action: () => navigate('/coordinator/ai/brochure') },
+    { label: 'AI Sentiment', icon: <SentimentSatisfied />, action: () => navigate('/coordinator/ai/sentiment') },
     { label: 'Settings', icon: <SettingsIcon />, action: () => setProfileOpen(true) }
   ];
 
