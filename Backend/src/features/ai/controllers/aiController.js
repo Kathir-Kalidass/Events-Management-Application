@@ -1,5 +1,9 @@
 import llm from '../../../shared/services/llm/index.js';
 import { generateSmartContent, generateSmartBrochurePDF, listTones } from '../services/smartBrochureService.js';
+import { personalizeCertificateText } from '../services/aiCertificateService.js';
+import { analyzeSingleFeedback, getEventSentimentTrends } from '../services/feedbackSentimentService.js';
+import { getRecommendationsForParticipant } from '../services/recommendationService.js';
+import { optimizeBudget, detectAnomalies } from '../services/budgetAssistantService.js';
 import logger from '../../../shared/utils/logger.js';
 
 export const getStatus = async (req, res) => {
@@ -34,7 +38,7 @@ export const generateCertificateText = async (req, res) => {
     const { participant, event } = req.body;
     if (!participant || !event) return res.status(400).json({ message: 'Participant and event data required' });
 
-    const result = await llm.generateContent('certificateText', { participant, event });
+    const result = await personalizeCertificateText(participant, event);
     res.json(result || { achievementText: '', skillsHighlighted: [], congratulatoryMessage: '' });
   } catch (err) {
     logger.error('AI certificate generation failed:', err);
@@ -44,24 +48,37 @@ export const generateCertificateText = async (req, res) => {
 
 export const analyzeFeedback = async (req, res) => {
   try {
-    const { feedbackText } = req.body;
+    const { feedbackText, feedbackId, eventId } = req.body;
     if (!feedbackText) return res.status(400).json({ message: 'Feedback text required' });
 
-    const result = await llm.generateContent('feedbackSentiment', { feedbackText });
-    res.json(result || { sentiment: 'neutral', score: 0.5, keyPhrases: [], suggestedImprovements: [] });
+    const result = await analyzeSingleFeedback(feedbackText, feedbackId, eventId);
+    res.json(result);
   } catch (err) {
     logger.error('AI feedback analysis failed:', err);
     res.status(500).json({ message: 'Failed to analyze feedback', error: err.message });
   }
 };
 
+export const getFeedbackTrends = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    if (!eventId) return res.status(400).json({ message: 'Event ID required' });
+
+    const trends = await getEventSentimentTrends(eventId);
+    res.json(trends);
+  } catch (err) {
+    logger.error('Failed to get feedback trends:', err);
+    res.status(500).json({ message: 'Failed to get feedback trends', error: err.message });
+  }
+};
+
 export const getRecommendations = async (req, res) => {
   try {
-    const { participant, events } = req.body;
-    if (!participant || !events) return res.status(400).json({ message: 'Participant and events data required' });
+    const { participant } = req.body;
+    if (!participant) return res.status(400).json({ message: 'Participant data required' });
 
-    const result = await llm.generateContent('eventRecommendation', { participant, events });
-    res.json(result || { recommendations: [], summary: '' });
+    const result = await getRecommendationsForParticipant(participant);
+    res.json(result);
   } catch (err) {
     logger.error('AI recommendations failed:', err);
     res.status(500).json({ message: 'Failed to generate recommendations', error: err.message });
@@ -104,10 +121,23 @@ export const getBudgetSuggestions = async (req, res) => {
     const { event, claims } = req.body;
     if (!event) return res.status(400).json({ message: 'Event data required' });
 
-    const result = await llm.generateContent('budgetSuggestions', { event, claims: claims || [] });
-    res.json(result || { suggestions: [], anomalies: [], summary: '' });
+    const result = await optimizeBudget(event, claims || []);
+    res.json(result);
   } catch (err) {
     logger.error('AI budget suggestions failed:', err);
     res.status(500).json({ message: 'Failed to generate budget suggestions', error: err.message });
+  }
+};
+
+export const getAnomalies = async (req, res) => {
+  try {
+    const { claims } = req.body;
+    if (!claims?.length) return res.status(400).json({ message: 'Claims data required' });
+
+    const anomalies = await detectAnomalies(claims);
+    res.json({ anomalies });
+  } catch (err) {
+    logger.error('AI anomaly detection failed:', err);
+    res.status(500).json({ message: 'Failed to detect anomalies', error: err.message });
   }
 };
