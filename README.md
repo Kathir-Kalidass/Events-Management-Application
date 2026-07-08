@@ -282,7 +282,7 @@ This application currently implements **Module 4** of a comprehensive 10-module 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/Events-Management-Application.git
+   git clone https://github.com/Kathir-Kalidass/Events-Management-Application.git
    cd Events-Management-Application
    ```
 
@@ -612,7 +612,7 @@ GET  /api/certificates/verify/:id            # Verify certificate (public)
 
 2. **Clone and Setup**
    ```bash
-   git clone https://github.com/your-username/Events-Management-Application.git
+   git clone https://github.com/Kathir-Kalidass/Events-Management-Application.git
    cd Events-Management-Application
    npm install  # Install root dependencies
    ```
