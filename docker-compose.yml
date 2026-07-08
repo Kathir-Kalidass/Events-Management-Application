@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: events-mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: events-management
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: events-backend
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://mongodb:27017/events-management
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-random-secret}
+      NODE_ENV: production
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: events-frontend
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
