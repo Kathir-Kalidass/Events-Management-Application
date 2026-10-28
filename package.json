@@ -65,7 +65,6 @@
     "jest": "^27.5.1",
     "lint-staged": "^17.0.8"
   },
-,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kathir-Kalidass/Events-Management-Application.git"
