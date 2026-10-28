@@ -23,7 +23,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) await mongoServer.stop();
 });
 
 describe('Auth Routes', () => {
@@ -39,7 +39,7 @@ describe('Auth Routes', () => {
       });
 
     expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty('token');
+    expect(res.body.user).toHaveProperty('id');
     expect(res.body.user.email).toBe('test@example.com');
   });
 
